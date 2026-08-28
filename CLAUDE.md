@@ -24,7 +24,10 @@
   ET service_role (Automatically expose new tables est désactivé sur ce
   projet — RLS seul ne suffit pas, PostgREST/Postgres exigent aussi les
   GRANT classiques)
-
+- Toute page apps/backoffice affichant des données scopées à une compagnie
+  doit appeler requireCompany() (pas requireUser() seul) — sinon un
+  utilisateur sans compagnie associée peut voir une page vide ou cassée au
+  lieu du message clair prévu
 ## Où chercher
 - Schéma de données  → supabase/migrations/
 - Logique de prix    → packages/shared/src/lib/pricing.ts
