@@ -20,6 +20,11 @@
   --primary: #f2a900;
   --primary-hover: #d99400;
   --primary-foreground: #241a00;
+
+  /* Text on the one deliberate dark panel (hero band) — not a second
+     theme, just the two colors needed against --foreground used as a bg. */
+  --on-ink: #fbf8f2;
+  --on-ink-muted: #cfc7b8;
 }
 
 @theme inline {
@@ -32,6 +37,9 @@
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
   --color-primary-foreground: var(--primary-foreground);
+
+  --color-on-ink: var(--on-ink);
+  --color-on-ink-muted: var(--on-ink-muted);
 
   --font-sans: var(--font-work-sans);
   --font-display: var(--font-baloo);

@@ -40,3 +40,30 @@ export function SearchIcon(props: SVGProps<SVGSVGElement>) {
     </Icon>
   );
 }
+
+export function CompareIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <rect x="3" y="4" width="7" height="16" rx="1.5" />
+      <rect x="14" y="4" width="7" height="10" rx="1.5" />
+    </Icon>
+  );
+}
+
+export function PhoneIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <rect x="4" y="2.5" width="16" height="19" rx="2.5" />
+      <path d="M4 17.5h16M11 20h2" />
+    </Icon>
+  );
+}
+
+export function TicketIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M4 8.5h16v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-9Z" />
+      <path d="M4 8.5 8 4h8l4 4.5M10 13h4" />
+    </Icon>
+  );
+}
