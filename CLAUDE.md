@@ -20,6 +20,10 @@
 - RLS activé sur toutes les tables : une compagnie ne voit que ses propres
   trajets et réservations
 - Le package interne s'appelle "shared" (pas "@gobus/shared")
+- Toute nouvelle table nécessite un GRANT explicite pour anon, authenticated
+  ET service_role (Automatically expose new tables est désactivé sur ce
+  projet — RLS seul ne suffit pas, PostgREST/Postgres exigent aussi les
+  GRANT classiques)
 
 ## Où chercher
 - Schéma de données  → supabase/migrations/
