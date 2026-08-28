@@ -8,6 +8,12 @@
   "scripts": {
     "dev:web": "npm run dev --workspace apps/web",
     "dev:backoffice": "npm run dev --workspace apps/backoffice",
-    "dev:mobile": "npm run start --workspace apps/mobile"
+    "dev:mobile": "npm run start --workspace apps/mobile",
+    "seed": "tsx scripts/seed.ts"
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "^2.112.4",
+    "dotenv": "^17.4.2",
+    "tsx": "^4.23.12"
   }
 }
