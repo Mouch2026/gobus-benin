@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { CalendarIcon, PinIcon, SearchIcon } from "@/lib/icons";
 
 const ORIGIN_CITY = "Cotonou";
 
@@ -20,90 +21,101 @@ async function getDestinationCities(): Promise<string[]> {
 export default async function Home() {
   const destinationCities = await getDestinationCities();
   const today = new Date().toISOString().split("T")[0];
+  const hasDestinations = destinationCities.length > 0;
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 px-4 py-16 dark:bg-black">
-      <main className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm dark:bg-zinc-900">
-        <h1 className="mb-1 text-2xl font-semibold text-zinc-950 dark:text-zinc-50">
-          GoBus Bénin
-        </h1>
-        <p className="mb-6 text-sm text-zinc-500 dark:text-zinc-400">
-          Recherchez et réservez votre trajet en bus.
-        </p>
+    <div className="flex min-h-screen flex-col items-center bg-background px-4 py-20 sm:py-28">
+      <div className="flex w-full max-w-3xl flex-col items-center gap-10 text-center">
+        <div className="flex flex-col gap-3">
+          <span className="font-display text-sm font-semibold uppercase tracking-[0.16em] text-primary">
+            GoBus Bénin
+          </span>
+          <h1 className="text-balance font-display text-4xl font-extrabold leading-tight text-foreground sm:text-5xl">
+            Où partez-vous ?
+          </h1>
+          <p className="text-lg text-muted">
+            Tous vos voyages en un seul endroit
+          </p>
+        </div>
 
-        <form action="/recherche" method="get" className="flex flex-col gap-5">
-          <div className="flex flex-col gap-1.5">
-            <label
-              htmlFor="origin"
-              className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-            >
-              Départ
-            </label>
-            <input
-              id="origin"
-              value={ORIGIN_CITY}
-              disabled
-              className="rounded-lg border border-zinc-200 bg-zinc-100 px-3 py-2 text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"
-            />
-            {/* `disabled` inputs are not submitted, so the fixed origin is
-                sent separately via this hidden field. */}
-            <input type="hidden" name="origin" value={ORIGIN_CITY} />
+        <form
+          action="/recherche"
+          method="get"
+          className="flex w-full flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(20,17,11,0.04),0_12px_28px_-16px_rgba(20,17,11,0.25)] sm:flex-row sm:items-stretch"
+        >
+          <div className="flex flex-1 items-center gap-3 border-b border-border px-5 py-4 text-left sm:border-b-0 sm:border-r">
+            <PinIcon className="h-5 w-5 shrink-0 text-muted" />
+            <div className="flex flex-1 flex-col">
+              <span className="text-xs font-semibold uppercase tracking-wide text-muted">
+                Départ
+              </span>
+              <span className="font-display text-base font-semibold text-foreground">
+                {ORIGIN_CITY}
+              </span>
+              {/* Departure is fixed; only the hidden field is submitted. */}
+              <input type="hidden" name="origin" value={ORIGIN_CITY} />
+            </div>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label
-              htmlFor="destination"
-              className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-            >
-              Arrivée
-            </label>
-            <select
-              id="destination"
-              name="destination"
-              required
-              defaultValue=""
-              disabled={destinationCities.length === 0}
-              className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-950 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
-            >
-              <option value="" disabled>
-                {destinationCities.length > 0
-                  ? "Choisir une ville"
-                  : "Aucune destination disponible"}
-              </option>
-              {destinationCities.map((city) => (
-                <option key={city} value={city}>
-                  {city}
+          <div className="flex flex-1 items-center gap-3 border-b border-border px-5 py-4 text-left sm:border-b-0 sm:border-r">
+            <PinIcon className="h-5 w-5 shrink-0 text-muted" />
+            <div className="flex flex-1 flex-col">
+              <label
+                htmlFor="destination"
+                className="text-xs font-semibold uppercase tracking-wide text-muted"
+              >
+                Arrivée
+              </label>
+              <select
+                id="destination"
+                name="destination"
+                required
+                defaultValue=""
+                disabled={!hasDestinations}
+                className="bg-transparent font-display text-base font-semibold text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="" disabled>
+                  {hasDestinations ? "Choisir une ville" : "Aucune destination disponible"}
                 </option>
-              ))}
-            </select>
+                {destinationCities.map((city) => (
+                  <option key={city} value={city}>
+                    {city}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label
-              htmlFor="date"
-              className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-            >
-              Date de départ
-            </label>
-            <input
-              id="date"
-              name="date"
-              type="date"
-              required
-              min={today}
-              className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-950 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
-            />
+          <div className="flex flex-1 items-center gap-3 px-5 py-4 text-left">
+            <CalendarIcon className="h-5 w-5 shrink-0 text-muted" />
+            <div className="flex flex-1 flex-col">
+              <label
+                htmlFor="date"
+                className="text-xs font-semibold uppercase tracking-wide text-muted"
+              >
+                Date
+              </label>
+              <input
+                id="date"
+                name="date"
+                type="date"
+                required
+                min={today}
+                className="bg-transparent font-display text-base font-semibold text-foreground [color-scheme:light]"
+              />
+            </div>
           </div>
 
           <button
             type="submit"
-            disabled={destinationCities.length === 0}
-            className="mt-2 rounded-lg bg-zinc-950 px-4 py-2.5 font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+            disabled={!hasDestinations}
+            className="flex items-center justify-center gap-2 bg-primary px-8 py-4 font-display text-base font-bold text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
           >
+            <SearchIcon className="h-5 w-5" />
             Rechercher
           </button>
         </form>
-      </main>
+      </div>
     </div>
   );
 }

@@ -3,6 +3,10 @@
 import { useState, type ChangeEvent } from "react";
 import { calculateBookingTotal, formatFcfa } from "shared";
 
+const fieldClasses =
+  "rounded-xl border border-border bg-background px-3 py-2.5 text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/25";
+const labelClasses = "text-xs font-semibold uppercase tracking-wide text-muted";
+
 export function BookingForm({
   unitPriceFcfa,
   availableSeats,
@@ -17,7 +21,7 @@ export function BookingForm({
 
   if (availableSeats < 1) {
     return (
-      <div className="rounded-lg border border-zinc-200 bg-white p-6 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
+      <div className="rounded-2xl border border-border bg-surface p-6 text-muted">
         Ce trajet est complet.
       </div>
     );
@@ -36,13 +40,10 @@ export function BookingForm({
   const canContinue = passengerName.trim().length > 0 && phone.trim().length > 0;
 
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="rounded-2xl border border-border bg-surface p-6">
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
-          <label
-            htmlFor="seatCount"
-            className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-          >
+          <label htmlFor="seatCount" className={labelClasses}>
             Nombre de places
           </label>
           <input
@@ -52,15 +53,12 @@ export function BookingForm({
             max={availableSeats}
             value={seatCount}
             onChange={handleSeatCountChange}
-            className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-950 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
+            className={fieldClasses}
           />
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label
-            htmlFor="passengerName"
-            className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-          >
+          <label htmlFor="passengerName" className={labelClasses}>
             Nom du voyageur
           </label>
           <input
@@ -69,12 +67,12 @@ export function BookingForm({
             value={passengerName}
             onChange={(event) => setPassengerName(event.target.value)}
             placeholder="Prénom et nom"
-            className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-950 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
+            className={fieldClasses}
           />
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="phone" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <label htmlFor="phone" className={labelClasses}>
             Téléphone
           </label>
           <input
@@ -83,13 +81,13 @@ export function BookingForm({
             value={phone}
             onChange={(event) => setPhone(event.target.value)}
             placeholder="+229 ..."
-            className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-950 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
+            className={fieldClasses}
           />
         </div>
 
-        <div className="flex items-center justify-between border-t border-zinc-200 pt-4 dark:border-zinc-700">
-          <span className="text-sm text-zinc-500 dark:text-zinc-400">Prix total</span>
-          <span className="text-xl font-semibold text-zinc-950 dark:text-zinc-50">
+        <div className="flex items-center justify-between rounded-xl bg-primary/10 px-4 py-3">
+          <span className="text-sm font-semibold text-muted">Prix total</span>
+          <span className="font-display text-2xl font-extrabold text-foreground">
             {formatFcfa(totalPriceFcfa)}
           </span>
         </div>
@@ -98,13 +96,13 @@ export function BookingForm({
           type="button"
           disabled={!canContinue}
           onClick={() => setShowPlaceholder(true)}
-          className="mt-2 rounded-lg bg-zinc-950 px-4 py-2.5 font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+          className="mt-1 rounded-xl bg-primary px-4 py-3 font-display font-bold text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
         >
           Continuer vers le paiement
         </button>
 
         {showPlaceholder ? (
-          <p className="rounded-lg bg-zinc-100 p-3 text-sm text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+          <p className="rounded-xl border border-border bg-background p-3 text-sm text-muted">
             Le paiement arrive bientôt — cette fonctionnalité n&apos;est pas encore disponible.
           </p>
         ) : null}

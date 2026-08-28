@@ -1,26 +1,43 @@
 @import "tailwindcss";
 
+/*
+ * Centralized design tokens for the FlixBus-inspired identity: white
+ * ground, high contrast, bold rounded type, a single signature accent
+ * (Or du Bénin). Deliberately single-theme (no prefers-color-scheme dark
+ * variant) — "fond blanc" is part of the identity itself, not a light-mode
+ * default to be overridden.
+ *
+ * Components must reference these tokens (bg-background, text-foreground,
+ * bg-primary, etc.) instead of literal Tailwind colors like zinc-950.
+ */
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --surface: #ffffff;
+  --foreground: #14110b;
+  --muted: #6b6459;
+  --border: #e4ded2;
+
+  --primary: #f2a900;
+  --primary-hover: #d99400;
+  --primary-foreground: #241a00;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-muted: var(--muted);
+  --color-border: var(--border);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --font-sans: var(--font-work-sans);
+  --font-display: var(--font-baloo);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }

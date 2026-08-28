@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { formatFcfa } from "shared";
-import { EmptyState, PageShell, SEAT_CLASS_LABELS, formatDepartureTime } from "./_shared";
+import { EmptyState, PageShell, RouteLine, SEAT_CLASS_LABELS, formatDepartureTime } from "./_shared";
 
 type TripSearchResult = {
   id: string;
@@ -88,22 +88,35 @@ export default async function RecherchePage(props: PageProps<"/recherche">) {
             <li key={trip.id}>
               <Link
                 href={`/recherche/${trip.id}`}
-                className="flex items-center justify-between gap-4 rounded-lg border border-zinc-200 bg-white p-4 transition-colors hover:border-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-zinc-500"
+                className="group flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5 transition-colors hover:border-primary sm:flex-row sm:items-center sm:justify-between"
               >
-                <div>
-                  <p className="font-medium text-zinc-950 dark:text-zinc-50">
-                    {trip.companies.name}
-                  </p>
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                    Départ {formatDepartureTime(trip.departure_at)} ·{" "}
-                    {SEAT_CLASS_LABELS[trip.seat_class] ?? trip.seat_class} ·{" "}
+                <div className="flex flex-1 flex-col gap-2">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-muted">
+                    <span>{trip.companies.name}</span>
+                    <span aria-hidden className="text-border">
+                      ·
+                    </span>
+                    <span>{SEAT_CLASS_LABELS[trip.seat_class] ?? trip.seat_class}</span>
+                  </div>
+                  <RouteLine
+                    origin={trip.routes.origin_city}
+                    destination={trip.routes.destination_city}
+                    departureLabel={`Départ ${formatDepartureTime(trip.departure_at)}`}
+                  />
+                  <span className="text-sm text-muted">
                     {trip.available_seats} place{trip.available_seats > 1 ? "s" : ""} disponible
                     {trip.available_seats > 1 ? "s" : ""}
-                  </p>
+                  </span>
                 </div>
-                <p className="whitespace-nowrap text-lg font-semibold text-zinc-950 dark:text-zinc-50">
-                  {formatFcfa(trip.price_fcfa)}
-                </p>
+
+                <div className="flex shrink-0 items-center gap-3 border-t border-border pt-4 sm:flex-col sm:items-end sm:gap-1 sm:border-t-0 sm:pt-0">
+                  <span className="font-display text-2xl font-extrabold text-foreground">
+                    {formatFcfa(trip.price_fcfa)}
+                  </span>
+                  <span className="text-sm font-semibold text-primary group-hover:underline">
+                    Voir le trajet →
+                  </span>
+                </div>
               </Link>
             </li>
           ))}

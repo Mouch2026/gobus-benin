@@ -24,13 +24,13 @@ export function formatDepartureDateTime(departureAt: string): string {
 
 export function PageShell({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col items-center bg-zinc-50 px-4 py-16 dark:bg-black">
+    <div className="flex min-h-screen flex-col items-center bg-background px-4 py-16">
       <main className="w-full max-w-2xl">
         <div className="mb-6 flex items-center justify-between gap-4">
-          <h1 className="text-2xl font-semibold text-zinc-950 dark:text-zinc-50">{title}</h1>
+          <h1 className="font-display text-2xl font-extrabold text-foreground">{title}</h1>
           <Link
             href="/"
-            className="whitespace-nowrap text-sm font-medium text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-50"
+            className="whitespace-nowrap text-sm font-semibold text-muted transition-colors hover:text-foreground"
           >
             ← Nouvelle recherche
           </Link>
@@ -43,8 +43,38 @@ export function PageShell({ title, children }: { title: string; children: ReactN
 
 export function EmptyState({ children }: { children: ReactNode }) {
   return (
-    <p className="rounded-lg border border-zinc-200 bg-white p-6 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
-      {children}
-    </p>
+    <p className="rounded-2xl border border-border bg-surface p-6 text-muted">{children}</p>
+  );
+}
+
+export function RouteLine({
+  origin,
+  destination,
+  departureLabel,
+  arrivalLabel,
+}: {
+  origin: string;
+  destination: string;
+  departureLabel?: string;
+  arrivalLabel?: string;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex flex-col items-start gap-0.5">
+        <span className="font-display text-base font-bold text-foreground">{origin}</span>
+        {departureLabel ? <span className="text-xs text-muted">{departureLabel}</span> : null}
+      </div>
+
+      <div className="flex flex-1 items-center gap-1.5">
+        <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />
+        <span className="h-px flex-1 bg-[repeating-linear-gradient(to_right,var(--border)_0,var(--border)_4px,transparent_4px,transparent_8px)]" />
+        <span className="h-2 w-2 shrink-0 rounded-full bg-foreground" />
+      </div>
+
+      <div className="flex flex-col items-end gap-0.5 text-right">
+        <span className="font-display text-base font-bold text-foreground">{destination}</span>
+        {arrivalLabel ? <span className="text-xs text-muted">{arrivalLabel}</span> : null}
+      </div>
+    </div>
   );
 }

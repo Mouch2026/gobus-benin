@@ -1,6 +1,12 @@
 import { supabase } from "@/lib/supabase";
 import { formatFcfa } from "shared";
-import { EmptyState, PageShell, SEAT_CLASS_LABELS, formatDepartureDateTime } from "../_shared";
+import {
+  EmptyState,
+  PageShell,
+  RouteLine,
+  SEAT_CLASS_LABELS,
+  formatDepartureDateTime,
+} from "../_shared";
 import { BookingForm } from "./BookingForm";
 
 type TripDetail = {
@@ -52,28 +58,32 @@ export default async function TripDetailPage(props: PageProps<"/recherche/[tripI
   return (
     <PageShell title={`${trip.routes.origin_city} → ${trip.routes.destination_city}`}>
       <div className="flex flex-col gap-6">
-        <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
-          <p className="text-lg font-medium text-zinc-950 dark:text-zinc-50">
-            {trip.companies.name}
-          </p>
-          <dl className="mt-4 grid grid-cols-2 gap-y-2 text-sm">
-            <dt className="text-zinc-500 dark:text-zinc-400">Trajet</dt>
-            <dd className="text-zinc-950 dark:text-zinc-50">
-              {trip.routes.origin_city} → {trip.routes.destination_city}
-            </dd>
-            <dt className="text-zinc-500 dark:text-zinc-400">Départ</dt>
-            <dd className="text-zinc-950 dark:text-zinc-50">
-              {formatDepartureDateTime(trip.departure_at)}
-            </dd>
-            <dt className="text-zinc-500 dark:text-zinc-400">Classe</dt>
-            <dd className="text-zinc-950 dark:text-zinc-50">
+        <div className="flex flex-col gap-5 rounded-2xl border border-border bg-surface p-6">
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-sm font-semibold text-muted">{trip.companies.name}</span>
+            <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary-foreground">
               {SEAT_CLASS_LABELS[trip.seat_class] ?? trip.seat_class}
-            </dd>
-            <dt className="text-zinc-500 dark:text-zinc-400">Prix unitaire</dt>
-            <dd className="text-zinc-950 dark:text-zinc-50">{formatFcfa(trip.price_fcfa)}</dd>
-            <dt className="text-zinc-500 dark:text-zinc-400">Places disponibles</dt>
-            <dd className="text-zinc-950 dark:text-zinc-50">{trip.available_seats}</dd>
-          </dl>
+            </span>
+          </div>
+
+          <RouteLine
+            origin={trip.routes.origin_city}
+            destination={trip.routes.destination_city}
+            departureLabel={formatDepartureDateTime(trip.departure_at)}
+          />
+
+          <div className="flex items-center justify-between border-t border-border pt-4">
+            <span className="text-sm text-muted">
+              {trip.available_seats} place{trip.available_seats > 1 ? "s" : ""} disponible
+              {trip.available_seats > 1 ? "s" : ""}
+            </span>
+            <div className="text-right">
+              <span className="block text-xs text-muted">Prix unitaire</span>
+              <span className="font-display text-xl font-extrabold text-foreground">
+                {formatFcfa(trip.price_fcfa)}
+              </span>
+            </div>
+          </div>
         </div>
 
         <BookingForm unitPriceFcfa={trip.price_fcfa} availableSeats={trip.available_seats} />
