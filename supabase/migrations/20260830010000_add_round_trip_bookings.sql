@@ -86,6 +86,16 @@ declare
   v_return_price integer;
   v_outbound_departure timestamptz;
   v_return_departure timestamptz;
+  -- Exact prefix of the message reserve_trip_seats() raises for "not
+  -- enough seats" (see supabase/migrations/20260825060934_create_core_schema.sql,
+  -- the `if not found then raise exception 'Plus assez de places
+  -- disponibles sur ce trajet (trip_id=%)' ...` branch). Both of that
+  -- trigger's failure branches (seats vs. price mismatch) share the exact
+  -- same errcode ('check_violation' / SQLSTATE 23514) — confirmed by
+  -- reading that file, not assumed — so SQLSTATE alone can't distinguish
+  -- them. Matching this fixed message text is the only way to label the
+  -- seats case specifically without touching that shared trigger.
+  c_not_enough_seats_prefix constant text := 'Plus assez de places disponibles sur ce trajet%';
 begin
   if v_user_id is null then
     raise exception 'Connexion requise' using errcode = '28000';
@@ -113,24 +123,53 @@ begin
   insert into public.booking_groups (user_id) values (v_user_id)
     returning id into v_group_id;
 
-  insert into public.bookings (trip_id, user_id, seat_count, total_price_fcfa, booking_group_id, leg)
-  values (p_outbound_trip_id, v_user_id, p_seat_count, v_outbound_price * p_seat_count, v_group_id, 'outbound')
-  returning id into v_outbound_booking_id;
-  -- reserve_trip_seats fires here for the outbound leg. If it raises,
-  -- everything above (including the booking_groups insert) is rolled back
-  -- — one RPC call is one transaction, nothing to compensate manually.
+  -- Each leg's insert is wrapped in its own begin/exception block so the
+  -- error message that reaches the client names the failing leg — but only
+  -- for the specific "not enough seats" case (matched on
+  -- reserve_trip_seats' known, fixed message text, see declaration above).
+  -- Anything else (a genuine price mismatch, a different constraint, an
+  -- unexpected failure) is re-raised UNCHANGED via bare `raise;` — never
+  -- substituted, never mislabeled as a seats problem. A plpgsql exception
+  -- block opens an implicit savepoint — catching it and then raising
+  -- (whether the relabeled message or the bare re-raise) still lets the
+  -- exception propagate out of the whole function call, so the entire RPC
+  -- call still fails atomically either way: any leg already inserted above
+  -- is still rolled back exactly as before. Only the message that reaches
+  -- the caller changes in the seats case; the original Postgres message is
+  -- preserved in `detail` there for server logs.
+  begin
+    insert into public.bookings (trip_id, user_id, seat_count, total_price_fcfa, booking_group_id, leg)
+    values (p_outbound_trip_id, v_user_id, p_seat_count, v_outbound_price * p_seat_count, v_group_id, 'outbound')
+    returning id into v_outbound_booking_id;
+  exception when others then
+    if sqlerrm like c_not_enough_seats_prefix then
+      raise exception 'Plus de places disponibles sur le trajet aller choisi, essayez un autre horaire'
+        using errcode = 'check_violation', detail = sqlerrm;
+    else
+      raise;
+    end if;
+  end;
 
   insert into public.passengers (booking_id, full_name, phone)
   values (v_outbound_booking_id, p_passenger_name, p_passenger_phone);
 
-  insert into public.bookings (trip_id, user_id, seat_count, total_price_fcfa, booking_group_id, leg)
-  values (p_return_trip_id, v_user_id, p_seat_count, v_return_price * p_seat_count, v_group_id, 'return')
-  returning id into v_return_booking_id;
-  -- If reserve_trip_seats raises HERE (not enough seats on the return
-  -- leg), Postgres unwinds the whole call — the outbound booking inserted
-  -- just above ceases to exist, as if it had never been inserted. This is
-  -- the guarantee this migration exists for, obtained from a function
-  -- call's native transactional semantics, not from compensating code.
+  begin
+    insert into public.bookings (trip_id, user_id, seat_count, total_price_fcfa, booking_group_id, leg)
+    values (p_return_trip_id, v_user_id, p_seat_count, v_return_price * p_seat_count, v_group_id, 'return')
+    returning id into v_return_booking_id;
+  exception when others then
+    if sqlerrm like c_not_enough_seats_prefix then
+      raise exception 'Plus de places disponibles sur le trajet retour choisi, essayez un autre horaire'
+        using errcode = 'check_violation', detail = sqlerrm;
+    else
+      raise;
+    end if;
+  end;
+  -- If this block raises (not enough seats on the return leg), Postgres
+  -- still unwinds the whole call — the outbound booking inserted above
+  -- ceases to exist, as if it had never been inserted. This is the
+  -- guarantee this migration exists for, obtained from a function call's
+  -- native transactional semantics, not from compensating code.
 
   insert into public.passengers (booking_id, full_name, phone)
   values (v_return_booking_id, p_passenger_name, p_passenger_phone);
