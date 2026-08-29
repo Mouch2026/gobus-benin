@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Baloo_2, Work_Sans } from "next/font/google";
 import "./globals.css";
+import { Footer } from "./Footer";
 
 const baloo = Baloo_2({
   variable: "--font-baloo",
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col bg-background font-sans text-foreground">
         {children}
+        <Footer />
       </body>
     </html>
   );
