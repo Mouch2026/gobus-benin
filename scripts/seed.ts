@@ -41,6 +41,21 @@ const TEST_TRIP = {
   available_seats: 40,
 };
 
+const TEST_SUBSCRIPTION_PLANS = [
+  {
+    name: "Essentiel",
+    price_fcfa: 15000,
+    billing_period: "monthly",
+    features: ["Jusqu'à 5 trajets actifs", "Support par WhatsApp"],
+  },
+  {
+    name: "Pro",
+    price_fcfa: 35000,
+    billing_period: "monthly",
+    features: ["Trajets illimités", "Support prioritaire", "Statistiques de vente"],
+  },
+] as const;
+
 async function ensureTestUser(): Promise<string> {
   const { data, error } = await supabase.auth.admin.createUser({
     email: TEST_USER_EMAIL,
@@ -87,6 +102,48 @@ async function ensureTestUser(): Promise<string> {
     }
     page = listed.nextPage;
   }
+}
+
+async function ensureSubscriptionPlan(plan: (typeof TEST_SUBSCRIPTION_PLANS)[number]): Promise<string> {
+  // Same reasoning as ensureTestCompany/ensureTestRoute: manual
+  // check-then-write instead of upsert(onConflict:), to keep `id` stable
+  // across reruns. No DB-level unique constraint on `name` — the script
+  // doesn't need one to match by it, same as ensureTestTrip matching on
+  // (route_id, seat_class) without a unique constraint backing that pair.
+  const { data: existing, error: selectError } = await supabase
+    .from("subscription_plans")
+    .select("id")
+    .eq("name", plan.name)
+    .maybeSingle();
+
+  if (selectError) throw selectError;
+
+  if (existing) {
+    const { error: updateError } = await supabase
+      .from("subscription_plans")
+      .update({
+        price_fcfa: plan.price_fcfa,
+        billing_period: plan.billing_period,
+        features: plan.features,
+      })
+      .eq("id", existing.id);
+    if (updateError) throw updateError;
+    return existing.id;
+  }
+
+  const { data: inserted, error: insertError } = await supabase
+    .from("subscription_plans")
+    .insert({
+      name: plan.name,
+      price_fcfa: plan.price_fcfa,
+      billing_period: plan.billing_period,
+      features: plan.features,
+    })
+    .select("id")
+    .single();
+
+  if (insertError) throw insertError;
+  return inserted.id;
 }
 
 async function ensureTestCompany(ownerId: string): Promise<string> {
@@ -208,6 +265,12 @@ async function ensureTestTrip(companyId: string, routeId: string): Promise<strin
 async function main() {
   console.log("Seed des données de test GoBus Bénin...\n");
 
+  const essentielPlanId = await ensureSubscriptionPlan(TEST_SUBSCRIPTION_PLANS[0]);
+  console.log(`✓ Plan "${TEST_SUBSCRIPTION_PLANS[0].name}"  (${essentielPlanId})`);
+
+  const proPlanId = await ensureSubscriptionPlan(TEST_SUBSCRIPTION_PLANS[1]);
+  console.log(`✓ Plan "${TEST_SUBSCRIPTION_PLANS[1].name}"  (${proPlanId})`);
+
   const userId = await ensureTestUser();
   console.log(`✓ Utilisateur test    ${TEST_USER_EMAIL}  (${userId})`);
 
@@ -223,7 +286,9 @@ async function main() {
   console.log(`✓ Trip  (${tripId})`);
 
   console.log("\nIds :");
-  console.log(JSON.stringify({ userId, companyId, routeId, tripId }, null, 2));
+  console.log(
+    JSON.stringify({ essentielPlanId, proPlanId, userId, companyId, routeId, tripId }, null, 2)
+  );
 
   console.log("\nIdentifiants de connexion :");
   console.log(`  email    ${TEST_USER_EMAIL}`);
