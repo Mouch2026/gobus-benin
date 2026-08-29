@@ -1,6 +1,6 @@
 import { requireCompany } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
-import { NoCompanyMessage } from "./_components";
+import { AccessBlockedMessage } from "./_components";
 import { logout } from "./actions";
 import { formatFcfa } from "shared";
 
@@ -61,12 +61,13 @@ async function getCompanyTrips(companyId: string): Promise<CompanyTrip[]> {
 }
 
 export default async function BackofficeHome() {
-  const { user, company } = await requireCompany();
+  const result = await requireCompany();
 
-  if (!company) {
-    return <NoCompanyMessage />;
+  if (!result.ok) {
+    return <AccessBlockedMessage reason={result.reason} />;
   }
 
+  const { user, company, subscription } = result;
   const trips = await getCompanyTrips(company.id);
 
   return (
@@ -77,7 +78,7 @@ export default async function BackofficeHome() {
             {company.name}
           </h1>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Connecté en tant que {String(user.email ?? user.sub)}
+            Connecté en tant que {String(user.email ?? user.sub)} · Abonnement {subscription.planName}
           </p>
         </div>
         <form action={logout}>

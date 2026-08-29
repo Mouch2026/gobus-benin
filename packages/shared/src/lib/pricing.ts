@@ -36,3 +36,30 @@ export interface BookingTotalInput {
 export function calculateBookingTotal({ unitPriceFcfa, seatCount }: BookingTotalInput): number {
   return unitPriceFcfa * seatCount;
 }
+
+// Traveler-side service fees, on top of the base price the company sets
+// and keeps in full (no commission is taken from companies — see
+// supabase/migrations/20260829020406_add_subscription_billing.sql for the
+// subscription model that replaces it). Named constants, not inlined
+// percentages, so the rates can change without touching the calculation
+// logic — mirrored in payments.base_amount_fcfa /
+// payments.platform_fee_fcfa / payments.transaction_fee_fcfa
+// (supabase/migrations/20260829020408_add_payment_fee_breakdown.sql).
+export const PLATFORM_FEE_RATE = 0.027; // ~2.7%, platform revenue
+export const TRANSACTION_FEE_RATE = 0.013; // ~1.3%, passed through to the payment provider
+
+export interface ServiceFees {
+  platformFeeFcfa: number;
+  transactionFeeFcfa: number;
+  totalFcfa: number;
+}
+
+export function calculateServiceFees(baseAmountFcfa: number): ServiceFees {
+  const platformFeeFcfa = Math.round(baseAmountFcfa * PLATFORM_FEE_RATE);
+  const transactionFeeFcfa = Math.round(baseAmountFcfa * TRANSACTION_FEE_RATE);
+  return {
+    platformFeeFcfa,
+    transactionFeeFcfa,
+    totalFcfa: baseAmountFcfa + platformFeeFcfa + transactionFeeFcfa,
+  };
+}
