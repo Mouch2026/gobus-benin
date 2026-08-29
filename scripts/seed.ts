@@ -21,7 +21,7 @@ const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
 });
 
 const TEST_USER_EMAIL = "test@test.com";
-const TEST_USER_PASSWORD = "test-password-123";
+const TEST_USER_PASSWORD = "TestPassword123!";
 
 const TEST_COMPANY = {
   name: "ATT Test",
@@ -68,7 +68,17 @@ async function ensureTestUser(): Promise<string> {
     if (listError) throw listError;
 
     const existing = listed.users.find((user) => user.email === TEST_USER_EMAIL);
-    if (existing) return existing.id;
+    if (existing) {
+      // Force the password back to the known fixed value even on a rerun —
+      // otherwise a user created before TEST_USER_PASSWORD existed (or
+      // manually changed since) would keep an unknown password forever,
+      // since createUser() only sets it on first creation.
+      const { error: updateError } = await supabase.auth.admin.updateUserById(existing.id, {
+        password: TEST_USER_PASSWORD,
+      });
+      if (updateError) throw updateError;
+      return existing.id;
+    }
 
     if (!listed.nextPage) {
       throw new Error(
@@ -145,23 +155,33 @@ async function ensureTestRoute(companyId: string): Promise<string> {
   return inserted.id;
 }
 
-function tomorrowAt8am(): string {
-  const date = new Date();
-  date.setDate(date.getDate() + 1);
-  date.setHours(8, 0, 0, 0);
-  return date.toISOString();
+function tomorrowAt8amBenin(): string {
+  // Anchored to Africa/Porto-Novo (UTC+1, no DST) via an explicit offset —
+  // not Date.prototype.setHours(), which sets the *executing machine's*
+  // local timezone. That mismatch previously made seeded departures drift
+  // by an hour (or more) depending on where/when the script ran.
+  const now = new Date();
+  const tomorrow = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+  const isoDate = tomorrow.toISOString().slice(0, 10);
+  return `${isoDate}T08:00:00+01:00`;
 }
 
 async function ensureTestTrip(companyId: string, routeId: string): Promise<string> {
-  const departureAt = tomorrowAt8am();
+  const departureAt = tomorrowAt8amBenin();
 
-  // No natural unique constraint on trips, so existence is checked manually
-  // (route_id + departure_at) instead of relying on upsert(onConflict:).
+  // Matched by (route_id, seat_class), not departure_at: departure_at is
+  // "tomorrow" relative to whenever the script happens to run, so it's a
+  // moving target by design — using it as part of the identity key would
+  // insert a brand new trip every different calendar day instead of
+  // rolling the existing test trip's date forward, which is what we
+  // actually want from a reseed. No natural unique DB constraint covers
+  // this, so existence is checked manually rather than via
+  // upsert(onConflict:).
   const { data: existing, error: selectError } = await supabase
     .from("trips")
     .select("id")
     .eq("route_id", routeId)
-    .eq("departure_at", departureAt)
+    .eq("seat_class", TEST_TRIP.seat_class)
     .maybeSingle();
 
   if (selectError) throw selectError;
@@ -169,7 +189,7 @@ async function ensureTestTrip(companyId: string, routeId: string): Promise<strin
   if (existing) {
     const { error: updateError } = await supabase
       .from("trips")
-      .update({ company_id: companyId, ...TEST_TRIP })
+      .update({ company_id: companyId, departure_at: departureAt, ...TEST_TRIP })
       .eq("id", existing.id);
     if (updateError) throw updateError;
     return existing.id;
@@ -204,6 +224,10 @@ async function main() {
 
   console.log("\nIds :");
   console.log(JSON.stringify({ userId, companyId, routeId, tripId }, null, 2));
+
+  console.log("\nIdentifiants de connexion :");
+  console.log(`  email    ${TEST_USER_EMAIL}`);
+  console.log(`  password ${TEST_USER_PASSWORD}`);
 }
 
 main().catch((error) => {
