@@ -63,3 +63,18 @@ export function calculateServiceFees(baseAmountFcfa: number): ServiceFees {
     totalFcfa: baseAmountFcfa + platformFeeFcfa + transactionFeeFcfa,
   };
 }
+
+// GoBus Points: 1 point per 100 FCFA of *base* price (bookings.total_price_fcfa,
+// before service fees) — the traveler isn't rewarded on the platform's own
+// fees. The real award happens server-side in the
+// award_points_on_payment_approved trigger (see
+// supabase/migrations/*_add_points_program.sql) at the moment a payment is
+// approved; this function only exists so the client-side "you'll earn N
+// points" preview uses the same rate. No SQL trigger can import this file,
+// so the rate is duplicated there — if it ever changes, change it in both
+// places.
+export const POINTS_PER_FCFA_SPENT = 1 / 100;
+
+export function calculatePointsEarned(baseAmountFcfa: number): number {
+  return Math.floor(baseAmountFcfa * POINTS_PER_FCFA_SPENT);
+}
