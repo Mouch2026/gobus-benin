@@ -67,3 +67,37 @@ export function TicketIcon(props: SVGProps<SVGSVGElement>) {
     </Icon>
   );
 }
+
+export function SwapIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M7 7h12l-3.5-3.5M17 17H5l3.5 3.5" />
+    </Icon>
+  );
+}
+
+export function ChevronLeftIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M15 5l-7 7 7 7" />
+    </Icon>
+  );
+}
+
+export function ChevronRightIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M9 5l7 7-7 7" />
+    </Icon>
+  );
+}
+
+export function UsersIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <circle cx="9" cy="8" r="3" />
+      <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+      <path d="M16 4.5c1.5.4 2.5 1.7 2.5 3.2s-1 2.8-2.5 3.2M20 20c0-2.6-1.7-4.8-4-5.6" />
+    </Icon>
+  );
+}

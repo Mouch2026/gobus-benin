@@ -1,14 +1,8 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { formatFcfa } from "shared";
-import {
-  CalendarIcon,
-  CompareIcon,
-  PhoneIcon,
-  PinIcon,
-  SearchIcon,
-  TicketIcon,
-} from "@/lib/icons";
+import { CompareIcon, PhoneIcon, TicketIcon } from "@/lib/icons";
+import { SearchWidget } from "./SearchWidget";
 
 const ORIGIN_CITY = "Cotonou";
 
@@ -18,11 +12,25 @@ type PopularDestination = {
   fromPriceFcfa: number | null;
 };
 
-async function getDestinationCities(): Promise<string[]> {
+async function getOriginCities(): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("routes")
+    .select("origin_city")
+    .order("origin_city");
+
+  if (error) {
+    console.error("Impossible de charger les départs :", error.message);
+    return [];
+  }
+
+  return Array.from(new Set(data.map((route) => route.origin_city)));
+}
+
+async function getDestinationCitiesForOrigin(origin: string): Promise<string[]> {
   const { data, error } = await supabase
     .from("routes")
     .select("destination_city")
-    .eq("origin_city", ORIGIN_CITY)
+    .eq("origin_city", origin)
     .order("destination_city");
 
   if (error) {
@@ -76,12 +84,17 @@ async function getPopularDestinations(): Promise<PopularDestination[]> {
 }
 
 export default async function Home() {
-  const [destinationCities, popularDestinations] = await Promise.all([
-    getDestinationCities(),
+  const [originCities, popularDestinations] = await Promise.all([
+    getOriginCities(),
     getPopularDestinations(),
   ]);
+  const defaultOrigin = originCities.includes(ORIGIN_CITY)
+    ? ORIGIN_CITY
+    : (originCities[0] ?? "");
+  const initialDestinationCities = defaultOrigin
+    ? await getDestinationCitiesForOrigin(defaultOrigin)
+    : [];
   const today = new Date().toISOString().split("T")[0];
-  const hasDestinations = destinationCities.length > 0;
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -117,83 +130,12 @@ export default async function Home() {
             <p className="text-lg text-on-ink-muted">Tous vos voyages en un seul endroit</p>
           </div>
 
-          <form
-            action="/recherche"
-            method="get"
-            className="flex w-full flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_24px_48px_-20px_rgba(0,0,0,0.45)] sm:flex-row sm:items-stretch"
-          >
-            <div className="flex flex-1 items-center gap-3 border-b border-border px-5 py-4 text-left sm:border-b-0 sm:border-r">
-              <PinIcon className="h-5 w-5 shrink-0 text-muted" />
-              <div className="flex flex-1 flex-col">
-                <span className="text-xs font-semibold uppercase tracking-wide text-muted">
-                  Départ
-                </span>
-                <span className="font-display text-base font-semibold text-foreground">
-                  {ORIGIN_CITY}
-                </span>
-                {/* Departure is fixed; only the hidden field is submitted. */}
-                <input type="hidden" name="origin" value={ORIGIN_CITY} />
-              </div>
-            </div>
-
-            <div className="flex flex-1 items-center gap-3 border-b border-border px-5 py-4 text-left sm:border-b-0 sm:border-r">
-              <PinIcon className="h-5 w-5 shrink-0 text-muted" />
-              <div className="flex flex-1 flex-col">
-                <label
-                  htmlFor="destination"
-                  className="text-xs font-semibold uppercase tracking-wide text-muted"
-                >
-                  Arrivée
-                </label>
-                <select
-                  id="destination"
-                  name="destination"
-                  required
-                  defaultValue=""
-                  disabled={!hasDestinations}
-                  className="bg-transparent font-display text-base font-semibold text-foreground disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <option value="" disabled>
-                    {hasDestinations ? "Choisir une ville" : "Aucune destination disponible"}
-                  </option>
-                  {destinationCities.map((city) => (
-                    <option key={city} value={city}>
-                      {city}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="flex flex-1 items-center gap-3 px-5 py-4 text-left">
-              <CalendarIcon className="h-5 w-5 shrink-0 text-muted" />
-              <div className="flex flex-1 flex-col">
-                <label
-                  htmlFor="date"
-                  className="text-xs font-semibold uppercase tracking-wide text-muted"
-                >
-                  Date
-                </label>
-                <input
-                  id="date"
-                  name="date"
-                  type="date"
-                  required
-                  min={today}
-                  className="bg-transparent font-display text-base font-semibold text-foreground [color-scheme:light]"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={!hasDestinations}
-              className="flex items-center justify-center gap-2 bg-primary px-8 py-4 font-display text-base font-bold text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <SearchIcon className="h-5 w-5" />
-              Rechercher
-            </button>
-          </form>
+          <SearchWidget
+            originCities={originCities}
+            defaultOrigin={defaultOrigin}
+            initialDestinationCities={initialDestinationCities}
+            today={today}
+          />
         </div>
       </section>
 
