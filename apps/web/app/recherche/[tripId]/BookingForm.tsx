@@ -1,23 +1,39 @@
 "use client";
 
-import { useState, type ChangeEvent } from "react";
-import { calculateBookingTotal, formatFcfa } from "shared";
+import { useActionState, useState, type ChangeEvent } from "react";
+import { useRouter } from "next/navigation";
+import { calculateBookingTotal, calculatePointsEarned, formatFcfa } from "shared";
+import { createBooking, type BookingState } from "./actions";
 
 const fieldClasses =
   "rounded-xl border border-border bg-background px-3 py-2.5 text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/25";
 const labelClasses = "text-xs font-semibold uppercase tracking-wide text-muted";
 
+const initialState: BookingState = { error: null };
+
 export function BookingForm({
+  tripId,
   unitPriceFcfa,
   availableSeats,
+  isLoggedIn,
+  initialSeatCount,
+  initialPassengerName,
+  initialPhone,
 }: {
+  tripId: string;
   unitPriceFcfa: number;
   availableSeats: number;
+  isLoggedIn: boolean;
+  initialSeatCount: number;
+  initialPassengerName: string;
+  initialPhone: string;
 }) {
-  const [seatCount, setSeatCount] = useState(1);
-  const [passengerName, setPassengerName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [showPlaceholder, setShowPlaceholder] = useState(false);
+  const router = useRouter();
+  const [seatCount, setSeatCount] = useState(Math.min(initialSeatCount, Math.max(availableSeats, 1)));
+  const [passengerName, setPassengerName] = useState(initialPassengerName);
+  const [phone, setPhone] = useState(initialPhone);
+
+  const [state, formAction, pending] = useActionState(createBooking, initialState);
 
   if (availableSeats < 1) {
     return (
@@ -30,6 +46,7 @@ export function BookingForm({
   // Aperçu client uniquement — reserve_trip_seats (côté DB) revalide ce
   // total à l'insertion et rejette la réservation si le client ment.
   const totalPriceFcfa = calculateBookingTotal({ unitPriceFcfa, seatCount });
+  const pointsEarned = calculatePointsEarned(totalPriceFcfa);
 
   function handleSeatCountChange(event: ChangeEvent<HTMLInputElement>) {
     const value = Number(event.target.value);
@@ -39,15 +56,29 @@ export function BookingForm({
 
   const canContinue = passengerName.trim().length > 0 && phone.trim().length > 0;
 
+  function goToLogin() {
+    const params = new URLSearchParams({
+      seats: String(seatCount),
+      name: passengerName,
+      phone,
+    });
+    router.push(
+      `/compte/connexion?next=${encodeURIComponent(`/recherche/${tripId}?${params.toString()}`)}`
+    );
+  }
+
   return (
     <div className="rounded-2xl border border-border bg-surface p-6">
-      <div className="flex flex-col gap-4">
+      <form action={isLoggedIn ? formAction : undefined} className="flex flex-col gap-4">
+        <input type="hidden" name="tripId" value={tripId} />
+
         <div className="flex flex-col gap-1.5">
           <label htmlFor="seatCount" className={labelClasses}>
             Nombre de places
           </label>
           <input
             id="seatCount"
+            name="seatCount"
             type="number"
             min={1}
             max={availableSeats}
@@ -63,6 +94,7 @@ export function BookingForm({
           </label>
           <input
             id="passengerName"
+            name="passengerName"
             type="text"
             value={passengerName}
             onChange={(event) => setPassengerName(event.target.value)}
@@ -77,6 +109,7 @@ export function BookingForm({
           </label>
           <input
             id="phone"
+            name="phone"
             type="tel"
             value={phone}
             onChange={(event) => setPhone(event.target.value)}
@@ -92,21 +125,36 @@ export function BookingForm({
           </span>
         </div>
 
-        <button
-          type="button"
-          disabled={!canContinue}
-          onClick={() => setShowPlaceholder(true)}
-          className="mt-1 rounded-xl bg-primary px-4 py-3 font-display font-bold text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Continuer vers le paiement
-        </button>
+        <p className="text-xs text-muted">
+          Vous gagnerez <span className="font-semibold text-foreground">{pointsEarned} GoBus Points</span>{" "}
+          une fois ce billet payé.
+        </p>
 
-        {showPlaceholder ? (
-          <p className="rounded-xl border border-border bg-background p-3 text-sm text-muted">
-            Le paiement arrive bientôt — cette fonctionnalité n&apos;est pas encore disponible.
+        {state.error ? (
+          <p className="text-sm text-red-600" role="alert">
+            {state.error}
           </p>
         ) : null}
-      </div>
+
+        {isLoggedIn ? (
+          <button
+            type="submit"
+            disabled={!canContinue || pending}
+            className="mt-1 rounded-xl bg-primary px-4 py-3 font-display font-bold text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {pending ? "Réservation en cours..." : "Continuer vers le paiement"}
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled={!canContinue}
+            onClick={goToLogin}
+            className="mt-1 rounded-xl bg-primary px-4 py-3 font-display font-bold text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Se connecter pour continuer
+          </button>
+        )}
+      </form>
     </div>
   );
 }

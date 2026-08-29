@@ -1,0 +1,116 @@
+import Link from "next/link";
+import { requireUser } from "@/lib/supabase/dal";
+import { createClient } from "@/lib/supabase/server";
+import { formatFcfa } from "shared";
+
+type BookingWithTrip = {
+  id: string;
+  booking_reference: string;
+  status: string;
+  seat_count: number;
+  total_price_fcfa: number;
+  trips: { departure_at: string; routes: { origin_city: string; destination_city: string } } | null;
+};
+
+function Message({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-4 text-center">
+      <p className="max-w-sm rounded-2xl border border-border bg-surface p-6 text-muted">
+        {children}
+      </p>
+      <Link href="/" className="font-semibold text-primary hover:underline">
+        ← Retour à l&apos;accueil
+      </Link>
+    </div>
+  );
+}
+
+export default async function SuccesPage(props: PageProps<"/reservation/[bookingId]/succes">) {
+  const { bookingId } = await props.params;
+  const user = await requireUser(`/reservation/${bookingId}/succes`);
+
+  const supabase = await createClient();
+
+  const { data: booking } = await supabase
+    .from("bookings")
+    .select(
+      "id, booking_reference, status, seat_count, total_price_fcfa, trips(departure_at, routes(origin_city, destination_city))"
+    )
+    .eq("id", bookingId)
+    .eq("user_id", user.sub)
+    .maybeSingle<BookingWithTrip>();
+
+  if (!booking) {
+    return <Message>Cette réservation n&apos;existe pas.</Message>;
+  }
+
+  if (booking.status !== "confirmed") {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-4 text-center">
+        <p className="max-w-sm rounded-2xl border border-border bg-surface p-6 text-muted">
+          Cette réservation n&apos;a pas encore été payée.
+        </p>
+        <Link
+          href={`/reservation/${booking.id}/paiement`}
+          className="font-semibold text-primary hover:underline"
+        >
+          Payer maintenant →
+        </Link>
+      </div>
+    );
+  }
+
+  // Le nombre de points affiché est lu directement dans points_ledger (pas
+  // recalculé) — il correspond exactement à ce qui a réellement été
+  // crédité par award_points_on_payment_approved, même si le taux venait à
+  // changer entre-temps.
+  const { data: ledgerEntry } = await supabase
+    .from("points_ledger")
+    .select("points_amount")
+    .eq("booking_id", bookingId)
+    .maybeSingle<{ points_amount: number }>();
+
+  return (
+    <div className="flex min-h-screen flex-col items-center bg-background px-4 py-16">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-8 text-center">
+        <span className="text-4xl">🎉</span>
+        <h1 className="mt-3 font-display text-2xl font-extrabold text-foreground">
+          Réservation confirmée
+        </h1>
+        <p className="mt-1 text-sm text-muted">
+          Référence : <span className="font-semibold text-foreground">{booking.booking_reference}</span>
+        </p>
+
+        {booking.trips ? (
+          <p className="mt-4 text-foreground">
+            {booking.trips.routes.origin_city} → {booking.trips.routes.destination_city}
+          </p>
+        ) : null}
+
+        <div className="mt-4 flex flex-col gap-2 border-t border-border pt-4 text-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-muted">Places</span>
+            <span className="text-foreground">{booking.seat_count}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-muted">Montant payé</span>
+            <span className="text-foreground">{formatFcfa(booking.total_price_fcfa)}</span>
+          </div>
+        </div>
+
+        {ledgerEntry ? (
+          <p className="mt-4 rounded-lg bg-primary/10 px-3 py-2 text-sm font-medium text-foreground">
+            + {ledgerEntry.points_amount} GoBus Points crédités
+          </p>
+        ) : null}
+
+        <Link
+          href="/"
+          className="mt-6 inline-block rounded-xl bg-primary px-4 py-3 font-display font-bold text-primary-foreground transition-colors hover:bg-primary-hover"
+        >
+          Retour à l&apos;accueil
+        </Link>
+      </div>
+    </div>
+  );
+}

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Baloo_2, Work_Sans } from "next/font/google";
 import "./globals.css";
+import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
 
 const baloo = Baloo_2({
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${baloo.variable} ${workSans.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background font-sans text-foreground">
+        <Navbar />
         {children}
         <Footer />
       </body>

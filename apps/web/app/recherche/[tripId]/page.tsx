@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { getOptionalUser } from "@/lib/supabase/dal";
 import { formatFcfa } from "shared";
 import {
   EmptyState,
@@ -8,6 +9,10 @@ import {
   formatDepartureDateTime,
 } from "../_shared";
 import { BookingForm } from "./BookingForm";
+
+function firstValue(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
 
 type TripDetail = {
   id: string;
@@ -42,7 +47,12 @@ async function getTrip(tripId: string): Promise<TripDetail | null> {
 
 export default async function TripDetailPage(props: PageProps<"/recherche/[tripId]">) {
   const { tripId } = await props.params;
-  const trip = await getTrip(tripId);
+  const searchParams = await props.searchParams;
+  const [trip, user] = await Promise.all([getTrip(tripId), getOptionalUser()]);
+
+  const initialSeatCount = Number(firstValue(searchParams.seats));
+  const initialPassengerName = firstValue(searchParams.name) ?? "";
+  const initialPhone = firstValue(searchParams.phone) ?? "";
 
   if (!trip) {
     return (
@@ -86,7 +96,17 @@ export default async function TripDetailPage(props: PageProps<"/recherche/[tripI
           </div>
         </div>
 
-        <BookingForm unitPriceFcfa={trip.price_fcfa} availableSeats={trip.available_seats} />
+        <BookingForm
+          tripId={trip.id}
+          unitPriceFcfa={trip.price_fcfa}
+          availableSeats={trip.available_seats}
+          isLoggedIn={!!user}
+          initialSeatCount={
+            Number.isInteger(initialSeatCount) && initialSeatCount > 0 ? initialSeatCount : 1
+          }
+          initialPassengerName={initialPassengerName}
+          initialPhone={initialPhone}
+        />
       </div>
     </PageShell>
   );
