@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { requireCompany } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
 import { AccessBlockedMessage } from "./_components";
+import { SEAT_CLASS_LABELS, STATUS_LABELS, STATUS_STYLES, formatDepartureDateTime } from "./_shared";
 import { logout } from "./actions";
 import { formatFcfa } from "shared";
 
@@ -14,33 +16,6 @@ type CompanyTrip = {
   status: string;
   routes: { origin_city: string; destination_city: string };
 };
-
-const SEAT_CLASS_LABELS: Record<string, string> = {
-  standard: "Standard",
-  vip: "VIP",
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  scheduled: "Programmé",
-  in_progress: "En cours",
-  completed: "Terminé",
-  cancelled: "Annulé",
-};
-
-const STATUS_STYLES: Record<string, string> = {
-  scheduled: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
-  in_progress: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
-  completed: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
-  cancelled: "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300",
-};
-
-function formatDepartureDateTime(departureAt: string): string {
-  return new Intl.DateTimeFormat("fr-BJ", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: "Africa/Porto-Novo",
-  }).format(new Date(departureAt));
-}
 
 async function getCompanyTrips(companyId: string): Promise<CompanyTrip[]> {
   const supabase = await createClient();
@@ -72,7 +47,7 @@ export default async function BackofficeHome() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black">
-      <header className="flex items-center justify-between border-b border-zinc-200 bg-white px-6 py-4 dark:border-zinc-800 dark:bg-zinc-900">
+      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200 bg-white px-6 py-4 dark:border-zinc-800 dark:bg-zinc-900">
         <div>
           <h1 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">
             {company.name}
@@ -81,14 +56,28 @@ export default async function BackofficeHome() {
             Connecté en tant que {String(user.email ?? user.sub)} · Abonnement {subscription.planName}
           </p>
         </div>
-        <form action={logout}>
-          <button
-            type="submit"
-            className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+        <div className="flex items-center gap-3">
+          <Link
+            href="/routes"
+            className="text-sm font-medium text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-50"
           >
-            Se déconnecter
-          </button>
-        </form>
+            Routes
+          </Link>
+          <Link
+            href="/trajets/nouveau"
+            className="rounded-lg bg-zinc-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+          >
+            Nouveau trajet
+          </Link>
+          <form action={logout}>
+            <button
+              type="submit"
+              className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              Se déconnecter
+            </button>
+          </form>
+        </div>
       </header>
 
       <main className="mx-auto max-w-5xl px-6 py-8">
@@ -115,10 +104,15 @@ export default async function BackofficeHome() {
                 {trips.map((trip) => (
                   <tr
                     key={trip.id}
-                    className="border-b border-zinc-100 last:border-b-0 dark:border-zinc-800"
+                    className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
                   >
-                    <td className="px-4 py-3 font-medium text-zinc-950 dark:text-zinc-50">
-                      {trip.routes.origin_city} → {trip.routes.destination_city}
+                    <td className="p-0">
+                      <Link
+                        href={`/trajets/${trip.id}`}
+                        className="block px-4 py-3 font-medium text-zinc-950 dark:text-zinc-50"
+                      >
+                        {trip.routes.origin_city} → {trip.routes.destination_city}
+                      </Link>
                     </td>
                     <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
                       {formatDepartureDateTime(trip.departure_at)}
