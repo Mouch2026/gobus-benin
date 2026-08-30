@@ -33,14 +33,14 @@ export async function createRoundTripBooking(
   );
 
   const seatCount = Number(formData.get("seatCount"));
-  const passengerName = String(formData.get("passengerName") ?? "").trim();
+  const passengerNames = formData.getAll("passengerName").map((name) => String(name).trim());
   const phone = String(formData.get("phone") ?? "").trim();
 
   if (!Number.isInteger(seatCount) || seatCount <= 0) {
     return { error: "Le nombre de places doit être un nombre entier positif." };
   }
-  if (!passengerName) {
-    return { error: "Merci de renseigner le nom du voyageur." };
+  if (passengerNames.length !== seatCount || passengerNames.some((name) => !name)) {
+    return { error: "Merci de renseigner le nom de chaque passager." };
   }
   if (!phone) {
     return { error: "Merci de renseigner un numéro de téléphone." };
@@ -51,16 +51,17 @@ export async function createRoundTripBooking(
   // Single RPC call = single Postgres transaction: if the return leg fails
   // (not enough seats, invalid trip, wrong date order), the outbound leg
   // already inserted inside the same function call is rolled back
-  // automatically — never a half-created round trip. See
+  // automatically — never a half-created round trip. The same passenger
+  // names are used for both legs (the same travelers go both ways). See
   // create_round_trip_booking() in
-  // supabase/migrations/20260830010000_add_round_trip_bookings.sql.
+  // supabase/migrations/20260830030000_add_bus_layouts_and_seat_assignment.sql.
   const { data, error } = await supabase
     .rpc("create_round_trip_booking", {
       p_outbound_trip_id: outboundTripId,
       p_return_trip_id: returnTripId,
       p_seat_count: seatCount,
-      p_passenger_name: passengerName,
-      p_passenger_phone: phone,
+      p_phone: phone,
+      p_passenger_names: passengerNames,
     })
     .single<RpcResult>();
 

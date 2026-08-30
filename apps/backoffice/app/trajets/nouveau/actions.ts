@@ -19,6 +19,7 @@ export async function createTrip(
   }
 
   const routeId = String(formData.get("routeId") ?? "");
+  const busLayoutId = String(formData.get("busLayoutId") ?? "").trim() || null;
   const seatClass = String(formData.get("seatClass") ?? "");
   const departureDate = String(formData.get("departureDate") ?? "");
   const departureTime = String(formData.get("departureTime") ?? "");
@@ -81,11 +82,15 @@ export async function createTrip(
     .insert({
       company_id: access.company.id,
       route_id: routeId,
+      bus_layout_id: busLayoutId,
       seat_class: seatClass,
       departure_at: departureAt,
       price_fcfa: priceFcfa,
+      // If busLayoutId is set, set_trip_seats_from_layout overrides both of
+      // these from the layout's seat count regardless of what's submitted
+      // here — never trusted from the client, same as company_id.
       total_seats: totalSeats,
-      available_seats: totalSeats, // no bookings exist yet on a brand-new trip
+      available_seats: totalSeats,
     })
     .select("id")
     .single();

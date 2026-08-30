@@ -15,6 +15,11 @@ function firstValue(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
+function toArray(value: string | string[] | undefined): string[] {
+  if (value === undefined) return [];
+  return Array.isArray(value) ? value : [value];
+}
+
 function isValidDate(value: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(new Date(value).getTime());
 }
@@ -56,7 +61,7 @@ export default async function TripDetailPage(props: PageProps<"/recherche/[tripI
   const [trip, user] = await Promise.all([getTrip(tripId), getOptionalUser()]);
 
   const initialSeatCount = Number(firstValue(searchParams.seats));
-  const initialPassengerName = firstValue(searchParams.name) ?? "";
+  const initialPassengerNames = toArray(searchParams.name);
   const initialPhone = firstValue(searchParams.phone) ?? "";
 
   const returnDateParam = firstValue(searchParams.returnDate);
@@ -129,7 +134,7 @@ export default async function TripDetailPage(props: PageProps<"/recherche/[tripI
             initialSeatCount={
               Number.isInteger(initialSeatCount) && initialSeatCount > 0 ? initialSeatCount : 1
             }
-            initialPassengerName={initialPassengerName}
+            initialPassengerNames={initialPassengerNames}
             initialPhone={initialPhone}
           />
         )}

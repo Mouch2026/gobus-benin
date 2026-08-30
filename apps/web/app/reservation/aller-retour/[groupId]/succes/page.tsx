@@ -12,6 +12,7 @@ type BookingWithTrip = {
   seat_count: number;
   total_price_fcfa: number;
   trips: { departure_at: string; routes: { origin_city: string; destination_city: string } } | null;
+  passengers: { id: string; full_name: string; seat_number: string | null }[];
 };
 
 function Message({ children }: { children: React.ReactNode }) {
@@ -38,7 +39,7 @@ export default async function SuccesAllerRetourPage(
   const { data: bookings } = await supabase
     .from("bookings")
     .select(
-      "id, leg, booking_reference, status, seat_count, total_price_fcfa, trips(departure_at, routes(origin_city, destination_city))"
+      "id, leg, booking_reference, status, seat_count, total_price_fcfa, trips(departure_at, routes(origin_city, destination_city)), passengers(id, full_name, seat_number)"
     )
     .eq("booking_group_id", groupId)
     .eq("user_id", user.sub)
@@ -103,10 +104,19 @@ export default async function SuccesAllerRetourPage(
             </p>
             {booking.trips ? (
               <p className="text-muted">
-                {booking.trips.routes.origin_city} → {booking.trips.routes.destination_city} ·{" "}
-                {booking.seat_count} place{booking.seat_count > 1 ? "s" : ""}
+                {booking.trips.routes.origin_city} → {booking.trips.routes.destination_city}
               </p>
             ) : null}
+            <div className="mt-2 flex flex-col gap-1">
+              {booking.passengers.map((passenger) => (
+                <div key={passenger.id} className="flex items-center justify-between">
+                  <span className="text-foreground">{passenger.full_name}</span>
+                  <span className="text-muted">
+                    {passenger.seat_number ? `Siège ${passenger.seat_number}` : "—"}
+                  </span>
+                </div>
+              ))}
+            </div>
             <div
               className="mx-auto mt-3 w-fit rounded-xl bg-white p-3"
               dangerouslySetInnerHTML={{ __html: qrSvg }}

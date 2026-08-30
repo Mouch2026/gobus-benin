@@ -12,6 +12,7 @@ type Trip = {
   total_seats: number;
   available_seats: number;
   status: string;
+  bus_layout_id: string | null;
 };
 
 export function EditTripForm({ trip }: { trip: Trip }) {
@@ -48,18 +49,27 @@ export function EditTripForm({ trip }: { trip: Trip }) {
           <label htmlFor="totalSeats" className={LABEL_CLASSES}>
             Nombre total de places
           </label>
-          <input
-            id="totalSeats"
-            name="totalSeats"
-            type="number"
-            min={booked > 0 ? booked : 1}
-            required
-            defaultValue={trip.total_seats}
-            className={FIELD_CLASSES}
-          />
+          {trip.bus_layout_id ? (
+            <>
+              <input type="hidden" name="totalSeats" value={trip.total_seats} />
+              <p className={FIELD_CLASSES}>{trip.total_seats} (dérivé du plan de bus)</p>
+            </>
+          ) : (
+            <input
+              id="totalSeats"
+              name="totalSeats"
+              type="number"
+              min={booked > 0 ? booked : 1}
+              required
+              defaultValue={trip.total_seats}
+              className={FIELD_CLASSES}
+            />
+          )}
           <span className="text-xs text-zinc-500 dark:text-zinc-400">
-            {booked} place{booked > 1 ? "s" : ""} déjà réservée{booked > 1 ? "s" : ""} — le nombre
-            total ne peut pas descendre en dessous.
+            {booked} place{booked > 1 ? "s" : ""} déjà réservée{booked > 1 ? "s" : ""}
+            {trip.bus_layout_id
+              ? " — dérivé du plan de bus choisi, non modifiable ici."
+              : " — le nombre total ne peut pas descendre en dessous."}
           </span>
         </div>
 

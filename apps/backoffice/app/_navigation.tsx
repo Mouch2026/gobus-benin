@@ -3,7 +3,7 @@ import { logout } from "./actions";
 
 // Shared across every authenticated page — replaces each page's own
 // independent <header>. "Nouveau trajet" is kept as a distinct action
-// button (not one of the 5 plain nav links) since it was the only path to
+// button (not one of the 6 plain nav links) since it was the only path to
 // /trajets/nouveau before this component existed; dropping it here would
 // be a silent regression.
 export function Navigation({ company }: { company: { name: string } }) {
@@ -19,6 +19,9 @@ export function Navigation({ company }: { company: { name: string } }) {
         </Link>
         <Link href="/routes" className="hover:text-zinc-950 dark:hover:text-zinc-50">
           Routes
+        </Link>
+        <Link href="/plans-de-bus" className="hover:text-zinc-950 dark:hover:text-zinc-50">
+          Plans de bus
         </Link>
         <Link href="/abonnement" className="hover:text-zinc-950 dark:hover:text-zinc-50">
           Abonnement

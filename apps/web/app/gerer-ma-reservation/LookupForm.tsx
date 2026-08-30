@@ -47,6 +47,18 @@ function BookingCard({ booking }: { booking: BookingSummary }) {
           {formatDepartureDateTime(booking.trips.departure_at)}
         </span>
       ) : null}
+      {booking.passengers.length > 0 ? (
+        <div className="flex flex-col gap-1 border-t border-border pt-2 text-sm">
+          {booking.passengers.map((passenger) => (
+            <div key={passenger.id} className="flex items-center justify-between">
+              <span className="text-foreground">{passenger.full_name}</span>
+              <span className="text-muted">
+                {passenger.seat_number ? `Siège ${passenger.seat_number}` : "—"}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : null}
       <div className="flex items-center justify-between text-sm">
         <span className="text-muted">{STATUS_LABELS[booking.status] ?? booking.status}</span>
         <span className="font-display font-bold text-foreground">

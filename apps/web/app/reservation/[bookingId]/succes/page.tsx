@@ -10,7 +10,9 @@ type BookingWithTrip = {
   status: string;
   seat_count: number;
   total_price_fcfa: number;
+  phone: string | null;
   trips: { departure_at: string; routes: { origin_city: string; destination_city: string } } | null;
+  passengers: { id: string; full_name: string; seat_number: string | null }[];
 };
 
 function Message({ children }: { children: React.ReactNode }) {
@@ -35,7 +37,7 @@ export default async function SuccesPage(props: PageProps<"/reservation/[booking
   const { data: booking } = await supabase
     .from("bookings")
     .select(
-      "id, booking_reference, status, seat_count, total_price_fcfa, trips(departure_at, routes(origin_city, destination_city))"
+      "id, booking_reference, status, seat_count, total_price_fcfa, phone, trips(departure_at, routes(origin_city, destination_city)), passengers(id, full_name, seat_number)"
     )
     .eq("id", bookingId)
     .eq("user_id", user.sub)
@@ -95,12 +97,16 @@ export default async function SuccesPage(props: PageProps<"/reservation/[booking
           </p>
         ) : null}
 
-        <div className="mt-4 flex flex-col gap-2 border-t border-border pt-4 text-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-muted">Places</span>
-            <span className="text-foreground">{booking.seat_count}</span>
-          </div>
-          <div className="flex items-center justify-between">
+        <div className="mt-4 flex flex-col gap-2 border-t border-border pt-4 text-left text-sm">
+          {booking.passengers.map((passenger) => (
+            <div key={passenger.id} className="flex items-center justify-between">
+              <span className="text-foreground">{passenger.full_name}</span>
+              <span className="text-muted">
+                {passenger.seat_number ? `Siège ${passenger.seat_number}` : "—"}
+              </span>
+            </div>
+          ))}
+          <div className="flex items-center justify-between border-t border-border pt-2">
             <span className="text-muted">Montant payé</span>
             <span className="text-foreground">{formatFcfa(booking.total_price_fcfa)}</span>
           </div>

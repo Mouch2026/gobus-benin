@@ -11,6 +11,12 @@ const labelClasses = "text-xs font-semibold uppercase tracking-wide text-muted";
 
 const initialState: RoundTripBookingState = { error: null };
 
+function resize(names: string[], count: number): string[] {
+  const next = names.slice(0, count);
+  while (next.length < count) next.push("");
+  return next;
+}
+
 export function RoundTripBookingForm({
   outboundTripId,
   returnTripId,
@@ -19,7 +25,7 @@ export function RoundTripBookingForm({
   maxSeats,
   isLoggedIn,
   initialSeatCount,
-  initialPassengerName,
+  initialPassengerNames,
   initialPhone,
 }: {
   outboundTripId: string;
@@ -29,12 +35,12 @@ export function RoundTripBookingForm({
   maxSeats: number;
   isLoggedIn: boolean;
   initialSeatCount: number;
-  initialPassengerName: string;
+  initialPassengerNames: string[];
   initialPhone: string;
 }) {
   const router = useRouter();
   const [seatCount, setSeatCount] = useState(Math.min(initialSeatCount, Math.max(maxSeats, 1)));
-  const [passengerName, setPassengerName] = useState(initialPassengerName);
+  const [passengerNames, setPassengerNames] = useState(() => resize(initialPassengerNames, seatCount));
   const [phone, setPhone] = useState(initialPhone);
 
   const [state, formAction, pending] = useActionState(createRoundTripBooking, initialState);
@@ -63,18 +69,26 @@ export function RoundTripBookingForm({
     const value = Number(event.target.value);
     const clamped = Number.isNaN(value) ? 1 : Math.min(Math.max(value, 1), maxSeats);
     setSeatCount(clamped);
+    setPassengerNames((current) => resize(current, clamped));
   }
 
-  const canContinue = passengerName.trim().length > 0 && phone.trim().length > 0;
+  function handlePassengerNameChange(index: number, value: string) {
+    setPassengerNames((current) => {
+      const next = [...current];
+      next[index] = value;
+      return next;
+    });
+  }
+
+  const canContinue = passengerNames.every((name) => name.trim().length > 0) && phone.trim().length > 0;
 
   function goToLogin() {
-    const params = new URLSearchParams({
-      outbound: outboundTripId,
-      return: returnTripId,
-      seats: String(seatCount),
-      name: passengerName,
-      phone,
-    });
+    const params = new URLSearchParams();
+    params.set("outbound", outboundTripId);
+    params.set("return", returnTripId);
+    params.set("seats", String(seatCount));
+    params.set("phone", phone);
+    for (const name of passengerNames) params.append("name", name);
     router.push(
       `/compte/connexion?next=${encodeURIComponent(`/reservation/aller-retour/nouveau?${params.toString()}`)}`
     );
@@ -102,24 +116,28 @@ export function RoundTripBookingForm({
           />
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="passengerName" className={labelClasses}>
-            Nom du voyageur
-          </label>
-          <input
-            id="passengerName"
-            name="passengerName"
-            type="text"
-            value={passengerName}
-            onChange={(event) => setPassengerName(event.target.value)}
-            placeholder="Prénom et nom"
-            className={fieldClasses}
-          />
+        <div className="flex flex-col gap-3">
+          {passengerNames.map((name, index) => (
+            <div key={index} className="flex flex-col gap-1.5">
+              <label htmlFor={`passengerName-${index}`} className={labelClasses}>
+                Passager {index + 1}
+              </label>
+              <input
+                id={`passengerName-${index}`}
+                name="passengerName"
+                type="text"
+                value={name}
+                onChange={(event) => handlePassengerNameChange(index, event.target.value)}
+                placeholder="Prénom et nom"
+                className={fieldClasses}
+              />
+            </div>
+          ))}
         </div>
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="phone" className={labelClasses}>
-            Téléphone
+            Téléphone (contact pour cette réservation)
           </label>
           <input
             id="phone"

@@ -21,6 +21,22 @@ async function getCompanyRoutes(companyId: string) {
   return data ?? [];
 }
 
+async function getCompanyBusLayouts(companyId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("bus_layouts")
+    .select("id, name, seat_labels")
+    .eq("company_id", companyId)
+    .order("name", { ascending: true });
+
+  if (error) {
+    console.error("Impossible de charger les plans de bus :", error.message);
+    return [];
+  }
+
+  return (data ?? []) as { id: string; name: string; seat_labels: string[] }[];
+}
+
 export default async function NewTripPage() {
   const result = await requireCompany();
 
@@ -28,7 +44,10 @@ export default async function NewTripPage() {
     return <AccessBlockedMessage reason={result.reason} />;
   }
 
-  const routes = await getCompanyRoutes(result.company.id);
+  const [routes, busLayouts] = await Promise.all([
+    getCompanyRoutes(result.company.id),
+    getCompanyBusLayouts(result.company.id),
+  ]);
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black">
@@ -53,7 +72,7 @@ export default async function NewTripPage() {
           </div>
         ) : (
           <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-            <NewTripForm routes={routes} />
+            <NewTripForm routes={routes} busLayouts={busLayouts} />
           </div>
         )}
       </main>

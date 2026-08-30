@@ -22,6 +22,7 @@ type TripDetail = {
   total_seats: number;
   available_seats: number;
   status: string;
+  bus_layout_id: string | null;
   routes: { origin_city: string; destination_city: string };
 };
 
@@ -30,7 +31,8 @@ type TripBooking = {
   booking_reference: string;
   seat_count: number;
   status: string;
-  passengers: { id: string; full_name: string; phone: string | null }[];
+  phone: string | null;
+  passengers: { id: string; full_name: string; seat_number: string | null }[];
 };
 
 async function getOwnedTrip(tripId: string, companyId: string): Promise<TripDetail | null> {
@@ -38,7 +40,7 @@ async function getOwnedTrip(tripId: string, companyId: string): Promise<TripDeta
   const { data, error } = await supabase
     .from("trips")
     .select(
-      "id, departure_at, seat_class, price_fcfa, total_seats, available_seats, status, routes!inner(origin_city, destination_city)"
+      "id, departure_at, seat_class, price_fcfa, total_seats, available_seats, status, bus_layout_id, routes!inner(origin_city, destination_city)"
     )
     .eq("id", tripId)
     .eq("company_id", companyId)
@@ -59,7 +61,7 @@ async function getTripBookings(tripId: string, companyId: string): Promise<TripB
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("bookings")
-    .select("id, booking_reference, seat_count, status, passengers(id, full_name, phone)")
+    .select("id, booking_reference, seat_count, status, phone, passengers(id, full_name, seat_number)")
     .eq("trip_id", tripId)
     .eq("company_id", companyId)
     .order("created_at", { ascending: true });
@@ -165,13 +167,19 @@ export default async function TripDetailPage(props: PageProps<"/trajets/[id]">) 
                     </span>
                   </div>
 
+                  {booking.phone ? (
+                    <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                      Contact : {booking.phone}
+                    </p>
+                  ) : null}
+
                   {booking.passengers.length > 0 ? (
                     <ul className="mt-3 flex flex-col gap-1 border-t border-zinc-100 pt-3 text-sm text-zinc-700 dark:border-zinc-800 dark:text-zinc-300">
                       {booking.passengers.map((passenger) => (
                         <li key={passenger.id} className="flex items-center justify-between gap-4">
                           <span>{passenger.full_name}</span>
                           <span className="text-zinc-500 dark:text-zinc-400">
-                            {passenger.phone ?? "—"}
+                            {passenger.seat_number ? `Siège ${passenger.seat_number}` : "—"}
                           </span>
                         </li>
                       ))}

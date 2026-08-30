@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { createTrip, type NewTripState } from "./actions";
 import { FIELD_CLASSES, LABEL_CLASSES } from "../../_shared";
 
@@ -12,9 +12,24 @@ type RouteOption = {
   destination_city: string;
 };
 
-export function NewTripForm({ routes }: { routes: RouteOption[] }) {
+type BusLayoutOption = {
+  id: string;
+  name: string;
+  seat_labels: string[];
+};
+
+export function NewTripForm({
+  routes,
+  busLayouts,
+}: {
+  routes: RouteOption[];
+  busLayouts: BusLayoutOption[];
+}) {
   const [state, formAction, pending] = useActionState(createTrip, initialState);
+  const [busLayoutId, setBusLayoutId] = useState("");
   const today = new Date().toISOString().slice(0, 10); // soft UI hint only — see actions.ts for the real, server-side guarantee
+
+  const selectedLayout = busLayouts.find((layout) => layout.id === busLayoutId);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -29,6 +44,26 @@ export function NewTripForm({ routes }: { routes: RouteOption[] }) {
           {routes.map((route) => (
             <option key={route.id} value={route.id}>
               {route.origin_city} → {route.destination_city}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="busLayoutId" className={LABEL_CLASSES}>
+          Plan de bus (optionnel)
+        </label>
+        <select
+          id="busLayoutId"
+          name="busLayoutId"
+          value={busLayoutId}
+          onChange={(event) => setBusLayoutId(event.target.value)}
+          className={FIELD_CLASSES}
+        >
+          <option value="">Numérotation simple (pas de plan)</option>
+          {busLayouts.map((layout) => (
+            <option key={layout.id} value={layout.id}>
+              {layout.name} ({layout.seat_labels.length} places)
             </option>
           ))}
         </select>
@@ -90,14 +125,27 @@ export function NewTripForm({ routes }: { routes: RouteOption[] }) {
           <label htmlFor="totalSeats" className={LABEL_CLASSES}>
             Nombre total de places
           </label>
-          <input
-            id="totalSeats"
-            name="totalSeats"
-            type="number"
-            min={1}
-            required
-            className={FIELD_CLASSES}
-          />
+          {selectedLayout ? (
+            <>
+              {/* La valeur soumise ici est un simple placeholder : le
+                  trigger set_trip_seats_from_layout la resynchronise
+                  toujours depuis le plan choisi, jamais fait confiance au
+                  client — même principe que company_id/booking_reference. */}
+              <input type="hidden" name="totalSeats" value={selectedLayout.seat_labels.length} />
+              <p className={FIELD_CLASSES}>
+                {selectedLayout.seat_labels.length} (dérivé du plan choisi)
+              </p>
+            </>
+          ) : (
+            <input
+              id="totalSeats"
+              name="totalSeats"
+              type="number"
+              min={1}
+              required
+              className={FIELD_CLASSES}
+            />
+          )}
         </div>
       </div>
 

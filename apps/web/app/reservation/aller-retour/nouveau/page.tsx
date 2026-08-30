@@ -25,6 +25,11 @@ function firstValue(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
+function toArray(value: string | string[] | undefined): string[] {
+  if (value === undefined) return [];
+  return Array.isArray(value) ? value : [value];
+}
+
 async function getTrip(tripId: string): Promise<TripSummary | null> {
   if (!UUID_RE.test(tripId)) return null;
 
@@ -77,7 +82,7 @@ export default async function NouveauAllerRetourPage(
   const returnTripId = firstValue(searchParams.return);
 
   const initialSeatCount = Number(firstValue(searchParams.seats));
-  const initialPassengerName = firstValue(searchParams.name) ?? "";
+  const initialPassengerNames = toArray(searchParams.name);
   const initialPhone = firstValue(searchParams.phone) ?? "";
 
   if (!outboundTripId || !returnTripId) {
@@ -127,7 +132,7 @@ export default async function NouveauAllerRetourPage(
           initialSeatCount={
             Number.isInteger(initialSeatCount) && initialSeatCount > 0 ? initialSeatCount : 1
           }
-          initialPassengerName={initialPassengerName}
+          initialPassengerNames={initialPassengerNames}
           initialPhone={initialPhone}
         />
       </div>

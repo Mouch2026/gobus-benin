@@ -2,6 +2,12 @@
 
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
+export type PassengerSummary = {
+  id: string;
+  full_name: string;
+  seat_number: string | null;
+};
+
 export type BookingSummary = {
   id: string;
   booking_reference: string;
@@ -9,19 +15,17 @@ export type BookingSummary = {
   status: string;
   total_price_fcfa: number;
   trips: { departure_at: string; routes: { origin_city: string; destination_city: string } } | null;
+  passengers: PassengerSummary[];
 };
 
-type BookingWithPassengers = BookingSummary & {
-  booking_group_id: string | null;
-  passengers: { phone: string | null }[];
-};
+type BookingWithGroup = BookingSummary & { booking_group_id: string | null; phone: string | null };
 
 export type LookupState =
   | { error: string | null; booking: null; siblingBooking: null }
   | { error: null; booking: BookingSummary; siblingBooking: BookingSummary | null };
 
 // Public, no-auth lookup — a visitor proves they know a booking by
-// supplying its reference AND the phone of one of its passengers. Never
+// supplying its reference AND the phone attached to it. Never
 // distinguishes "reference doesn't exist" from "reference exists but
 // phone doesn't match": both collapse into the exact same generic
 // message, decided from a single query, so there's no logical or timing
@@ -42,22 +46,19 @@ export async function lookupBooking(
   }
 
   // One round-trip decides everything: `booking` is null if the reference
-  // doesn't exist; `matchingPassenger` is false if it exists but no
-  // passenger on it has this phone. Both fall through to the exact same
-  // branch below.
+  // doesn't exist; the phone comparison below is false if it exists but
+  // belongs to someone else. Both fall through to the exact same branch.
   const { data: booking } = await supabaseAdmin
     .from("bookings")
     .select(
-      "id, booking_reference, booking_group_id, leg, status, total_price_fcfa, trips(departure_at, routes(origin_city, destination_city)), passengers(phone)"
+      "id, booking_reference, booking_group_id, leg, status, total_price_fcfa, phone, trips(departure_at, routes(origin_city, destination_city)), passengers(id, full_name, seat_number)"
     )
     .eq("booking_reference", reference)
-    .maybeSingle<BookingWithPassengers>();
+    .maybeSingle<BookingWithGroup>();
 
-  const matchingPassenger = booking?.passengers.some(
-    (p) => p.phone?.replace(/\s+/g, "") === phone
-  );
+  const phoneMatches = booking?.phone?.replace(/\s+/g, "") === phone;
 
-  if (!booking || !matchingPassenger) {
+  if (!booking || !phoneMatches) {
     return {
       error: "Aucune réservation ne correspond à ces informations.",
       booking: null,
@@ -69,12 +70,12 @@ export async function lookupBooking(
   if (booking.booking_group_id) {
     // No separate phone check on the sibling leg: belonging to the same
     // booking_group_id as an already-proven booking is sufficient trust —
-    // create_round_trip_booking() inserts the same passenger on both legs
-    // at creation time anyway.
+    // create_round_trip_booking() inserts the same phone on both legs at
+    // creation time anyway.
     const { data } = await supabaseAdmin
       .from("bookings")
       .select(
-        "id, booking_reference, leg, status, total_price_fcfa, trips(departure_at, routes(origin_city, destination_city))"
+        "id, booking_reference, leg, status, total_price_fcfa, trips(departure_at, routes(origin_city, destination_city)), passengers(id, full_name, seat_number)"
       )
       .eq("booking_group_id", booking.booking_group_id)
       .neq("id", booking.id)
@@ -82,7 +83,7 @@ export async function lookupBooking(
     siblingBooking = data;
   }
 
-  const { passengers: _passengers, booking_group_id: _groupId, ...bookingSummary } = booking;
+  const { booking_group_id: _groupId, phone: _phone, ...bookingSummary } = booking;
 
   return { error: null, booking: bookingSummary, siblingBooking };
 }
