@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { getOptionalUser } from "@/lib/supabase/dal";
 import { formatFcfa } from "shared";
@@ -12,6 +13,10 @@ import { BookingForm } from "./BookingForm";
 
 function firstValue(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
+}
+
+function isValidDate(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(new Date(value).getTime());
 }
 
 type TripDetail = {
@@ -53,6 +58,10 @@ export default async function TripDetailPage(props: PageProps<"/recherche/[tripI
   const initialSeatCount = Number(firstValue(searchParams.seats));
   const initialPassengerName = firstValue(searchParams.name) ?? "";
   const initialPhone = firstValue(searchParams.phone) ?? "";
+
+  const returnDateParam = firstValue(searchParams.returnDate);
+  const returnDate = returnDateParam && isValidDate(returnDateParam) ? returnDateParam : undefined;
+  const passengers = firstValue(searchParams.passengers) ?? "1";
 
   if (!trip) {
     return (
@@ -96,17 +105,33 @@ export default async function TripDetailPage(props: PageProps<"/recherche/[tripI
           </div>
         </div>
 
-        <BookingForm
-          tripId={trip.id}
-          unitPriceFcfa={trip.price_fcfa}
-          availableSeats={trip.available_seats}
-          isLoggedIn={!!user}
-          initialSeatCount={
-            Number.isInteger(initialSeatCount) && initialSeatCount > 0 ? initialSeatCount : 1
-          }
-          initialPassengerName={initialPassengerName}
-          initialPhone={initialPhone}
-        />
+        {returnDate ? (
+          <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-6">
+            <p className="text-sm text-muted">
+              Trajet aller sélectionné. Il vous reste à choisir votre trajet retour avant de
+              réserver — un aller-retour est créé en une seule fois, jamais l&apos;un sans
+              l&apos;autre.
+            </p>
+            <Link
+              href={`/recherche?origin=${encodeURIComponent(trip.routes.destination_city)}&destination=${encodeURIComponent(trip.routes.origin_city)}&date=${returnDate}&passengers=${passengers}&outboundTripId=${trip.id}`}
+              className="rounded-xl bg-primary px-4 py-3 text-center font-display font-bold text-primary-foreground transition-colors hover:bg-primary-hover"
+            >
+              Choisir mon trajet retour
+            </Link>
+          </div>
+        ) : (
+          <BookingForm
+            tripId={trip.id}
+            unitPriceFcfa={trip.price_fcfa}
+            availableSeats={trip.available_seats}
+            isLoggedIn={!!user}
+            initialSeatCount={
+              Number.isInteger(initialSeatCount) && initialSeatCount > 0 ? initialSeatCount : 1
+            }
+            initialPassengerName={initialPassengerName}
+            initialPhone={initialPhone}
+          />
+        )}
       </div>
     </PageShell>
   );

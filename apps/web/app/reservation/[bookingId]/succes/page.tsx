@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
+import { generateTicketQrSvg } from "@/lib/qrcode";
 import { formatFcfa } from "shared";
 
 type BookingWithTrip = {
@@ -70,6 +71,8 @@ export default async function SuccesPage(props: PageProps<"/reservation/[booking
     .eq("booking_id", bookingId)
     .maybeSingle<{ points_amount: number }>();
 
+  const qrSvg = await generateTicketQrSvg(booking.booking_reference);
+
   return (
     <div className="flex min-h-screen flex-col items-center bg-background px-4 py-16">
       <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-8 text-center">
@@ -80,6 +83,11 @@ export default async function SuccesPage(props: PageProps<"/reservation/[booking
         <p className="mt-1 text-sm text-muted">
           Référence : <span className="font-semibold text-foreground">{booking.booking_reference}</span>
         </p>
+
+        <div
+          className="mx-auto mt-4 w-fit rounded-xl bg-white p-3"
+          dangerouslySetInnerHTML={{ __html: qrSvg }}
+        />
 
         {booking.trips ? (
           <p className="mt-4 text-foreground">

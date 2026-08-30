@@ -58,11 +58,39 @@ async function searchTrips(
   return (data ?? []) as unknown as TripSearchResult[];
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+type OutboundSummary = {
+  id: string;
+  departure_at: string;
+  routes: { origin_city: string; destination_city: string };
+};
+
+async function getOutboundTrip(tripId: string): Promise<OutboundSummary | null> {
+  if (!UUID_RE.test(tripId)) return null;
+
+  const { data, error } = await supabase
+    .from("trips")
+    .select("id, departure_at, routes!inner(origin_city, destination_city)")
+    .eq("id", tripId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Impossible de charger le trajet aller :", error.message);
+    return null;
+  }
+
+  return data as unknown as OutboundSummary | null;
+}
+
 export default async function RecherchePage(props: PageProps<"/recherche">) {
   const params = await props.searchParams;
   const origin = firstValue(params.origin);
   const destination = firstValue(params.destination);
   const date = firstValue(params.date);
+  const returnDate = firstValue(params.returnDate);
+  const passengers = firstValue(params.passengers) ?? "1";
+  const outboundTripId = firstValue(params.outboundTripId);
 
   if (!origin || !destination || !date || !isValidDate(date)) {
     return (
@@ -74,22 +102,52 @@ export default async function RecherchePage(props: PageProps<"/recherche">) {
     );
   }
 
-  const results = await searchTrips(origin, destination, date);
+  // Presence of outboundTripId means this search IS the return leg of a
+  // round trip (the traveler already picked their outbound trip) — each
+  // result here must lead to the combined round-trip confirmation page,
+  // not to a plain one-way booking. Presence of returnDate alone (no
+  // outboundTripId yet) means this is the OUTBOUND leg of a round trip —
+  // each result must carry returnDate/passengers forward so
+  // /recherche/[tripId] knows to ask for a return trip next, instead of
+  // going straight to a one-way BookingForm.
+  const [results, outboundTrip] = await Promise.all([
+    searchTrips(origin, destination, date),
+    outboundTripId ? getOutboundTrip(outboundTripId) : Promise.resolve(null),
+  ]);
 
   return (
     <PageShell title={`${origin} → ${destination}`}>
+      {outboundTripId && outboundTrip ? (
+        <p className="mb-4 rounded-xl bg-primary/10 px-4 py-3 text-sm text-muted">
+          Trajet aller sélectionné :{" "}
+          <span className="font-semibold text-foreground">
+            {outboundTrip.routes.origin_city} → {outboundTrip.routes.destination_city}
+          </span>{" "}
+          le {formatDepartureTime(outboundTrip.departure_at)} — choisissez maintenant votre trajet
+          retour.
+        </p>
+      ) : null}
+
       {results.length === 0 ? (
         <EmptyState>
           Aucun trajet trouvé pour {origin} → {destination} le {formatSearchDate(date)}.
         </EmptyState>
       ) : (
         <ul className="flex flex-col gap-3">
-          {results.map((trip) => (
-            <li key={trip.id}>
-              <Link
-                href={`/recherche/${trip.id}`}
-                className="group flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5 transition-colors hover:border-primary sm:flex-row sm:items-center sm:justify-between"
-              >
+          {results.map((trip) => {
+            const href =
+              outboundTripId && outboundTrip
+                ? `/reservation/aller-retour/nouveau?outbound=${outboundTripId}&return=${trip.id}&passengers=${passengers}`
+                : returnDate
+                  ? `/recherche/${trip.id}?returnDate=${returnDate}&passengers=${passengers}`
+                  : `/recherche/${trip.id}`;
+
+            return (
+              <li key={trip.id}>
+                <Link
+                  href={href}
+                  className="group flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5 transition-colors hover:border-primary sm:flex-row sm:items-center sm:justify-between"
+                >
                 <div className="flex flex-1 flex-col gap-2">
                   <div className="flex items-center gap-2 text-sm font-semibold text-muted">
                     <span>{trip.companies.name}</span>
@@ -119,7 +177,8 @@ export default async function RecherchePage(props: PageProps<"/recherche">) {
                 </div>
               </Link>
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </PageShell>

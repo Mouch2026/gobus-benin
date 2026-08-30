@@ -28,6 +28,13 @@
   doit appeler requireCompany() (pas requireUser() seul) — sinon un
   utilisateur sans compagnie associée peut voir une page vide ou cassée au
   lieu du message clair prévu
+- Une migration déjà appliquée (visible dans supabase migration list côté
+  remote) ne doit JAMAIS être éditée sur place — Supabase suit l'historique
+  par nom de fichier (horodatage), pas par contenu ; éditer et recommitter
+  un fichier déjà appliqué n'a aucun effet réel tant qu'une nouvelle
+  migration (create or replace ...) n'est pas créée avec un horodatage
+  postérieur. Toujours vérifier `supabase migration list` avant de modifier
+  un fichier de migration existant.
 ## Où chercher
 - Schéma de données  → supabase/migrations/
 - Logique de prix    → packages/shared/src/lib/pricing.ts
