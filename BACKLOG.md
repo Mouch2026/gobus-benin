@@ -2,11 +2,6 @@
 
 Liste vivante, à mettre à jour au fil du développement (pas figée à un instant donné).
 
-## En cours
-- Aller-retour fonctionnel — schéma atomique posé (booking_groups,
-  create_round_trip_booking, simulate_round_trip_payment), code applicatif
-  (recherche, sélection retour, paiement) en cours.
-
 ## À construire
 
 ### Paiement
