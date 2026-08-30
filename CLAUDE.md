@@ -35,6 +35,12 @@
   migration (create or replace ...) n'est pas créée avec un horodatage
   postérieur. Toujours vérifier `supabase migration list` avant de modifier
   un fichier de migration existant.
+- L'API admin Supabase (auth.admin.listUsers / getUserByEmail) ne filtre PAS
+  de façon fiable par email malgré le paramètre ?email= — toujours vérifier
+  explicitement (email correspondant exact) l'utilisateur retourné avant
+  d'agir dessus (reset de mot de passe, suppression, etc.), ne jamais faire
+  confiance au filtre seul. Rencontré deux fois sur ce projet
+  (scripts/seed.ts, puis test d'accès du back-office).
 ## Où chercher
 - Schéma de données  → supabase/migrations/
 - Logique de prix    → packages/shared/src/lib/pricing.ts

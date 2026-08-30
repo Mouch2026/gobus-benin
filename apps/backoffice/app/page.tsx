@@ -2,8 +2,8 @@ import Link from "next/link";
 import { requireCompany } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
 import { AccessBlockedMessage } from "./_components";
+import { Navigation } from "./_navigation";
 import { SEAT_CLASS_LABELS, STATUS_LABELS, STATUS_STYLES, formatDepartureDateTime } from "./_shared";
-import { logout } from "./actions";
 import { formatFcfa } from "shared";
 
 type CompanyTrip = {
@@ -42,43 +42,12 @@ export default async function BackofficeHome() {
     return <AccessBlockedMessage reason={result.reason} />;
   }
 
-  const { user, company, subscription } = result;
+  const { company } = result;
   const trips = await getCompanyTrips(company.id);
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black">
-      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200 bg-white px-6 py-4 dark:border-zinc-800 dark:bg-zinc-900">
-        <div>
-          <h1 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">
-            {company.name}
-          </h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Connecté en tant que {String(user.email ?? user.sub)} · Abonnement {subscription.planName}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link
-            href="/routes"
-            className="text-sm font-medium text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-50"
-          >
-            Routes
-          </Link>
-          <Link
-            href="/trajets/nouveau"
-            className="rounded-lg bg-zinc-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
-          >
-            Nouveau trajet
-          </Link>
-          <form action={logout}>
-            <button
-              type="submit"
-              className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-            >
-              Se déconnecter
-            </button>
-          </form>
-        </div>
-      </header>
+      <Navigation company={company} />
 
       <main className="mx-auto max-w-5xl px-6 py-8">
         <h2 className="mb-4 text-xl font-semibold text-zinc-950 dark:text-zinc-50">Trajets</h2>
