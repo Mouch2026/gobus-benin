@@ -61,7 +61,8 @@ export default async function TripDetailPage(props: PageProps<"/recherche/[tripI
 
   const returnDateParam = firstValue(searchParams.returnDate);
   const returnDate = returnDateParam && isValidDate(returnDateParam) ? returnDateParam : undefined;
-  const passengers = firstValue(searchParams.passengers) ?? "1";
+  const adults = firstValue(searchParams.adults) ?? "1";
+  const children = firstValue(searchParams.children) ?? "0";
 
   if (!trip) {
     return (
@@ -113,7 +114,7 @@ export default async function TripDetailPage(props: PageProps<"/recherche/[tripI
               l&apos;autre.
             </p>
             <Link
-              href={`/recherche?origin=${encodeURIComponent(trip.routes.destination_city)}&destination=${encodeURIComponent(trip.routes.origin_city)}&date=${returnDate}&passengers=${passengers}&outboundTripId=${trip.id}`}
+              href={`/recherche?origin=${encodeURIComponent(trip.routes.destination_city)}&destination=${encodeURIComponent(trip.routes.origin_city)}&date=${returnDate}&adults=${adults}&children=${children}&outboundTripId=${trip.id}`}
               className="rounded-xl bg-primary px-4 py-3 text-center font-display font-bold text-primary-foreground transition-colors hover:bg-primary-hover"
             >
               Choisir mon trajet retour

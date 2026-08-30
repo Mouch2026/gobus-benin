@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   CalendarIcon,
@@ -52,7 +52,10 @@ export function SearchWidget({
   const [destinationCities, setDestinationCities] = useState(initialDestinationCities);
   const [date, setDate] = useState(today);
   const [returnDate, setReturnDate] = useState(today);
-  const [passengers, setPassengers] = useState(1);
+  const [adults, setAdults] = useState(1);
+  const [children, setChildren] = useState(0);
+  const [passengersOpen, setPassengersOpen] = useState(false);
+  const passengersRef = useRef<HTMLDivElement>(null);
 
   // A return date earlier than the (possibly just-changed) departure date is
   // never valid — bump it forward to match rather than leaving it stale or
@@ -86,6 +89,21 @@ export function SearchWidget({
     };
   }, [origin]);
 
+  // Closes the passengers popover on an outside click — the trigger button
+  // itself toggles it open/closed, so it's excluded via the ref check.
+  useEffect(() => {
+    if (!passengersOpen) return;
+
+    function handleClickOutside(event: MouseEvent) {
+      if (passengersRef.current && !passengersRef.current.contains(event.target as Node)) {
+        setPassengersOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [passengersOpen]);
+
   const hasDestinations = destinationCities.length > 0;
   const hasOrigins = originCities.length > 0;
 
@@ -96,11 +114,18 @@ export function SearchWidget({
     setDestination(previousOrigin);
   }
 
-  function handlePassengersChange(event: ChangeEvent<HTMLInputElement>) {
-    const value = Number(event.target.value);
-    const clamped = Number.isNaN(value) ? 1 : Math.min(Math.max(value, 1), MAX_PASSENGERS);
-    setPassengers(clamped);
+  function adjustAdults(delta: number) {
+    setAdults((current) => Math.min(Math.max(current + delta, 1), MAX_PASSENGERS));
   }
+
+  function adjustChildren(delta: number) {
+    setChildren((current) => Math.min(Math.max(current + delta, 0), MAX_PASSENGERS));
+  }
+
+  const passengersSummary =
+    children > 0
+      ? `${adults} voyageur${adults > 1 ? "s" : ""}, ${children} enfant${children > 1 ? "s" : ""}`
+      : `${adults} voyageur${adults > 1 ? "s" : ""}`;
 
   const isAtMinDate = date <= today;
 
@@ -162,7 +187,7 @@ export function SearchWidget({
       <form
         action="/recherche"
         method="get"
-        className={`grid grid-cols-1 overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_24px_48px_-20px_rgba(0,0,0,0.45)] lg:grid ${desktopGridCols}`}
+        className={`grid grid-cols-1 rounded-2xl border border-border bg-surface shadow-[0_24px_48px_-20px_rgba(0,0,0,0.45)] lg:grid ${desktopGridCols}`}
       >
         {/* Row group 1: De / À / Départ [/ Retour]. Its own grid at sm–lg;
             becomes `contents` at lg so its children join the form's single
@@ -301,26 +326,57 @@ export function SearchWidget({
             at lg the button becomes the form grid's fixed 11.5rem last
             track instead of sharing a 2-column split with Passagers. */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:contents">
-          <div className="flex items-center gap-3 border-b border-border px-5 py-4 text-left sm:border-b-0 sm:border-r">
+          <div
+            ref={passengersRef}
+            className="relative flex items-center gap-3 border-b border-border px-5 py-4 text-left sm:border-b-0 sm:border-r"
+          >
             <UsersIcon className="h-5 w-5 shrink-0 text-muted" />
-            <div className="flex flex-1 flex-col">
-              <label
-                htmlFor="passengers"
-                className="text-xs font-semibold uppercase tracking-wide text-muted"
-              >
+            <button
+              type="button"
+              onClick={() => setPassengersOpen((open) => !open)}
+              className="flex flex-1 flex-col text-left"
+            >
+              <span className="text-xs font-semibold uppercase tracking-wide text-muted">
                 Passagers
-              </label>
-              <input
-                id="passengers"
-                name="passengers"
-                type="number"
-                min={1}
-                max={MAX_PASSENGERS}
-                value={passengers}
-                onChange={handlePassengersChange}
-                className="bg-transparent font-display text-base font-semibold text-foreground"
-              />
-            </div>
+              </span>
+              <span className="font-display text-base font-semibold text-foreground">
+                {passengersSummary}
+              </span>
+            </button>
+
+            <input type="hidden" name="adults" value={adults} />
+            <input type="hidden" name="children" value={children} />
+
+            {passengersOpen ? (
+              <div className="absolute left-0 top-full z-20 mt-2 w-72 rounded-2xl border border-border bg-surface p-4 shadow-[0_24px_48px_-20px_rgba(0,0,0,0.45)]">
+                <PassengerCounter
+                  label="Voyageurs (6 ans et +)"
+                  value={adults}
+                  min={1}
+                  max={MAX_PASSENGERS}
+                  onDecrement={() => adjustAdults(-1)}
+                  onIncrement={() => adjustAdults(1)}
+                />
+                <div className="mt-4 border-t border-border pt-4">
+                  <PassengerCounter
+                    label="Enfants (moins de 6 ans)"
+                    subtext="Gratuit, sans siège"
+                    value={children}
+                    min={0}
+                    max={MAX_PASSENGERS}
+                    onDecrement={() => adjustChildren(-1)}
+                    onIncrement={() => adjustChildren(1)}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPassengersOpen(false)}
+                  className="mt-4 w-full rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover"
+                >
+                  Terminé
+                </button>
+              </div>
+            ) : null}
           </div>
 
           <button
@@ -333,6 +389,56 @@ export function SearchWidget({
           </button>
         </div>
       </form>
+    </div>
+  );
+}
+
+function PassengerCounter({
+  label,
+  subtext,
+  value,
+  min,
+  max,
+  onDecrement,
+  onIncrement,
+}: {
+  label: string;
+  subtext?: string;
+  value: number;
+  min: number;
+  max: number;
+  onDecrement: () => void;
+  onIncrement: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col">
+        <span className="text-sm font-semibold text-foreground">{label}</span>
+        {subtext ? <span className="text-xs text-muted">{subtext}</span> : null}
+      </div>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={onDecrement}
+          disabled={value <= min}
+          aria-label={`Diminuer — ${label}`}
+          className="flex h-8 w-8 items-center justify-center rounded-full border border-border text-foreground transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-30"
+        >
+          −
+        </button>
+        <span className="w-4 text-center font-display text-base font-semibold tabular-nums text-foreground">
+          {value}
+        </span>
+        <button
+          type="button"
+          onClick={onIncrement}
+          disabled={value >= max}
+          aria-label={`Augmenter — ${label}`}
+          className="flex h-8 w-8 items-center justify-center rounded-full border border-border text-foreground transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-30"
+        >
+          +
+        </button>
+      </div>
     </div>
   );
 }

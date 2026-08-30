@@ -89,7 +89,8 @@ export default async function RecherchePage(props: PageProps<"/recherche">) {
   const destination = firstValue(params.destination);
   const date = firstValue(params.date);
   const returnDate = firstValue(params.returnDate);
-  const passengers = firstValue(params.passengers) ?? "1";
+  const adults = firstValue(params.adults) ?? "1";
+  const children = firstValue(params.children) ?? "0";
   const outboundTripId = firstValue(params.outboundTripId);
 
   if (!origin || !destination || !date || !isValidDate(date)) {
@@ -107,7 +108,7 @@ export default async function RecherchePage(props: PageProps<"/recherche">) {
   // result here must lead to the combined round-trip confirmation page,
   // not to a plain one-way booking. Presence of returnDate alone (no
   // outboundTripId yet) means this is the OUTBOUND leg of a round trip —
-  // each result must carry returnDate/passengers forward so
+  // each result must carry returnDate/adults/children forward so
   // /recherche/[tripId] knows to ask for a return trip next, instead of
   // going straight to a one-way BookingForm.
   const [results, outboundTrip] = await Promise.all([
@@ -137,9 +138,9 @@ export default async function RecherchePage(props: PageProps<"/recherche">) {
           {results.map((trip) => {
             const href =
               outboundTripId && outboundTrip
-                ? `/reservation/aller-retour/nouveau?outbound=${outboundTripId}&return=${trip.id}&passengers=${passengers}`
+                ? `/reservation/aller-retour/nouveau?outbound=${outboundTripId}&return=${trip.id}&adults=${adults}&children=${children}`
                 : returnDate
-                  ? `/recherche/${trip.id}?returnDate=${returnDate}&passengers=${passengers}`
+                  ? `/recherche/${trip.id}?returnDate=${returnDate}&adults=${adults}&children=${children}`
                   : `/recherche/${trip.id}`;
 
             return (
