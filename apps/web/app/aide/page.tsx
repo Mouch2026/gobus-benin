@@ -160,15 +160,70 @@ export default async function AidePage() {
                 Après connexion, votre tableau de bord liste les trajets déjà déclarés pour votre
                 compagnie.
               </p>
-              <p className="rounded-lg bg-primary/10 px-3 py-2 text-sm">
-                L&apos;ajout et la modification de trajets directement depuis le back-office
-                arrivent bientôt. En attendant, contactez{" "}
-                <a href="mailto:support@gobus.bj" className="font-medium text-primary hover:underline">
-                  support@gobus.bj
-                </a>{" "}
-                pour faire déclarer vos trajets.
+              <p>
+                Commencez par créer vos routes (villes de départ et d&apos;arrivée) dans{" "}
+                <strong>Routes</strong>, si elles n&apos;existent pas encore. Puis, dans{" "}
+                <strong>Nouveau trajet</strong>, sélectionnez une route existante et renseignez la
+                classe, la date et l&apos;heure de départ, le prix et le nombre de places — le
+                trajet est immédiatement visible aux voyageurs.
               </p>
             </Question>
+
+            <div className="border-t border-border pt-8">
+              <h3 className="font-display text-lg font-bold text-foreground">
+                Questions fréquentes
+              </h3>
+              <div className="mt-6 flex flex-col gap-8">
+                <Question title="Comment éviter la survente de billets ?">
+                  <p>
+                    Vous gardez un contrôle total sur le nombre de places mises en vente pour
+                    chaque trajet, directement depuis votre espace back-office. Dès qu&apos;une
+                    place est réservée sur [nom du site], elle est immédiatement retirée du
+                    nombre disponible.
+                  </p>
+                </Question>
+
+                <Question title="Comment les billets sont-ils validés ?">
+                  <p>
+                    Chaque réservation génère un billet numérique avec un code QR unique, que
+                    votre équipe peut scanner à l&apos;embarquement pour confirmer l&apos;identité
+                    du passager et son trajet.
+                  </p>
+                </Question>
+
+                <Question title="Comment se déroule la réservation pour le voyageur ?">
+                  <p>
+                    Le voyageur recherche et compare les trajets disponibles directement sur le
+                    site, réserve en ligne, et paie par Mobile Money ou carte bancaire. Le billet
+                    lui est immédiatement disponible avec son code QR.
+                  </p>
+                </Question>
+
+                <Question title="Combien coûte un partenariat ?">
+                  <p>
+                    [nom du site] fonctionne par abonnement à tarif fixe, pas par commission sur
+                    vos ventes — vous gardez l&apos;intégralité du prix que vous fixez pour chaque
+                    billet. Voir le détail des plans ci-dessus.
+                  </p>
+                </Question>
+
+                <Question title="Comment gérer mon inventaire de places ?">
+                  <p>
+                    Directement depuis votre espace back-office, en temps réel : vous créez vos
+                    trajets, fixez le nombre de places disponibles, et ajustez à tout moment.
+                  </p>
+                </Question>
+
+                <Question title="Pourquoi devenir partenaire ?">
+                  <p>
+                    Une visibilité supplémentaire auprès des voyageurs qui comparent leurs options
+                    de transport en ligne avant de choisir une compagnie, un paiement 100% adapté
+                    aux habitudes locales (Mobile Money, carte bancaire), et une mise en ligne de
+                    vos trajets sans investissement technique de votre part.
+                  </p>
+                </Question>
+              </div>
+            </div>
           </Section>
         </div>
       </div>
