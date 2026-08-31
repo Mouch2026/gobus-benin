@@ -16,19 +16,18 @@ export async function createBusLayout(
   }
 
   const name = String(formData.get("name") ?? "").trim();
-  const seatLabelsRaw = String(formData.get("seatLabels") ?? "");
 
   if (!name) {
     return { error: "Merci de renseigner un nom pour ce plan." };
   }
 
-  const seatLabels = seatLabelsRaw
-    .split(",")
-    .map((label) => label.trim())
+  const seatLabels = formData
+    .getAll("seatLabels")
+    .map((label) => String(label).trim())
     .filter((label) => label.length > 0);
 
   if (seatLabels.length === 0) {
-    return { error: "Merci de renseigner au moins un libellé de siège (séparés par des virgules)." };
+    return { error: "Merci de générer au moins un siège avant de créer le plan." };
   }
 
   const uniqueLabels = new Set(seatLabels);

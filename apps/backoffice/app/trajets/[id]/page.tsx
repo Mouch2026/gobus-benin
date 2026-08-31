@@ -22,7 +22,7 @@ type TripDetail = {
   total_seats: number;
   available_seats: number;
   status: string;
-  bus_layout_id: string | null;
+  bus_layout_id: string;
   routes: { origin_city: string; destination_city: string };
 };
 

@@ -24,6 +24,7 @@ export function NewTripForm({
   const today = new Date().toISOString().slice(0, 10); // soft UI hint only — see actions.ts for the real, server-side guarantee
 
   const selectedLayout = busLayouts.find((layout) => layout.id === busLayoutId);
+  const totalSeats = selectedLayout?.seat_labels.length;
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -66,16 +67,19 @@ export function NewTripForm({
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="busLayoutId" className={LABEL_CLASSES}>
-          Plan de bus (optionnel)
+          Plan de bus
         </label>
         <select
           id="busLayoutId"
           name="busLayoutId"
+          required
           value={busLayoutId}
           onChange={(event) => setBusLayoutId(event.target.value)}
           className={FIELD_CLASSES}
         >
-          <option value="">Numérotation simple (pas de plan)</option>
+          <option value="" disabled>
+            Choisir un plan de bus
+          </option>
           {busLayouts.map((layout) => (
             <option key={layout.id} value={layout.id}>
               {layout.name} ({layout.seat_labels.length} places)
@@ -140,27 +144,16 @@ export function NewTripForm({
           <label htmlFor="totalSeats" className={LABEL_CLASSES}>
             Nombre total de places
           </label>
-          {selectedLayout ? (
-            <>
-              {/* La valeur soumise ici est un simple placeholder : le
-                  trigger set_trip_seats_from_layout la resynchronise
-                  toujours depuis le plan choisi, jamais fait confiance au
-                  client — même principe que company_id/booking_reference. */}
-              <input type="hidden" name="totalSeats" value={selectedLayout.seat_labels.length} />
-              <p className={FIELD_CLASSES}>
-                {selectedLayout.seat_labels.length} (dérivé du plan choisi)
-              </p>
-            </>
-          ) : (
-            <input
-              id="totalSeats"
-              name="totalSeats"
-              type="number"
-              min={1}
-              required
-              className={FIELD_CLASSES}
-            />
-          )}
+          {/* Le plan de bus est désormais obligatoire (trips.bus_layout_id
+              est NOT NULL) : ce champ est toujours dérivé, jamais saisi
+              manuellement. La valeur soumise ici est un simple placeholder
+              tant qu'aucun plan n'est encore choisi — le trigger
+              set_trip_seats_from_layout la resynchronise toujours depuis le
+              plan choisi côté serveur, jamais fait confiance au client. */}
+          <input type="hidden" name="totalSeats" value={totalSeats ?? 0} />
+          <p className={FIELD_CLASSES}>
+            {totalSeats ? `${totalSeats} (dérivé du plan choisi)` : "Choisissez un plan de bus ci-dessus"}
+          </p>
         </div>
       </div>
 
