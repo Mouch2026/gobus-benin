@@ -53,3 +53,91 @@ export async function updateCompanyProfile(
   revalidatePath("/"); // company name shown in the shared navigation
   return { error: null, success: true };
 }
+
+export type PasswordFormState = { error: string | null; success: boolean };
+
+// Matches this project's actual Supabase Auth policy
+// (supabase/config.toml: minimum_password_length = 6, password_requirements
+// = "" — no complexity rule beyond length) rather than inventing a stricter
+// rule. This is also just the friendly pre-check: supabase.auth.updateUser
+// below remains the real, authoritative enforcement regardless.
+const MIN_PASSWORD_LENGTH = 6;
+
+export async function changePassword(
+  _prevState: PasswordFormState,
+  formData: FormData
+): Promise<PasswordFormState> {
+  const access = await requireCompany();
+  if (!access.ok) {
+    return { error: "Votre session ou votre abonnement ne permet plus cette action.", success: false };
+  }
+
+  const currentPassword = String(formData.get("currentPassword") ?? "");
+  const newPassword = String(formData.get("newPassword") ?? "");
+  const confirmPassword = String(formData.get("confirmPassword") ?? "");
+
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    return { error: "Merci de remplir les trois champs.", success: false };
+  }
+
+  if (newPassword !== confirmPassword) {
+    return {
+      error: "Le nouveau mot de passe et sa confirmation ne correspondent pas.",
+      success: false,
+    };
+  }
+
+  if (newPassword.length < MIN_PASSWORD_LENGTH) {
+    return {
+      error: `Le nouveau mot de passe doit contenir au moins ${MIN_PASSWORD_LENGTH} caractères.`,
+      success: false,
+    };
+  }
+
+  const supabase = await createClient();
+
+  // secure_password_change est désactivé sur ce projet (config.toml) :
+  // Supabase n'exige pas lui-même une ré-authentification récente avant un
+  // changement de mot de passe. Sans ce contrôle explicite, la seule
+  // session déjà ouverte suffirait à changer le mot de passe — ce qui
+  // n'est pas acceptable pour une action aussi sensible (ex. appareil
+  // laissé déverrouillé). On revérifie donc nous-mêmes le mot de passe
+  // actuel via une tentative réelle de connexion, avant d'accepter quoi
+  // que ce soit.
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user?.email) {
+    return {
+      error: "Impossible de vérifier votre identité. Reconnectez-vous et réessayez.",
+      success: false,
+    };
+  }
+
+  const { error: reauthError } = await supabase.auth.signInWithPassword({
+    email: userData.user.email,
+    password: currentPassword,
+  });
+
+  if (reauthError) {
+    return { error: "Mot de passe actuel incorrect.", success: false };
+  }
+
+  const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+
+  if (updateError) {
+    // weak_password : filet de sécurité si la politique réellement
+    // configurée côté Supabase (remote) diverge de MIN_PASSWORD_LENGTH
+    // (dérivée de supabase/config.toml, qui peut ne pas refléter le
+    // remote) — message générique plutôt que de relayer le message brut
+    // en anglais de Supabase.
+    if (updateError.code === "weak_password") {
+      return {
+        error: "Le nouveau mot de passe ne respecte pas la politique de sécurité (longueur minimale notamment).",
+        success: false,
+      };
+    }
+    console.error("Impossible de changer le mot de passe :", updateError.message);
+    return { error: "Impossible de changer le mot de passe. Réessayez.", success: false };
+  }
+
+  return { error: null, success: true };
+}
