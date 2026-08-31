@@ -14,6 +14,7 @@ type TripForEdit = {
   available_seats: number;
   status: string;
   route_id: string;
+  price_fcfa: number;
 };
 
 async function getOwnedTrip(
@@ -23,7 +24,7 @@ async function getOwnedTrip(
 ): Promise<TripForEdit | null> {
   const { data, error } = await supabase
     .from("trips")
-    .select("id, company_id, departure_at, total_seats, available_seats, status, route_id")
+    .select("id, company_id, departure_at, total_seats, available_seats, status, route_id, price_fcfa")
     .eq("id", tripId)
     .eq("company_id", companyId)
     .maybeSingle();
@@ -71,8 +72,23 @@ export async function updateTripDetails(
     return { error: "Ce trajet n'existe pas ou ne vous appartient pas." };
   }
 
-  if (new Date(trip.departure_at).getTime() <= Date.now()) {
+  const tripDeparted = new Date(trip.departure_at).getTime() <= Date.now();
+
+  // Le garde-fou "trajet déjà parti" ne s'applique qu'à price_fcfa/
+  // total_seats — des grandeurs propres à ce trajet précis, qu'il n'est
+  // plus logique de changer une fois qu'il est parti — et seulement si
+  // l'une des deux a réellement changé par rapport à la valeur actuelle
+  // (total_seats est de toute façon toujours un champ caché dérivé du plan
+  // de bus, jamais modifiable via l'UI ; gardé par symétrie/défense).
+  // bus_number a sa propre condition, indépendante de departure_at : une
+  // réaffectation de flotte peut légitimement être constatée après le
+  // départ, tant que le trajet n'est pas terminé/annulé (voir plus bas).
+  if (tripDeparted && (priceFcfa !== trip.price_fcfa || newTotalSeats !== trip.total_seats)) {
     return { error: "Ce trajet est déjà parti, il ne peut plus être modifié." };
+  }
+
+  if (trip.status === "completed" || trip.status === "cancelled") {
+    return { error: "Ce trajet est terminé ou annulé, le numéro de bus ne peut plus être modifié." };
   }
 
   // The real invariant to preserve when changing capacity is the number of
