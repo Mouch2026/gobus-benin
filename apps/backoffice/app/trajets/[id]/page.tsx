@@ -24,7 +24,8 @@ type TripDetail = {
   status: string;
   bus_layout_id: string;
   bus_number: string;
-  routes: { origin_city: string; destination_city: string };
+  route_id: string;
+  routes: { origin_city: string; destination_city: string; distance_km: number | null; line_number: string | null };
 };
 
 type TripBooking = {
@@ -41,7 +42,7 @@ async function getOwnedTrip(tripId: string, companyId: string): Promise<TripDeta
   const { data, error } = await supabase
     .from("trips")
     .select(
-      "id, departure_at, seat_class, price_fcfa, total_seats, available_seats, status, bus_layout_id, bus_number, routes!inner(origin_city, destination_city)"
+      "id, departure_at, seat_class, price_fcfa, total_seats, available_seats, status, bus_layout_id, bus_number, route_id, routes!inner(origin_city, destination_city, distance_km, line_number)"
     )
     .eq("id", tripId)
     .eq("company_id", companyId)

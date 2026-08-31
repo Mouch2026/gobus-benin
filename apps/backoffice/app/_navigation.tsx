@@ -3,9 +3,11 @@ import { logout } from "./actions";
 
 // Shared across every authenticated page — replaces each page's own
 // independent <header>. "Nouveau trajet" is kept as a distinct action
-// button (not one of the 6 plain nav links) since it was the only path to
+// button (not one of the 5 plain nav links) since it was the only path to
 // /trajets/nouveau before this component existed; dropping it here would
-// be a silent regression.
+// be a silent regression. "Routes" removed: /routes no longer exists —
+// route creation/editing now lives entirely in /trajets/nouveau and
+// /trajets/[id] (EditTripForm's "Route" section).
 export function Navigation({ company }: { company: { name: string } }) {
   return (
     <header className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200 bg-white px-6 py-4 dark:border-zinc-800 dark:bg-zinc-900">
@@ -16,9 +18,6 @@ export function Navigation({ company }: { company: { name: string } }) {
       <nav className="flex flex-wrap items-center gap-5 text-sm font-medium text-zinc-600 dark:text-zinc-400">
         <Link href="/" className="hover:text-zinc-950 dark:hover:text-zinc-50">
           Trajets
-        </Link>
-        <Link href="/routes" className="hover:text-zinc-950 dark:hover:text-zinc-50">
-          Routes
         </Link>
         <Link href="/plans-de-bus" className="hover:text-zinc-950 dark:hover:text-zinc-50">
           Plans de bus
