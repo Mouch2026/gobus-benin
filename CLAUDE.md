@@ -41,6 +41,12 @@
   d'agir dessus (reset de mot de passe, suppression, etc.), ne jamais faire
   confiance au filtre seul. Rencontré deux fois sur ce projet
   (scripts/seed.ts, puis test d'accès du back-office).
+- Ne jamais exécuter supabase db push, git commit, ni git push de ta propre
+  initiative — même en fin de tâche, même si tout semble vérifié. Ce sont
+  toujours des commandes manuelles que l'utilisateur tape lui-même après
+  review humaine. Une migration ou un commit que tu proposes doit toujours
+  être montré et laissé en attente, jamais appliqué automatiquement.
+
 ## Où chercher
 - Schéma de données  → supabase/migrations/
 - Logique de prix    → packages/shared/src/lib/pricing.ts
