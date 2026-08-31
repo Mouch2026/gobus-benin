@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { LoginForm } from "./LoginForm";
 
 function firstValue(value: string | string[] | undefined): string | undefined {
@@ -20,6 +21,20 @@ export default async function ConnexionPage(props: PageProps<"/connexion">) {
           </p>
         </div>
         <LoginForm redirectTo={redirectTo} />
+        <div className="flex flex-col gap-2 text-sm">
+          <Link
+            href="/mot-de-passe-oublie"
+            className="font-medium text-zinc-600 hover:underline dark:text-zinc-400"
+          >
+            Mot de passe oublié ?
+          </Link>
+          <Link
+            href={`${process.env.NEXT_PUBLIC_WEB_URL}/partenaires`}
+            className="font-medium text-zinc-600 hover:underline dark:text-zinc-400"
+          >
+            Pas encore de compte ? Devenez partenaire
+          </Link>
+        </div>
       </div>
     </div>
   );

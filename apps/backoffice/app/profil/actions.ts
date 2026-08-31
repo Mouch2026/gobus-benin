@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireCompany } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
+import { validateNewPassword, mapWeakPasswordError } from "@/lib/password";
 
 export type ProfilFormState = { error: string | null; success: boolean };
 
@@ -56,13 +57,6 @@ export async function updateCompanyProfile(
 
 export type PasswordFormState = { error: string | null; success: boolean };
 
-// Matches this project's actual Supabase Auth policy
-// (supabase/config.toml: minimum_password_length = 6, password_requirements
-// = "" — no complexity rule beyond length) rather than inventing a stricter
-// rule. This is also just the friendly pre-check: supabase.auth.updateUser
-// below remains the real, authoritative enforcement regardless.
-const MIN_PASSWORD_LENGTH = 6;
-
 export async function changePassword(
   _prevState: PasswordFormState,
   formData: FormData
@@ -80,18 +74,9 @@ export async function changePassword(
     return { error: "Merci de remplir les trois champs.", success: false };
   }
 
-  if (newPassword !== confirmPassword) {
-    return {
-      error: "Le nouveau mot de passe et sa confirmation ne correspondent pas.",
-      success: false,
-    };
-  }
-
-  if (newPassword.length < MIN_PASSWORD_LENGTH) {
-    return {
-      error: `Le nouveau mot de passe doit contenir au moins ${MIN_PASSWORD_LENGTH} caractères.`,
-      success: false,
-    };
+  const validationError = validateNewPassword(newPassword, confirmPassword);
+  if (validationError) {
+    return { error: validationError, success: false };
   }
 
   const supabase = await createClient();
@@ -124,16 +109,8 @@ export async function changePassword(
   const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
 
   if (updateError) {
-    // weak_password : filet de sécurité si la politique réellement
-    // configurée côté Supabase (remote) diverge de MIN_PASSWORD_LENGTH
-    // (dérivée de supabase/config.toml, qui peut ne pas refléter le
-    // remote) — message générique plutôt que de relayer le message brut
-    // en anglais de Supabase.
     if (updateError.code === "weak_password") {
-      return {
-        error: "Le nouveau mot de passe ne respecte pas la politique de sécurité (longueur minimale notamment).",
-        success: false,
-      };
+      return { error: mapWeakPasswordError(), success: false };
     }
     console.error("Impossible de changer le mot de passe :", updateError.message);
     return { error: "Impossible de changer le mot de passe. Réessayez.", success: false };

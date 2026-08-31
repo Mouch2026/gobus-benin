@@ -7,7 +7,12 @@ import { NextResponse, type NextRequest } from "next/server";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-const PUBLIC_PATHS = ["/connexion"];
+// /reinitialiser-mot-de-passe reste volontairement HORS de cette liste :
+// elle doit se comporter comme une page protégée normale (redirige vers
+// /connexion si aucune session), car "accessible uniquement via le lien
+// reçu par e-mail" est satisfait par la session de recovery établie par
+// /auth/confirm avant d'y arriver — pas besoin d'un garde-fou séparé.
+const PUBLIC_PATHS = ["/connexion", "/mot-de-passe-oublie", "/auth/confirm"];
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
