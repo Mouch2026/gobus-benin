@@ -6,12 +6,6 @@ import { FIELD_CLASSES, LABEL_CLASSES } from "../../_shared";
 
 const initialState: NewTripState = { error: null };
 
-type RouteOption = {
-  id: string;
-  origin_city: string;
-  destination_city: string;
-};
-
 type BusLayoutOption = {
   id: string;
   name: string;
@@ -19,10 +13,10 @@ type BusLayoutOption = {
 };
 
 export function NewTripForm({
-  routes,
+  cities,
   busLayouts,
 }: {
-  routes: RouteOption[];
+  cities: string[];
   busLayouts: BusLayoutOption[];
 }) {
   const [state, formAction, pending] = useActionState(createTrip, initialState);
@@ -33,20 +27,41 @@ export function NewTripForm({
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="routeId" className={LABEL_CLASSES}>
-          Route
-        </label>
-        <select id="routeId" name="routeId" required defaultValue="" className={FIELD_CLASSES}>
-          <option value="" disabled>
-            Choisir une route
-          </option>
-          {routes.map((route) => (
-            <option key={route.id} value={route.id}>
-              {route.origin_city} → {route.destination_city}
-            </option>
-          ))}
-        </select>
+      <datalist id="cities-list">
+        {cities.map((city) => (
+          <option key={city} value={city} />
+        ))}
+      </datalist>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="originCity" className={LABEL_CLASSES}>
+            Départ
+          </label>
+          <input
+            id="originCity"
+            name="originCity"
+            type="text"
+            required
+            list="cities-list"
+            placeholder="Cotonou"
+            className={FIELD_CLASSES}
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="destinationCity" className={LABEL_CLASSES}>
+            Arrivée
+          </label>
+          <input
+            id="destinationCity"
+            name="destinationCity"
+            type="text"
+            required
+            list="cities-list"
+            placeholder="Parakou"
+            className={FIELD_CLASSES}
+          />
+        </div>
       </div>
 
       <div className="flex flex-col gap-1.5">

@@ -3,11 +3,79 @@
 import { redirect } from "next/navigation";
 import { requireCompany } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type NewTripState = { error: string | null };
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_RE = /^\d{2}:\d{2}$/;
+
+// Route saisie en texte libre côté formulaire — pas de sélecteur contraint
+// à une liste. Réutilise la route existante si (company_id, origin_city,
+// destination_city) correspond exactement, sinon en crée une à la volée
+// (distance_km laissé vide, complétable depuis /routes). Deux soumissions
+// concurrentes pour la même paire de villes peuvent toutes les deux
+// dépasser le check-then-insert : ce n'est pas grave ici (contrairement à
+// l'attribution de sièges, aucune ressource limitée n'est en jeu) — la
+// contrainte unique existante (company_id, origin_city, destination_city)
+// rejette la seconde insertion avec 23505, et on récupère alors la route
+// que l'autre requête vient de créer plutôt que d'échouer.
+async function getOrCreateRouteId(
+  supabase: SupabaseClient,
+  companyId: string,
+  originCityRaw: string,
+  destinationCityRaw: string
+): Promise<string> {
+  // Trim internalisé ici (pas seulement chez l'appelant) : le matching et
+  // l'insertion doivent utiliser exactement les mêmes valeurs, et cette
+  // fonction ne doit pas dépendre de la discipline de chaque futur
+  // appelant. Pas de normalisation de casse : "Cotonou" et "cotonou"
+  // restent reconnues comme deux villes distinctes (non demandé ici).
+  const originCity = originCityRaw.trim();
+  const destinationCity = destinationCityRaw.trim();
+
+  const { data: existing } = await supabase
+    .from("routes")
+    .select("id")
+    .eq("company_id", companyId)
+    .eq("origin_city", originCity)
+    .eq("destination_city", destinationCity)
+    .maybeSingle();
+
+  if (existing) {
+    return existing.id;
+  }
+
+  const { data: inserted, error: insertError } = await supabase
+    .from("routes")
+    .insert({
+      company_id: companyId,
+      origin_city: originCity,
+      destination_city: destinationCity,
+      distance_km: null,
+    })
+    .select("id")
+    .single();
+
+  if (insertError) {
+    if (insertError.code === "23505") {
+      // Créée entre-temps par une soumission concurrente pour la même
+      // paire de villes — la récupérer plutôt qu'échouer.
+      const { data: raceWinner, error: raceError } = await supabase
+        .from("routes")
+        .select("id")
+        .eq("company_id", companyId)
+        .eq("origin_city", originCity)
+        .eq("destination_city", destinationCity)
+        .single();
+      if (raceError || !raceWinner) throw insertError;
+      return raceWinner.id;
+    }
+    throw insertError;
+  }
+
+  return inserted.id;
+}
 
 export async function createTrip(
   _prevState: NewTripState,
@@ -18,7 +86,8 @@ export async function createTrip(
     return { error: "Votre session ou votre abonnement ne permet plus cette action." };
   }
 
-  const routeId = String(formData.get("routeId") ?? "");
+  const originCity = String(formData.get("originCity") ?? "").trim();
+  const destinationCity = String(formData.get("destinationCity") ?? "").trim();
   const busLayoutId = String(formData.get("busLayoutId") ?? "").trim() || null;
   const seatClass = String(formData.get("seatClass") ?? "");
   const departureDate = String(formData.get("departureDate") ?? "");
@@ -26,8 +95,8 @@ export async function createTrip(
   const priceRaw = String(formData.get("priceFcfa") ?? "");
   const totalSeatsRaw = String(formData.get("totalSeats") ?? "");
 
-  if (!routeId) {
-    return { error: "Merci de choisir une route." };
+  if (!originCity || !destinationCity) {
+    return { error: "Merci de renseigner les deux villes." };
   }
   if (seatClass !== "standard" && seatClass !== "vip") {
     return { error: "Classe invalide." };
@@ -62,19 +131,15 @@ export async function createTrip(
 
   const supabase = await createClient();
 
-  // Friendlier error than the generic RLS rejection if the route belongs
-  // to another company — the trigger + RLS combo would reject it either
-  // way (see supabase/migrations/20260829123607_add_trip_company_id_trigger.sql),
-  // this is purely about the message shown.
-  const { data: route, error: routeError } = await supabase
-    .from("routes")
-    .select("id")
-    .eq("id", routeId)
-    .eq("company_id", access.company.id)
-    .maybeSingle();
-
-  if (routeError || !route) {
-    return { error: "Cette route n'existe pas ou ne vous appartient pas." };
+  let routeId: string;
+  try {
+    routeId = await getOrCreateRouteId(supabase, access.company.id, originCity, destinationCity);
+  } catch (routeError) {
+    console.error(
+      "Impossible de trouver/créer la route :",
+      routeError instanceof Error ? routeError.message : routeError
+    );
+    return { error: "Impossible de créer ce trajet. Réessayez." };
   }
 
   const { data: trip, error: insertError } = await supabase

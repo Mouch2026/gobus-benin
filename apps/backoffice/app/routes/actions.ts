@@ -22,6 +22,8 @@ export async function createRoute(
   const destinationCity = String(formData.get("destinationCity") ?? "").trim();
   const distanceKmRaw = String(formData.get("distanceKm") ?? "");
   const durationMinutesRaw = String(formData.get("durationMinutes") ?? "").trim();
+  const lineNumberRaw = String(formData.get("lineNumber") ?? "").trim();
+  const lineNumber = lineNumberRaw || null;
 
   if (!originCity || !destinationCity) {
     return { error: "Merci de renseigner les deux villes." };
@@ -47,6 +49,7 @@ export async function createRoute(
     destination_city: destinationCity,
     distance_km: distanceKm,
     duration_minutes: durationMinutes,
+    line_number: lineNumber,
   });
 
   if (error) {

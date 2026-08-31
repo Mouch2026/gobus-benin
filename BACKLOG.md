@@ -7,6 +7,9 @@ Liste vivante, à mettre à jour au fil du développement (pas figée à un inst
 ### Paiement
 - Paiement FedaPay réel — remplace les deux flux actuellement simulés
   (billets voyageurs ET abonnement compagnie), en une seule intégration.
+- Changement de plan d'abonnement (upgrade/downgrade) depuis le
+  back-office — actuellement /abonnement est en lecture seule, aucune
+  proration ni changement de plan en cours d'abonnement n'est géré.
 
 ### Communication voyageur
 - Envoi par e-mail de la confirmation de réservation : facture + billet
@@ -20,6 +23,18 @@ Liste vivante, à mettre à jour au fil du développement (pas figée à un inst
 
 ### Réservation
 - Règles de modification/annulation d'une réservation par le voyageur.
+- Tarif réduit enfant (moins de 6 ans) avec siège payant — actuellement les
+  enfants voyagent gratuitement sans siège par défaut ; un tarif réduit
+  avec occupation de siège est possible mais négocié compagnie par
+  compagnie selon la réglementation béninoise, pas encore modélisé
+  (nécessite une politique de tarif par compagnie).
+
+### Back-office
+- Normalisation de la casse sur origin_city/destination_city (routes
+  créées à la volée depuis /trajets/nouveau) — actuellement seul un
+  trim() est appliqué, "Cotonou" et "cotonou" seraient encore reconnus
+  comme deux villes distinctes. À surveiller si ça pose problème en usage
+  réel avec plusieurs compagnies.
 
 ### Produits
 - Application Admin (interne, pas pour les compagnies).

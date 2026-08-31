@@ -75,6 +75,18 @@ export function RouteForm() {
             className={FIELD_CLASSES}
           />
         </div>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="lineNumber" className={LABEL_CLASSES}>
+            Numéro de ligne (optionnel)
+          </label>
+          <input
+            id="lineNumber"
+            name="lineNumber"
+            type="text"
+            placeholder="12"
+            className={FIELD_CLASSES}
+          />
+        </div>
       </div>
 
       {state.error ? (

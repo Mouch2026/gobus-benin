@@ -10,13 +10,14 @@ type CompanyRoute = {
   destination_city: string;
   distance_km: number;
   duration_minutes: number | null;
+  line_number: string | null;
 };
 
 async function getCompanyRoutes(companyId: string): Promise<CompanyRoute[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("routes")
-    .select("id, origin_city, destination_city, distance_km, duration_minutes")
+    .select("id, origin_city, destination_city, distance_km, duration_minutes, line_number")
     .eq("company_id", companyId)
     .order("origin_city", { ascending: true });
 
@@ -67,6 +68,7 @@ export default async function RoutesPage() {
                 <thead>
                   <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
                     <th className="px-4 py-3 font-medium">Route</th>
+                    <th className="px-4 py-3 font-medium">Ligne</th>
                     <th className="px-4 py-3 font-medium">Distance</th>
                     <th className="px-4 py-3 font-medium">Durée estimée</th>
                   </tr>
@@ -79,6 +81,9 @@ export default async function RoutesPage() {
                     >
                       <td className="px-4 py-3 font-medium text-zinc-950 dark:text-zinc-50">
                         {route.origin_city} → {route.destination_city}
+                      </td>
+                      <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                        {route.line_number ?? "—"}
                       </td>
                       <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
                         {route.distance_km} km
