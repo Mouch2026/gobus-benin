@@ -23,6 +23,7 @@ type TripDetail = {
   available_seats: number;
   status: string;
   bus_layout_id: string;
+  bus_number: string;
   routes: { origin_city: string; destination_city: string };
 };
 
@@ -40,7 +41,7 @@ async function getOwnedTrip(tripId: string, companyId: string): Promise<TripDeta
   const { data, error } = await supabase
     .from("trips")
     .select(
-      "id, departure_at, seat_class, price_fcfa, total_seats, available_seats, status, bus_layout_id, routes!inner(origin_city, destination_city)"
+      "id, departure_at, seat_class, price_fcfa, total_seats, available_seats, status, bus_layout_id, bus_number, routes!inner(origin_city, destination_city)"
     )
     .eq("id", tripId)
     .eq("company_id", companyId)
@@ -126,6 +127,7 @@ export default async function TripDetailPage(props: PageProps<"/trajets/[id]">) 
             Prix actuel : {formatFcfa(trip.price_fcfa)} · {trip.available_seats}/{trip.total_seats}{" "}
             places disponibles
           </div>
+          <div className="text-sm text-zinc-500 dark:text-zinc-400">Bus n° {trip.bus_number}</div>
         </div>
 
         <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">

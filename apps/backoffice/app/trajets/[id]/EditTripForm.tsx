@@ -13,6 +13,7 @@ type Trip = {
   available_seats: number;
   status: string;
   bus_layout_id: string;
+  bus_number: string;
 };
 
 export function EditTripForm({ trip }: { trip: Trip }) {
@@ -43,6 +44,23 @@ export function EditTripForm({ trip }: { trip: Trip }) {
             defaultValue={trip.price_fcfa}
             className={FIELD_CLASSES}
           />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="busNumber" className={LABEL_CLASSES}>
+            Numéro de bus
+          </label>
+          <input
+            id="busNumber"
+            name="busNumber"
+            type="text"
+            required
+            defaultValue={trip.bus_number}
+            className={FIELD_CLASSES}
+          />
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+            Modifiable tant que le trajet n&apos;est pas parti (panne, réaffectation de flotte).
+          </span>
         </div>
 
         <div className="flex flex-col gap-1.5">

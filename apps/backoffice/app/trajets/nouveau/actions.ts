@@ -89,6 +89,7 @@ export async function createTrip(
   const originCity = String(formData.get("originCity") ?? "").trim();
   const destinationCity = String(formData.get("destinationCity") ?? "").trim();
   const busLayoutId = String(formData.get("busLayoutId") ?? "").trim();
+  const busNumber = String(formData.get("busNumber") ?? "").trim();
   const seatClass = String(formData.get("seatClass") ?? "");
   const departureDate = String(formData.get("departureDate") ?? "");
   const departureTime = String(formData.get("departureTime") ?? "");
@@ -100,6 +101,9 @@ export async function createTrip(
   }
   if (!busLayoutId) {
     return { error: "Merci de choisir un plan de bus." };
+  }
+  if (!busNumber) {
+    return { error: "Merci de renseigner le numéro du bus." };
   }
   if (seatClass !== "standard" && seatClass !== "vip") {
     return { error: "Classe invalide." };
@@ -151,6 +155,7 @@ export async function createTrip(
       company_id: access.company.id,
       route_id: routeId,
       bus_layout_id: busLayoutId,
+      bus_number: busNumber,
       seat_class: seatClass,
       departure_at: departureAt,
       price_fcfa: priceFcfa,

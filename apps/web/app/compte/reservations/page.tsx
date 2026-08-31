@@ -11,7 +11,11 @@ type BookingRow = {
   total_price_fcfa: number;
   booking_group_id: string | null;
   leg: "outbound" | "return" | null;
-  trips: { departure_at: string; routes: { origin_city: string; destination_city: string } } | null;
+  trips: {
+    departure_at: string;
+    bus_number: string;
+    routes: { origin_city: string; destination_city: string };
+  } | null;
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -31,7 +35,7 @@ async function getUserBookings(userId: string): Promise<BookingRow[]> {
   const { data, error } = await supabase
     .from("bookings")
     .select(
-      "id, booking_reference, status, total_price_fcfa, booking_group_id, leg, trips!inner(departure_at, routes(origin_city, destination_city))"
+      "id, booking_reference, status, total_price_fcfa, booking_group_id, leg, trips!inner(departure_at, bus_number, routes(origin_city, destination_city))"
     )
     .eq("user_id", userId)
     // Verified live against this project's PostgREST: ordering by a
@@ -85,7 +89,8 @@ export default async function MesReservationsPage() {
                     {booking.trips ? (
                       <span className="text-sm text-muted">
                         {booking.trips.routes.origin_city} → {booking.trips.routes.destination_city} ·{" "}
-                        {formatDepartureDateTime(booking.trips.departure_at)}
+                        {formatDepartureDateTime(booking.trips.departure_at)} · Bus n°{" "}
+                        {booking.trips.bus_number}
                       </span>
                     ) : null}
                   </div>

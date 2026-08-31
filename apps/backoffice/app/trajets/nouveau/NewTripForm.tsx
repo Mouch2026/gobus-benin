@@ -89,6 +89,20 @@ export function NewTripForm({
       </div>
 
       <div className="flex flex-col gap-1.5">
+        <label htmlFor="busNumber" className={LABEL_CLASSES}>
+          Numéro de bus
+        </label>
+        <input
+          id="busNumber"
+          name="busNumber"
+          type="text"
+          required
+          placeholder="12 ou AB-1234-BJ"
+          className={FIELD_CLASSES}
+        />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
         <label htmlFor="seatClass" className={LABEL_CLASSES}>
           Classe
         </label>

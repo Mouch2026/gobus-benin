@@ -14,6 +14,7 @@ type CompanyTrip = {
   available_seats: number;
   total_seats: number;
   status: string;
+  bus_number: string;
   routes: { origin_city: string; destination_city: string };
 };
 
@@ -22,7 +23,7 @@ async function getCompanyTrips(companyId: string): Promise<CompanyTrip[]> {
   const { data, error } = await supabase
     .from("trips")
     .select(
-      "id, departure_at, seat_class, price_fcfa, available_seats, total_seats, status, routes!inner(origin_city, destination_city)"
+      "id, departure_at, seat_class, price_fcfa, available_seats, total_seats, status, bus_number, routes!inner(origin_city, destination_city)"
     )
     .eq("company_id", companyId)
     .order("departure_at", { ascending: true });
@@ -66,6 +67,7 @@ export default async function BackofficeHome() {
                   <th className="px-4 py-3 font-medium">Classe</th>
                   <th className="px-4 py-3 font-medium">Prix</th>
                   <th className="px-4 py-3 font-medium">Places</th>
+                  <th className="px-4 py-3 font-medium">Bus</th>
                   <th className="px-4 py-3 font-medium">Statut</th>
                 </tr>
               </thead>
@@ -95,6 +97,7 @@ export default async function BackofficeHome() {
                     <td className="px-4 py-3 tabular-nums text-zinc-700 dark:text-zinc-300">
                       {trip.available_seats} / {trip.total_seats}
                     </td>
+                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{trip.bus_number}</td>
                     <td className="px-4 py-3">
                       <span
                         className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${

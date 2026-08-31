@@ -11,7 +11,11 @@ type BookingWithTrip = {
   status: string;
   seat_count: number;
   total_price_fcfa: number;
-  trips: { departure_at: string; routes: { origin_city: string; destination_city: string } } | null;
+  trips: {
+    departure_at: string;
+    bus_number: string;
+    routes: { origin_city: string; destination_city: string };
+  } | null;
   passengers: { id: string; full_name: string; seat_number: string | null }[];
 };
 
@@ -39,7 +43,7 @@ export default async function SuccesAllerRetourPage(
   const { data: bookings } = await supabase
     .from("bookings")
     .select(
-      "id, leg, booking_reference, status, seat_count, total_price_fcfa, trips(departure_at, routes(origin_city, destination_city)), passengers(id, full_name, seat_number)"
+      "id, leg, booking_reference, status, seat_count, total_price_fcfa, trips(departure_at, bus_number, routes(origin_city, destination_city)), passengers(id, full_name, seat_number)"
     )
     .eq("booking_group_id", groupId)
     .eq("user_id", user.sub)
@@ -103,9 +107,12 @@ export default async function SuccesAllerRetourPage(
               <span className="font-semibold text-foreground">{booking.booking_reference}</span>
             </p>
             {booking.trips ? (
-              <p className="text-muted">
-                {booking.trips.routes.origin_city} → {booking.trips.routes.destination_city}
-              </p>
+              <>
+                <p className="text-muted">
+                  {booking.trips.routes.origin_city} → {booking.trips.routes.destination_city}
+                </p>
+                <p className="text-muted">Bus n° {booking.trips.bus_number}</p>
+              </>
             ) : null}
             <div className="mt-2 flex flex-col gap-1">
               {booking.passengers.map((passenger) => (

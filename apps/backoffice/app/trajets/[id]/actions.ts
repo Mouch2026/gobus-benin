@@ -47,10 +47,15 @@ export async function updateTripDetails(
   const tripId = String(formData.get("tripId") ?? "");
   const priceRaw = String(formData.get("priceFcfa") ?? "");
   const totalSeatsRaw = String(formData.get("totalSeats") ?? "");
+  const busNumber = String(formData.get("busNumber") ?? "").trim();
 
   const priceFcfa = Number(priceRaw);
   if (!Number.isInteger(priceFcfa) || priceFcfa < 0) {
     return { error: "Le prix doit être un nombre entier positif ou nul." };
+  }
+
+  if (!busNumber) {
+    return { error: "Merci de renseigner le numéro du bus." };
   }
 
   const newTotalSeats = Number(totalSeatsRaw);
@@ -85,7 +90,12 @@ export async function updateTripDetails(
 
   const { error: updateError } = await supabase
     .from("trips")
-    .update({ price_fcfa: priceFcfa, total_seats: newTotalSeats, available_seats: newAvailableSeats })
+    .update({
+      price_fcfa: priceFcfa,
+      total_seats: newTotalSeats,
+      available_seats: newAvailableSeats,
+      bus_number: busNumber,
+    })
     .eq("id", tripId);
 
   if (updateError) {

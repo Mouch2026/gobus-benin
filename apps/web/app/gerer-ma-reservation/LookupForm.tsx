@@ -42,10 +42,13 @@ function BookingCard({ booking }: { booking: BookingSummary }) {
         ) : null}
       </div>
       {booking.trips ? (
-        <span className="text-sm text-muted">
-          {booking.trips.routes.origin_city} → {booking.trips.routes.destination_city} ·{" "}
-          {formatDepartureDateTime(booking.trips.departure_at)}
-        </span>
+        <>
+          <span className="text-sm text-muted">
+            {booking.trips.routes.origin_city} → {booking.trips.routes.destination_city} ·{" "}
+            {formatDepartureDateTime(booking.trips.departure_at)}
+          </span>
+          <span className="text-sm text-muted">Bus n° {booking.trips.bus_number}</span>
+        </>
       ) : null}
       {booking.passengers.length > 0 ? (
         <div className="flex flex-col gap-1 border-t border-border pt-2 text-sm">
