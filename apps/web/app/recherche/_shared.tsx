@@ -65,6 +65,34 @@ export function DurationBadge({ departureAt, arrivalAt }: { departureAt: string;
   );
 }
 
+// Repli neutre quand companies.logo_url est absent — une pastille avec
+// l'initiale du nom, pas un logo générique inventé qui pourrait passer
+// pour une vraie marque.
+export function CompanyLogo({ name, logoUrl }: { name: string; logoUrl: string | null }) {
+  if (logoUrl) {
+    // <img> ordinaire (pas next/image) : logo_url est une URL externe
+    // arbitraire saisie par chaque compagnie, autoriser next/image dessus
+    // exigerait une allow-list de domaines par remotePatterns incompatible
+    // avec "n'importe quelle URL".
+    return (
+      <img
+        src={logoUrl}
+        alt={name}
+        className="h-12 w-12 shrink-0 rounded-xl object-cover"
+      />
+    );
+  }
+
+  return (
+    <span
+      aria-hidden
+      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 font-display text-lg font-extrabold text-primary-foreground"
+    >
+      {name.charAt(0).toUpperCase()}
+    </span>
+  );
+}
+
 export function RouteLine({
   origin,
   destination,

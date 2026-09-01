@@ -2,6 +2,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { formatFcfa } from "shared";
 import {
+  CompanyLogo,
   DurationBadge,
   EmptyState,
   PageShell,
@@ -17,8 +18,8 @@ type TripSearchResult = {
   seat_class: string;
   price_fcfa: number;
   available_seats: number;
-  routes: { origin_city: string; destination_city: string };
-  companies: { name: string };
+  routes: { origin_city: string; destination_city: string; line_number: string | null };
+  companies: { name: string; logo_url: string | null };
 };
 
 function firstValue(value: string | string[] | undefined): string | undefined {
@@ -50,7 +51,7 @@ async function searchTrips(
   const { data, error } = await supabase
     .from("trips")
     .select(
-      "id, departure_at, arrival_at, seat_class, price_fcfa, available_seats, routes!inner(origin_city, destination_city), companies!inner(name)"
+      "id, departure_at, arrival_at, seat_class, price_fcfa, available_seats, routes!inner(origin_city, destination_city, line_number), companies!inner(name, logo_url)"
     )
     .eq("routes.origin_city", origin)
     .eq("routes.destination_city", destination)
@@ -124,6 +125,13 @@ export default async function RecherchePage(props: PageProps<"/recherche">) {
     outboundTripId ? getOutboundTrip(outboundTripId) : Promise.resolve(null),
   ]);
 
+  // Cette page sert aussi bien une recherche simple que l'un ou l'autre
+  // des deux legs d'un aller-retour : returnDate (leg aller) ou
+  // outboundTripId (leg retour) signalent tous les deux "aller-retour",
+  // peu importe lequel des deux legs est affiché ici.
+  const isRoundTrip = Boolean(returnDate) || Boolean(outboundTripId);
+  const totalPassengers = Number(adults) + Number(children);
+
   return (
     <PageShell title={`${origin} → ${destination}`}>
       {outboundTripId && outboundTrip ? (
@@ -155,45 +163,57 @@ export default async function RecherchePage(props: PageProps<"/recherche">) {
               <li key={trip.id}>
                 <Link
                   href={href}
-                  className="group flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5 transition-colors hover:border-primary sm:flex-row sm:items-center sm:justify-between"
+                  className="group flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5 transition-colors hover:border-primary sm:flex-row sm:items-center"
                 >
-                <div className="flex flex-1 flex-col gap-2">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-muted">
-                    <span>{trip.companies.name}</span>
-                    <span aria-hidden className="text-border">
-                      ·
-                    </span>
-                    <span>{SEAT_CLASS_LABELS[trip.seat_class] ?? trip.seat_class}</span>
-                  </div>
-                  {trip.arrival_at ? (
-                    <div className="flex justify-center">
-                      <DurationBadge departureAt={trip.departure_at} arrivalAt={trip.arrival_at} />
-                    </div>
-                  ) : null}
-                  <RouteLine
-                    origin={trip.routes.origin_city}
-                    destination={trip.routes.destination_city}
-                    departureLabel={
-                      trip.arrival_at ? formatDepartureTime(trip.departure_at) : `Départ ${formatDepartureTime(trip.departure_at)}`
-                    }
-                    arrivalLabel={trip.arrival_at ? formatDepartureTime(trip.arrival_at) : undefined}
-                  />
-                  <span className="text-sm text-muted">
-                    {trip.available_seats} place{trip.available_seats > 1 ? "s" : ""} disponible
-                    {trip.available_seats > 1 ? "s" : ""}
-                  </span>
-                </div>
+                  <CompanyLogo name={trip.companies.name} logoUrl={trip.companies.logo_url} />
 
-                <div className="flex shrink-0 items-center gap-3 border-t border-border pt-4 sm:flex-col sm:items-end sm:gap-1 sm:border-t-0 sm:pt-0">
-                  <span className="font-display text-2xl font-extrabold text-foreground">
-                    {formatFcfa(trip.price_fcfa)}
-                  </span>
-                  <span className="text-sm font-semibold text-primary group-hover:underline">
-                    Voir le trajet →
-                  </span>
-                </div>
-              </Link>
-            </li>
+                  <div className="flex flex-1 flex-col gap-2">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-muted">
+                      <span>{trip.companies.name}</span>
+                      {trip.routes.line_number ? (
+                        <>
+                          <span aria-hidden className="text-border">
+                            ·
+                          </span>
+                          <span>Ligne {trip.routes.line_number}</span>
+                        </>
+                      ) : null}
+                    </div>
+                    {trip.arrival_at ? (
+                      <div className="flex justify-center">
+                        <DurationBadge departureAt={trip.departure_at} arrivalAt={trip.arrival_at} />
+                      </div>
+                    ) : null}
+                    <RouteLine
+                      origin={trip.routes.origin_city}
+                      destination={trip.routes.destination_city}
+                      departureLabel={
+                        trip.arrival_at
+                          ? formatDepartureTime(trip.departure_at)
+                          : `Départ ${formatDepartureTime(trip.departure_at)}`
+                      }
+                      arrivalLabel={trip.arrival_at ? formatDepartureTime(trip.arrival_at) : undefined}
+                    />
+                    <span className="text-sm text-muted">
+                      {SEAT_CLASS_LABELS[trip.seat_class] ?? trip.seat_class} · {trip.available_seats}{" "}
+                      place{trip.available_seats > 1 ? "s" : ""} disponible
+                      {trip.available_seats > 1 ? "s" : ""}
+                    </span>
+                  </div>
+
+                  <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border pt-4 sm:flex-col sm:items-end sm:gap-1 sm:border-t-0 sm:pt-0">
+                    <span className="font-display text-2xl font-extrabold text-foreground">
+                      {formatFcfa(trip.price_fcfa)}
+                    </span>
+                    <span className="text-xs text-muted">
+                      {totalPassengers} passager{totalPassengers > 1 ? "s" : ""}
+                    </span>
+                    <span className="text-xs font-semibold text-primary">
+                      {isRoundTrip ? "Aller-retour" : "Aller simple"}
+                    </span>
+                  </div>
+                </Link>
+              </li>
             );
           })}
         </ul>
