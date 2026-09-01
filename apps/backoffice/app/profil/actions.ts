@@ -9,6 +9,14 @@ export type ProfilFormState = { error: string | null; success: boolean };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+const LOGO_BUCKET = "company-logos";
+const MAX_LOGO_BYTES = 2 * 1024 * 1024; // 2 Mo — cohérent avec file_size_limit du bucket
+const LOGO_MIME_TO_EXT: Record<string, string> = {
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/webp": "webp",
+};
+
 export async function updateCompanyProfile(
   _prevState: ProfilFormState,
   formData: FormData
@@ -21,7 +29,7 @@ export async function updateCompanyProfile(
   const name = String(formData.get("name") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
-  const logoUrl = String(formData.get("logoUrl") ?? "").trim();
+  const logo = formData.get("logo");
 
   if (!name) {
     return { error: "Merci de renseigner le nom de la compagnie.", success: false };
@@ -30,7 +38,54 @@ export async function updateCompanyProfile(
     return { error: "Merci de renseigner un email valide (ou de laisser le champ vide).", success: false };
   }
 
+  // Champ facultatif : aucun fichier choisi (ou input laissé vide) ne doit
+  // jamais bloquer la mise à jour des autres champs.
+  const hasNewLogo = logo instanceof File && logo.size > 0;
+
+  if (hasNewLogo) {
+    const ext = LOGO_MIME_TO_EXT[logo.type];
+    if (!ext) {
+      return {
+        error: "Format d'image non supporté (PNG, JPG ou WEBP uniquement).",
+        success: false,
+      };
+    }
+    if (logo.size > MAX_LOGO_BYTES) {
+      return { error: "L'image ne doit pas dépasser 2 Mo.", success: false };
+    }
+  }
+
   const supabase = await createClient();
+
+  let logoUrl: string | undefined;
+  if (hasNewLogo) {
+    const ext = LOGO_MIME_TO_EXT[(logo as File).type];
+    const companyId = access.company.id;
+
+    // Vide le dossier de cette compagnie avant d'y remettre le nouveau
+    // fichier — évite les fichiers orphelins si l'extension change d'un
+    // upload à l'autre (ex. .png → .jpg), sans avoir à parser l'ancienne
+    // URL pour deviner son extension.
+    const { data: existingFiles } = await supabase.storage.from(LOGO_BUCKET).list(companyId);
+    if (existingFiles && existingFiles.length > 0) {
+      await supabase.storage
+        .from(LOGO_BUCKET)
+        .remove(existingFiles.map((file) => `${companyId}/${file.name}`));
+    }
+
+    const path = `${companyId}/logo.${ext}`;
+    const { error: uploadError } = await supabase.storage
+      .from(LOGO_BUCKET)
+      .upload(path, logo as File, { contentType: (logo as File).type });
+
+    if (uploadError) {
+      console.error("Impossible de téléverser le logo :", uploadError.message);
+      return { error: "Impossible de téléverser le logo. Réessayez.", success: false };
+    }
+
+    logoUrl = supabase.storage.from(LOGO_BUCKET).getPublicUrl(path).data.publicUrl;
+  }
+
   // companies_update_owner (owner_id = auth.uid()) already scopes this —
   // ordinary authenticated client, no service_role needed. slug is
   // intentionally not editable here: it's the company's stable URL
@@ -41,7 +96,10 @@ export async function updateCompanyProfile(
       name,
       phone: phone || null,
       email: email || null,
-      logo_url: logoUrl || null,
+      // logoUrl undefined (pas de nouveau fichier) : la colonne n'est
+      // simplement pas incluse dans l'objet, donc jamais touchée par cet
+      // update — le logo existant reste inchangé.
+      ...(logoUrl !== undefined ? { logo_url: logoUrl } : {}),
     })
     .eq("id", access.company.id);
 
