@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { formatFcfa } from "shared";
+import { getDestinationCitiesForOrigin, getOriginCities } from "@/lib/routes";
+import { SearchWidget } from "../SearchWidget";
 import {
   CompanyLogo,
   DurationBadge,
@@ -112,6 +114,19 @@ export default async function RecherchePage(props: PageProps<"/recherche">) {
     );
   }
 
+  const today = new Date().toISOString().split("T")[0];
+
+  // Widget compact : préremplit avec la recherche en cours plutôt qu'un
+  // formulaire vide. Suspendu pendant le choix du trajet retour
+  // (outboundTripId) — la bannière "Trajet aller sélectionné" ci-dessous
+  // gère déjà ce cas précis (villes inversées par rapport à une recherche
+  // normale), un widget générique y ferait doublon/contresens.
+  const showSearchWidget = !outboundTripId;
+  const [originCities, destinationCitiesForOrigin] = await Promise.all([
+    showSearchWidget ? getOriginCities() : Promise.resolve([]),
+    showSearchWidget ? getDestinationCitiesForOrigin(origin) : Promise.resolve([]),
+  ]);
+
   // Presence of outboundTripId means this search IS the return leg of a
   // round trip (the traveler already picked their outbound trip) — each
   // result here must lead to the combined round-trip confirmation page,
@@ -134,6 +149,24 @@ export default async function RecherchePage(props: PageProps<"/recherche">) {
 
   return (
     <PageShell title={`${origin} → ${destination}`}>
+      {showSearchWidget ? (
+        <div className="mb-6 flex justify-center">
+          <SearchWidget
+            compact
+            originCities={originCities}
+            defaultOrigin={origin}
+            initialDestinationCities={destinationCitiesForOrigin}
+            initialDestination={destination}
+            today={today}
+            initialDate={date}
+            initialReturnDate={returnDate && isValidDate(returnDate) ? returnDate : today}
+            initialAdults={Number(adults)}
+            initialChildren={Number(children)}
+            initialTripType={returnDate ? "round-trip" : "one-way"}
+          />
+        </div>
+      ) : null}
+
       {outboundTripId && outboundTrip ? (
         <p className="mb-4 rounded-xl bg-primary/10 px-4 py-3 text-sm text-muted">
           Trajet aller sélectionné :{" "}

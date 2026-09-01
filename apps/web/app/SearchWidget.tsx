@@ -40,20 +40,42 @@ export function SearchWidget({
   defaultOrigin,
   initialDestinationCities,
   today,
+  initialDestination = "",
+  initialDate = today,
+  initialReturnDate = today,
+  initialAdults = 1,
+  initialChildren = 0,
+  initialTripType = "one-way",
+  compact = false,
 }: {
   originCities: string[];
   defaultOrigin: string;
   initialDestinationCities: string[];
   today: string;
+  // Tout préremplissage au-delà de defaultOrigin/initialDestinationCities
+  // (déjà utilisés tels quels) — sert la version compacte de /recherche,
+  // qui doit refléter la recherche en cours plutôt qu'un formulaire vide.
+  // Valeurs par défaut = comportement exact d'avant sur l'accueil.
+  initialDestination?: string;
+  initialDate?: string;
+  initialReturnDate?: string;
+  initialAdults?: number;
+  initialChildren?: number;
+  initialTripType?: "one-way" | "round-trip";
+  // Bandeau noir + titre/slogan n'existent que dans le hero de l'accueil
+  // (page.tsx), pas dans ce composant — compact ne change ici que le style
+  // du sélecteur Aller simple/Aller-retour, seule partie de ce composant
+  // pensée pour un fond sombre (bg-white/5, text-on-ink-muted).
+  compact?: boolean;
 }) {
-  const [tripType, setTripType] = useState<"one-way" | "round-trip">("one-way");
+  const [tripType, setTripType] = useState<"one-way" | "round-trip">(initialTripType);
   const [origin, setOrigin] = useState(defaultOrigin);
-  const [destination, setDestination] = useState("");
+  const [destination, setDestination] = useState(initialDestination);
   const [destinationCities, setDestinationCities] = useState(initialDestinationCities);
-  const [date, setDate] = useState(today);
-  const [returnDate, setReturnDate] = useState(today);
-  const [adults, setAdults] = useState(1);
-  const [children, setChildren] = useState(0);
+  const [date, setDate] = useState(initialDate);
+  const [returnDate, setReturnDate] = useState(initialReturnDate);
+  const [adults, setAdults] = useState(initialAdults);
+  const [children, setChildren] = useState(initialChildren);
   const [passengersOpen, setPassengersOpen] = useState(false);
   const passengersRef = useRef<HTMLDivElement>(null);
 
@@ -157,16 +179,22 @@ export function SearchWidget({
       : "lg:grid-cols-[1.15fr_1.15fr_0.9fr_0.7fr_11.5rem]";
   const dateFieldDivider = tripType === "round-trip" ? "border-b border-border sm:border-b-0 sm:border-r" : "";
 
+  const inactiveTabClasses = compact
+    ? "text-muted hover:text-foreground"
+    : "text-on-ink-muted hover:text-on-ink";
+
   return (
     <div className="flex w-full flex-col items-center gap-4">
-      <div className="flex items-center gap-1 rounded-full border border-white/15 bg-white/5 p-1">
+      <div
+        className={`flex items-center gap-1 rounded-full border p-1 ${
+          compact ? "border-border bg-surface" : "border-white/15 bg-white/5"
+        }`}
+      >
         <button
           type="button"
           onClick={() => setTripType("one-way")}
           className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${
-            tripType === "one-way"
-              ? "bg-primary text-primary-foreground"
-              : "text-on-ink-muted hover:text-on-ink"
+            tripType === "one-way" ? "bg-primary text-primary-foreground" : inactiveTabClasses
           }`}
         >
           Aller simple
@@ -175,9 +203,7 @@ export function SearchWidget({
           type="button"
           onClick={() => setTripType("round-trip")}
           className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${
-            tripType === "round-trip"
-              ? "bg-primary text-primary-foreground"
-              : "text-on-ink-muted hover:text-on-ink"
+            tripType === "round-trip" ? "bg-primary text-primary-foreground" : inactiveTabClasses
           }`}
         >
           Aller-retour
