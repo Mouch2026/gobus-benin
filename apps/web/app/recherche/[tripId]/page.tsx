@@ -3,11 +3,13 @@ import { supabase } from "@/lib/supabase";
 import { getOptionalUser } from "@/lib/supabase/dal";
 import { formatFcfa } from "shared";
 import {
+  DurationBadge,
   EmptyState,
   PageShell,
   RouteLine,
   SEAT_CLASS_LABELS,
   formatDepartureDateTime,
+  formatDepartureTime,
 } from "../_shared";
 import { BookingForm } from "./BookingForm";
 
@@ -27,6 +29,7 @@ function isValidDate(value: string): boolean {
 type TripDetail = {
   id: string;
   departure_at: string;
+  arrival_at: string | null;
   seat_class: string;
   price_fcfa: number;
   available_seats: number;
@@ -42,7 +45,7 @@ async function getTrip(tripId: string): Promise<TripDetail | null> {
   const { data, error } = await supabase
     .from("trips")
     .select(
-      "id, departure_at, seat_class, price_fcfa, available_seats, routes!inner(origin_city, destination_city), companies!inner(name)"
+      "id, departure_at, arrival_at, seat_class, price_fcfa, available_seats, routes!inner(origin_city, destination_city), companies!inner(name)"
     )
     .eq("id", tripId)
     .maybeSingle();
@@ -91,10 +94,16 @@ export default async function TripDetailPage(props: PageProps<"/recherche/[tripI
             </span>
           </div>
 
+          {trip.arrival_at ? (
+            <div className="flex justify-center">
+              <DurationBadge departureAt={trip.departure_at} arrivalAt={trip.arrival_at} />
+            </div>
+          ) : null}
           <RouteLine
             origin={trip.routes.origin_city}
             destination={trip.routes.destination_city}
             departureLabel={formatDepartureDateTime(trip.departure_at)}
+            arrivalLabel={trip.arrival_at ? formatDepartureTime(trip.arrival_at) : undefined}
           />
 
           <div className="flex items-center justify-between border-t border-border pt-4">

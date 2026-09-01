@@ -17,6 +17,7 @@ import { EditTripForm } from "./EditTripForm";
 type TripDetail = {
   id: string;
   departure_at: string;
+  arrival_at: string | null;
   seat_class: string;
   price_fcfa: number;
   total_seats: number;
@@ -42,7 +43,7 @@ async function getOwnedTrip(tripId: string, companyId: string): Promise<TripDeta
   const { data, error } = await supabase
     .from("trips")
     .select(
-      "id, departure_at, seat_class, price_fcfa, total_seats, available_seats, status, bus_layout_id, bus_number, route_id, routes!inner(origin_city, destination_city, distance_km, line_number)"
+      "id, departure_at, arrival_at, seat_class, price_fcfa, total_seats, available_seats, status, bus_layout_id, bus_number, route_id, routes!inner(origin_city, destination_city, distance_km, line_number)"
     )
     .eq("id", tripId)
     .eq("company_id", companyId)

@@ -30,6 +30,14 @@ function formatDepartureDateTime(departureAt: string): string {
   }).format(new Date(departureAt));
 }
 
+function formatDepartureTime(departureAt: string): string {
+  return new Intl.DateTimeFormat("fr-BJ", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Africa/Porto-Novo",
+  }).format(new Date(departureAt));
+}
+
 function BookingCard({ booking }: { booking: BookingSummary }) {
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-border bg-background p-4">
@@ -46,6 +54,7 @@ function BookingCard({ booking }: { booking: BookingSummary }) {
           <span className="text-sm text-muted">
             {booking.trips.routes.origin_city} → {booking.trips.routes.destination_city} ·{" "}
             {formatDepartureDateTime(booking.trips.departure_at)}
+            {booking.trips.arrival_at ? ` → ${formatDepartureTime(booking.trips.arrival_at)}` : ""}
           </span>
           <span className="text-sm text-muted">Bus n° {booking.trips.bus_number}</span>
         </>

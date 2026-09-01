@@ -16,6 +16,7 @@ export type BookingSummary = {
   total_price_fcfa: number;
   trips: {
     departure_at: string;
+    arrival_at: string | null;
     bus_number: string;
     routes: { origin_city: string; destination_city: string };
   } | null;
@@ -55,7 +56,7 @@ export async function lookupBooking(
   const { data: booking } = await supabaseAdmin
     .from("bookings")
     .select(
-      "id, booking_reference, booking_group_id, leg, status, total_price_fcfa, phone, trips(departure_at, bus_number, routes(origin_city, destination_city)), passengers(id, full_name, seat_number)"
+      "id, booking_reference, booking_group_id, leg, status, total_price_fcfa, phone, trips(departure_at, arrival_at, bus_number, routes(origin_city, destination_city)), passengers(id, full_name, seat_number)"
     )
     .eq("booking_reference", reference)
     .maybeSingle<BookingWithGroup>();
@@ -79,7 +80,7 @@ export async function lookupBooking(
     const { data } = await supabaseAdmin
       .from("bookings")
       .select(
-        "id, booking_reference, leg, status, total_price_fcfa, trips(departure_at, bus_number, routes(origin_city, destination_city)), passengers(id, full_name, seat_number)"
+        "id, booking_reference, leg, status, total_price_fcfa, trips(departure_at, arrival_at, bus_number, routes(origin_city, destination_city)), passengers(id, full_name, seat_number)"
       )
       .eq("booking_group_id", booking.booking_group_id)
       .neq("id", booking.id)

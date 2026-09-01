@@ -2,7 +2,12 @@ import Link from "next/link";
 import { requireUser } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
 import { formatFcfa } from "shared";
-import { EmptyState, PageShell, formatDepartureDateTime } from "../../recherche/_shared";
+import {
+  EmptyState,
+  PageShell,
+  formatDepartureDateTime,
+  formatDepartureTime,
+} from "../../recherche/_shared";
 
 type BookingRow = {
   id: string;
@@ -13,6 +18,7 @@ type BookingRow = {
   leg: "outbound" | "return" | null;
   trips: {
     departure_at: string;
+    arrival_at: string | null;
     bus_number: string;
     routes: { origin_city: string; destination_city: string };
   } | null;
@@ -35,7 +41,7 @@ async function getUserBookings(userId: string): Promise<BookingRow[]> {
   const { data, error } = await supabase
     .from("bookings")
     .select(
-      "id, booking_reference, status, total_price_fcfa, booking_group_id, leg, trips!inner(departure_at, bus_number, routes(origin_city, destination_city))"
+      "id, booking_reference, status, total_price_fcfa, booking_group_id, leg, trips!inner(departure_at, arrival_at, bus_number, routes(origin_city, destination_city))"
     )
     .eq("user_id", userId)
     // Verified live against this project's PostgREST: ordering by a
@@ -89,8 +95,11 @@ export default async function MesReservationsPage() {
                     {booking.trips ? (
                       <span className="text-sm text-muted">
                         {booking.trips.routes.origin_city} → {booking.trips.routes.destination_city} ·{" "}
-                        {formatDepartureDateTime(booking.trips.departure_at)} · Bus n°{" "}
-                        {booking.trips.bus_number}
+                        {formatDepartureDateTime(booking.trips.departure_at)}
+                        {booking.trips.arrival_at
+                          ? ` → ${formatDepartureTime(booking.trips.arrival_at)}`
+                          : ""}{" "}
+                        · Bus n° {booking.trips.bus_number}
                       </span>
                     ) : null}
                   </div>

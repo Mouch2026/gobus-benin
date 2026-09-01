@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireCompany } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
+import { computeArrivalAt } from "@/lib/duration";
 
 export type EditTripState = { error: string | null };
 
@@ -10,6 +11,7 @@ type TripForEdit = {
   id: string;
   company_id: string;
   departure_at: string;
+  arrival_at: string | null;
   total_seats: number;
   available_seats: number;
   status: string;
@@ -24,7 +26,9 @@ async function getOwnedTrip(
 ): Promise<TripForEdit | null> {
   const { data, error } = await supabase
     .from("trips")
-    .select("id, company_id, departure_at, total_seats, available_seats, status, route_id, price_fcfa")
+    .select(
+      "id, company_id, departure_at, arrival_at, total_seats, available_seats, status, route_id, price_fcfa"
+    )
     .eq("id", tripId)
     .eq("company_id", companyId)
     .maybeSingle();
@@ -50,6 +54,8 @@ export async function updateTripDetails(
   const priceRaw = String(formData.get("priceFcfa") ?? "");
   const totalSeatsRaw = String(formData.get("totalSeats") ?? "");
   const busNumber = String(formData.get("busNumber") ?? "").trim();
+  const durationHoursRaw = String(formData.get("durationHours") ?? "");
+  const durationMinutesRaw = String(formData.get("durationMinutes") ?? "");
 
   const priceFcfa = Number(priceRaw);
   if (!Number.isInteger(priceFcfa) || priceFcfa < 0) {
@@ -72,18 +78,32 @@ export async function updateTripDetails(
     return { error: "Ce trajet n'existe pas ou ne vous appartient pas." };
   }
 
+  const arrival = computeArrivalAt(trip.departure_at, durationHoursRaw, durationMinutesRaw);
+  if (!arrival.ok) {
+    return { error: arrival.error };
+  }
+
   const tripDeparted = new Date(trip.departure_at).getTime() <= Date.now();
+  const arrivalChanged =
+    (trip.arrival_at === null) !== (arrival.arrivalAt === null) ||
+    (trip.arrival_at !== null &&
+      arrival.arrivalAt !== null &&
+      new Date(trip.arrival_at).getTime() !== new Date(arrival.arrivalAt).getTime());
 
   // Le garde-fou "trajet déjà parti" ne s'applique qu'à price_fcfa/
-  // total_seats — des grandeurs propres à ce trajet précis, qu'il n'est
-  // plus logique de changer une fois qu'il est parti — et seulement si
-  // l'une des deux a réellement changé par rapport à la valeur actuelle
-  // (total_seats est de toute façon toujours un champ caché dérivé du plan
-  // de bus, jamais modifiable via l'UI ; gardé par symétrie/défense).
-  // bus_number a sa propre condition, indépendante de departure_at : une
-  // réaffectation de flotte peut légitimement être constatée après le
-  // départ, tant que le trajet n'est pas terminé/annulé (voir plus bas).
-  if (tripDeparted && (priceFcfa !== trip.price_fcfa || newTotalSeats !== trip.total_seats)) {
+  // total_seats/durée estimée — des grandeurs propres à ce trajet précis,
+  // qu'il n'est plus logique de changer une fois qu'il est parti — et
+  // seulement si l'une d'elles a réellement changé par rapport à la valeur
+  // actuelle (total_seats est de toute façon toujours un champ caché
+  // dérivé du plan de bus, jamais modifiable via l'UI ; gardé par
+  // symétrie/défense). bus_number a sa propre condition, indépendante de
+  // departure_at : une réaffectation de flotte peut légitimement être
+  // constatée après le départ, tant que le trajet n'est pas terminé/annulé
+  // (voir plus bas).
+  if (
+    tripDeparted &&
+    (priceFcfa !== trip.price_fcfa || newTotalSeats !== trip.total_seats || arrivalChanged)
+  ) {
     return { error: "Ce trajet est déjà parti, il ne peut plus être modifié." };
   }
 
@@ -112,6 +132,7 @@ export async function updateTripDetails(
       total_seats: newTotalSeats,
       available_seats: newAvailableSeats,
       bus_number: busNumber,
+      arrival_at: arrival.arrivalAt,
     })
     .eq("id", tripId);
 

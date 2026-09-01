@@ -154,6 +154,34 @@ export function NewTripForm({
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
+          <label htmlFor="durationHours" className={LABEL_CLASSES}>
+            Durée estimée — heures (optionnel)
+          </label>
+          <input
+            id="durationHours"
+            name="durationHours"
+            type="number"
+            min={0}
+            className={FIELD_CLASSES}
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="durationMinutes" className={LABEL_CLASSES}>
+            Durée estimée — minutes (optionnel)
+          </label>
+          <input
+            id="durationMinutes"
+            name="durationMinutes"
+            type="number"
+            min={0}
+            max={59}
+            className={FIELD_CLASSES}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="flex flex-col gap-1.5">
           <label htmlFor="priceFcfa" className={LABEL_CLASSES}>
             Prix (FCFA)
           </label>

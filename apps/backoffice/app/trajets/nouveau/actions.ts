@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { requireCompany } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { computeArrivalAt } from "@/lib/duration";
 
 export type NewTripState = { error: string | null };
 
@@ -129,6 +130,8 @@ export async function createTrip(
   const departureTime = String(formData.get("departureTime") ?? "");
   const priceRaw = String(formData.get("priceFcfa") ?? "");
   const totalSeatsRaw = String(formData.get("totalSeats") ?? "");
+  const durationHoursRaw = String(formData.get("durationHours") ?? "");
+  const durationMinutesRaw = String(formData.get("durationMinutes") ?? "");
 
   if (!originCity || !destinationCity) {
     return { error: "Merci de renseigner les deux villes." };
@@ -180,6 +183,11 @@ export async function createTrip(
     return { error: "La date de départ doit être dans le futur." };
   }
 
+  const arrival = computeArrivalAt(departureAt, durationHoursRaw, durationMinutesRaw);
+  if (!arrival.ok) {
+    return { error: arrival.error };
+  }
+
   const supabase = await createClient();
 
   let routeId: string;
@@ -209,6 +217,7 @@ export async function createTrip(
       bus_number: busNumber,
       seat_class: seatClass,
       departure_at: departureAt,
+      arrival_at: arrival.arrivalAt,
       price_fcfa: priceFcfa,
       // If busLayoutId is set, set_trip_seats_from_layout overrides both of
       // these from the layout's seat count regardless of what's submitted

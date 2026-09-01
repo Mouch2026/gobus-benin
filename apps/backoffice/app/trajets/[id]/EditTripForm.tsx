@@ -3,11 +3,14 @@
 import { useActionState } from "react";
 import { updateTripDetails, updateTripRoute, cancelTrip, type EditTripState } from "./actions";
 import { FIELD_CLASSES, LABEL_CLASSES } from "../../_shared";
+import { splitDuration } from "@/lib/duration";
 
 const initialState: EditTripState = { error: null };
 
 type Trip = {
   id: string;
+  departure_at: string;
+  arrival_at: string | null;
   price_fcfa: number;
   total_seats: number;
   available_seats: number;
@@ -32,6 +35,7 @@ export function EditTripForm({ trip }: { trip: Trip }) {
 
   const booked = trip.total_seats - trip.available_seats;
   const canCancel = trip.status !== "cancelled" && trip.status !== "completed";
+  const currentDuration = splitDuration(trip.departure_at, trip.arrival_at);
 
   return (
     <div className="flex flex-col gap-6">
@@ -68,6 +72,36 @@ export function EditTripForm({ trip }: { trip: Trip }) {
           <span className="text-xs text-zinc-500 dark:text-zinc-400">
             Modifiable tant que le trajet n&apos;est pas parti (panne, réaffectation de flotte).
           </span>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="durationHours" className={LABEL_CLASSES}>
+              Durée estimée — heures (optionnel)
+            </label>
+            <input
+              id="durationHours"
+              name="durationHours"
+              type="number"
+              min={0}
+              defaultValue={currentDuration.hours}
+              className={FIELD_CLASSES}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="durationMinutes" className={LABEL_CLASSES}>
+              Durée estimée — minutes (optionnel)
+            </label>
+            <input
+              id="durationMinutes"
+              name="durationMinutes"
+              type="number"
+              min={0}
+              max={59}
+              defaultValue={currentDuration.minutes}
+              className={FIELD_CLASSES}
+            />
+          </div>
         </div>
 
         <div className="flex flex-col gap-1.5">

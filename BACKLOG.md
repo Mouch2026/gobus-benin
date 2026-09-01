@@ -16,6 +16,11 @@ Liste vivante, à mettre à jour au fil du développement (pas figée à un inst
   avec QR code (c'est la raison pour laquelle le compte voyageur a été
   rendu obligatoire — l'infrastructure d'envoi d'e-mails n'est pas encore
   construite).
+- Alerte immédiate au voyageur en cas de changement de dernière minute
+  (panne, changement de bus, retard) — SMS ou notification, distinct de
+  la confirmation de réservation classique par e-mail. Urgent une fois
+  qu'un vrai incident survient en usage réel, contrairement à la
+  confirmation qui peut attendre.
 
 ### Communication compagnie
 - E-mail de confirmation à la compagnie à chaque vente de billet.

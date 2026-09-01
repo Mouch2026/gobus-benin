@@ -47,6 +47,24 @@ export function EmptyState({ children }: { children: ReactNode }) {
   );
 }
 
+export function formatDuration(minutes: number): string {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  if (hours === 0) return `${mins}min`;
+  if (mins === 0) return `${hours}h`;
+  return `${hours}h${String(mins).padStart(2, "0")}`;
+}
+
+// Sièges/prix/réduction volontairement absents ici — uniquement l'horaire.
+export function DurationBadge({ departureAt, arrivalAt }: { departureAt: string; arrivalAt: string }) {
+  const minutes = Math.round((new Date(arrivalAt).getTime() - new Date(departureAt).getTime()) / 60_000);
+  return (
+    <span className="self-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary-foreground">
+      {formatDuration(minutes)}
+    </span>
+  );
+}
+
 export function RouteLine({
   origin,
   destination,

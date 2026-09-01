@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
 import { generateTicketQrSvg } from "@/lib/qrcode";
 import { formatFcfa } from "shared";
+import { DurationBadge, formatDepartureDateTime, formatDepartureTime } from "../../../../recherche/_shared";
 
 type BookingWithTrip = {
   id: string;
@@ -13,6 +14,7 @@ type BookingWithTrip = {
   total_price_fcfa: number;
   trips: {
     departure_at: string;
+    arrival_at: string | null;
     bus_number: string;
     routes: { origin_city: string; destination_city: string };
   } | null;
@@ -43,7 +45,7 @@ export default async function SuccesAllerRetourPage(
   const { data: bookings } = await supabase
     .from("bookings")
     .select(
-      "id, leg, booking_reference, status, seat_count, total_price_fcfa, trips(departure_at, bus_number, routes(origin_city, destination_city)), passengers(id, full_name, seat_number)"
+      "id, leg, booking_reference, status, seat_count, total_price_fcfa, trips(departure_at, arrival_at, bus_number, routes(origin_city, destination_city)), passengers(id, full_name, seat_number)"
     )
     .eq("booking_group_id", groupId)
     .eq("user_id", user.sub)
@@ -111,6 +113,22 @@ export default async function SuccesAllerRetourPage(
                 <p className="text-muted">
                   {booking.trips.routes.origin_city} → {booking.trips.routes.destination_city}
                 </p>
+                {booking.trips.arrival_at ? (
+                  <div className="mt-1 flex flex-col items-center gap-1">
+                    <DurationBadge
+                      departureAt={booking.trips.departure_at}
+                      arrivalAt={booking.trips.arrival_at}
+                    />
+                    <p className="text-muted">
+                      {formatDepartureTime(booking.trips.departure_at)} →{" "}
+                      {formatDepartureTime(booking.trips.arrival_at)}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-muted">
+                    Départ {formatDepartureDateTime(booking.trips.departure_at)}
+                  </p>
+                )}
                 <p className="text-muted">Bus n° {booking.trips.bus_number}</p>
               </>
             ) : null}

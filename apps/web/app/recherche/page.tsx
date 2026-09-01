@@ -1,11 +1,19 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { formatFcfa } from "shared";
-import { EmptyState, PageShell, RouteLine, SEAT_CLASS_LABELS, formatDepartureTime } from "./_shared";
+import {
+  DurationBadge,
+  EmptyState,
+  PageShell,
+  RouteLine,
+  SEAT_CLASS_LABELS,
+  formatDepartureTime,
+} from "./_shared";
 
 type TripSearchResult = {
   id: string;
   departure_at: string;
+  arrival_at: string | null;
   seat_class: string;
   price_fcfa: number;
   available_seats: number;
@@ -42,7 +50,7 @@ async function searchTrips(
   const { data, error } = await supabase
     .from("trips")
     .select(
-      "id, departure_at, seat_class, price_fcfa, available_seats, routes!inner(origin_city, destination_city), companies!inner(name)"
+      "id, departure_at, arrival_at, seat_class, price_fcfa, available_seats, routes!inner(origin_city, destination_city), companies!inner(name)"
     )
     .eq("routes.origin_city", origin)
     .eq("routes.destination_city", destination)
@@ -157,10 +165,18 @@ export default async function RecherchePage(props: PageProps<"/recherche">) {
                     </span>
                     <span>{SEAT_CLASS_LABELS[trip.seat_class] ?? trip.seat_class}</span>
                   </div>
+                  {trip.arrival_at ? (
+                    <div className="flex justify-center">
+                      <DurationBadge departureAt={trip.departure_at} arrivalAt={trip.arrival_at} />
+                    </div>
+                  ) : null}
                   <RouteLine
                     origin={trip.routes.origin_city}
                     destination={trip.routes.destination_city}
-                    departureLabel={`Départ ${formatDepartureTime(trip.departure_at)}`}
+                    departureLabel={
+                      trip.arrival_at ? formatDepartureTime(trip.departure_at) : `Départ ${formatDepartureTime(trip.departure_at)}`
+                    }
+                    arrivalLabel={trip.arrival_at ? formatDepartureTime(trip.arrival_at) : undefined}
                   />
                   <span className="text-sm text-muted">
                     {trip.available_seats} place{trip.available_seats > 1 ? "s" : ""} disponible
