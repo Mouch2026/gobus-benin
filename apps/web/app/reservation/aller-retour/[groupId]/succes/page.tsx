@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { generateTicketQrSvg } from "@/lib/qrcode";
 import { formatFcfa } from "shared";
 import { DurationBadge, formatDepartureDateTime, formatDepartureTime } from "../../../../recherche/_shared";
+import { CancelBookingButton } from "../../../CancelBookingButton";
 
 type BookingWithTrip = {
   id: string;
@@ -19,6 +20,7 @@ type BookingWithTrip = {
     routes: { origin_city: string; destination_city: string };
   } | null;
   passengers: { id: string; full_name: string; seat_number: string | null }[];
+  payments: { base_amount_fcfa: number; status: string }[];
 };
 
 function Message({ children }: { children: React.ReactNode }) {
@@ -45,7 +47,7 @@ export default async function SuccesAllerRetourPage(
   const { data: bookings } = await supabase
     .from("bookings")
     .select(
-      "id, leg, booking_reference, status, seat_count, total_price_fcfa, trips(departure_at, arrival_at, bus_number, routes(origin_city, destination_city)), passengers(id, full_name, seat_number)"
+      "id, leg, booking_reference, status, seat_count, total_price_fcfa, trips(departure_at, arrival_at, bus_number, routes(origin_city, destination_city)), passengers(id, full_name, seat_number), payments(base_amount_fcfa, status)"
     )
     .eq("booking_group_id", groupId)
     .eq("user_id", user.sub)
@@ -58,7 +60,11 @@ export default async function SuccesAllerRetourPage(
   const outbound = bookings.find((b) => b.leg === "outbound")!;
   const returnLeg = bookings.find((b) => b.leg === "return")!;
 
-  if (outbound.status !== "confirmed" || returnLeg.status !== "confirmed") {
+  // "pending" seul signifie "jamais payé" — un leg "cancelled" a bien été
+  // payé puis annulé indépendamment de l'autre (voir cancel_booking()),
+  // ce n'est pas "pas encore payé" et ne doit pas afficher cette invite à
+  // payer.
+  if (outbound.status === "pending" || returnLeg.status === "pending") {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-4 text-center">
         <p className="max-w-sm rounded-2xl border border-border bg-surface p-6 text-muted">
@@ -101,9 +107,29 @@ export default async function SuccesAllerRetourPage(
           Aller-retour confirmé
         </h1>
 
-        {legs.map(({ label, booking, qrSvg }) => (
+        {legs.map(({ label, booking, qrSvg }) => {
+          // Prévisualisation par leg — chaque leg a son propre départ, son
+          // propre paiement, et est annulable indépendamment de l'autre.
+          const approvedPayment = booking.payments.find((p) => p.status === "approved");
+          const departureAt = booking.trips ? new Date(booking.trips.departure_at).getTime() : 0;
+          const canCancel =
+            booking.status === "confirmed" &&
+            booking.trips !== null &&
+            departureAt > Date.now() &&
+            !!approvedPayment;
+          const refundPreviewFcfa =
+            canCancel && departureAt - Date.now() > 30 * 60 * 1000 ? approvedPayment!.base_amount_fcfa : 0;
+
+          return (
           <div key={booking.id} className="mt-4 border-t border-border pt-4 text-left text-sm">
-            <p className="font-semibold text-foreground">{label}</p>
+            <div className="flex items-center gap-2">
+              <p className="font-semibold text-foreground">{label}</p>
+              {booking.status === "cancelled" ? (
+                <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">
+                  Annulée
+                </span>
+              ) : null}
+            </div>
             <p className="text-muted">
               Référence :{" "}
               <span className="font-semibold text-foreground">{booking.booking_reference}</span>
@@ -146,8 +172,12 @@ export default async function SuccesAllerRetourPage(
               className="mx-auto mt-3 w-fit rounded-xl bg-white p-3"
               dangerouslySetInnerHTML={{ __html: qrSvg }}
             />
+            {canCancel ? (
+              <CancelBookingButton bookingId={booking.id} refundPreviewFcfa={refundPreviewFcfa} />
+            ) : null}
           </div>
-        ))}
+          );
+        })}
 
         <div className="mt-4 flex items-center justify-between border-t border-border pt-4 text-sm">
           <span className="text-muted">Montant total payé</span>

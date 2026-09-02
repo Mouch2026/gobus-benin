@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { generateTicketQrSvg } from "@/lib/qrcode";
 import { formatFcfa } from "shared";
 import { DurationBadge, formatDepartureDateTime, formatDepartureTime } from "../../../recherche/_shared";
+import { CancelBookingButton } from "../../CancelBookingButton";
 
 type BookingWithTrip = {
   id: string;
@@ -19,6 +20,7 @@ type BookingWithTrip = {
     routes: { origin_city: string; destination_city: string };
   } | null;
   passengers: { id: string; full_name: string; seat_number: string | null }[];
+  payments: { base_amount_fcfa: number; status: string }[];
 };
 
 function Message({ children }: { children: React.ReactNode }) {
@@ -43,7 +45,7 @@ export default async function SuccesPage(props: PageProps<"/reservation/[booking
   const { data: booking } = await supabase
     .from("bookings")
     .select(
-      "id, booking_reference, status, seat_count, total_price_fcfa, phone, trips(departure_at, arrival_at, bus_number, routes(origin_city, destination_city)), passengers(id, full_name, seat_number)"
+      "id, booking_reference, status, seat_count, total_price_fcfa, phone, trips(departure_at, arrival_at, bus_number, routes(origin_city, destination_city)), passengers(id, full_name, seat_number), payments(base_amount_fcfa, status)"
     )
     .eq("id", bookingId)
     .eq("user_id", user.sub)
@@ -80,6 +82,15 @@ export default async function SuccesPage(props: PageProps<"/reservation/[booking
     .maybeSingle<{ points_amount: number }>();
 
   const qrSvg = await generateTicketQrSvg(booking.booking_reference);
+
+  // Prévisualisation uniquement — cancel_booking() recalcule strictement
+  // la même règle côté serveur au moment de l'annulation réelle. Calculé
+  // ici (Server Component), jamais côté client.
+  const approvedPayment = booking.payments.find((p) => p.status === "approved");
+  const departureAt = booking.trips ? new Date(booking.trips.departure_at).getTime() : 0;
+  const canCancel = booking.trips !== null && departureAt > Date.now() && !!approvedPayment;
+  const refundPreviewFcfa =
+    canCancel && departureAt - Date.now() > 30 * 60 * 1000 ? approvedPayment!.base_amount_fcfa : 0;
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-background px-4 py-16">
@@ -149,6 +160,10 @@ export default async function SuccesPage(props: PageProps<"/reservation/[booking
         >
           Retour à l&apos;accueil
         </Link>
+
+        {canCancel ? (
+          <CancelBookingButton bookingId={booking.id} refundPreviewFcfa={refundPreviewFcfa} />
+        ) : null}
       </div>
     </div>
   );
