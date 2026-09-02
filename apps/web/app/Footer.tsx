@@ -15,6 +15,9 @@ export function Footer() {
           <Link href="/aide" className="hover:text-foreground">
             Aide
           </Link>
+          <Link href="/assistance-voyageurs" className="hover:text-foreground">
+            Assistance voyageurs
+          </Link>
           <Link href="/confidentialite" className="hover:text-foreground">
             Confidentialité
           </Link>
