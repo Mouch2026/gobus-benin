@@ -46,6 +46,14 @@
   toujours des commandes manuelles que l'utilisateur tape lui-même après
   review humaine. Une migration ou un commit que tu proposes doit toujours
   être montré et laissé en attente, jamais appliqué automatiquement.
+- Ne jamais utiliser un jeton d'accès, une clé API, ou un identifiant en
+  cache découvert sur la machine (ex. ~/.supabase/access-token) pour
+  interroger une API externe/de gestion en dehors de ce que l'utilisateur
+  a explicitement demandé — même en lecture seule, même pour une simple
+  vérification. Un jeton d'accès personnel a souvent une portée plus
+  large que le seul projet en cours (accès à d'autres projets du compte).
+  Demander la permission explicite avant toute utilisation d'un tel
+  identifiant, aussi anodine soit-elle.
 
 ## Où chercher
 - Schéma de données  → supabase/migrations/
