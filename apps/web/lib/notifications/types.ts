@@ -18,8 +18,10 @@ export type BookingConfirmationLeg = {
   // null pour un aller simple (une seule leg, pas de distinction à faire).
   legLabel: "Aller" | "Retour" | null;
   bookingReference: string;
+  companyId: string;
   companyName: string;
   companyLogoUrl: string | null;
+  companyEmail: string | null;
   originCity: string;
   destinationCity: string;
   departureAt: string; // ISO

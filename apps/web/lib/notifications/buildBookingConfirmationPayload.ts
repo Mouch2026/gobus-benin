@@ -15,7 +15,7 @@ type BookingRow = {
     bus_number: string;
     seat_class: string;
     routes: { origin_city: string; destination_city: string };
-    companies: { name: string; logo_url: string | null };
+    companies: { id: string; name: string; logo_url: string | null; email: string | null };
   };
   passengers: { full_name: string; seat_number: string | null }[];
   payments: {
@@ -28,7 +28,7 @@ type BookingRow = {
 
 const BOOKING_SELECT =
   "id, booking_reference, leg, user_id, phone, " +
-  "trips(departure_at, arrival_at, bus_number, seat_class, routes(origin_city, destination_city), companies(name, logo_url)), " +
+  "trips(departure_at, arrival_at, bus_number, seat_class, routes(origin_city, destination_city), companies(id, name, logo_url, email)), " +
   "passengers(full_name, seat_number), " +
   "payments(base_amount_fcfa, platform_fee_fcfa, transaction_fee_fcfa, amount_fcfa)";
 
@@ -44,8 +44,10 @@ function toLeg(booking: BookingRow): BookingConfirmationLeg {
   return {
     legLabel: booking.leg === "outbound" ? "Aller" : booking.leg === "return" ? "Retour" : null,
     bookingReference: booking.booking_reference,
+    companyId: booking.trips.companies.id,
     companyName: booking.trips.companies.name,
     companyLogoUrl: booking.trips.companies.logo_url,
+    companyEmail: booking.trips.companies.email,
     originCity: booking.trips.routes.origin_city,
     destinationCity: booking.trips.routes.destination_city,
     departureAt: booking.trips.departure_at,
