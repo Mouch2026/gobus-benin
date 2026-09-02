@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { calculateServiceFees } from "shared";
+import { sendBookingConfirmation } from "@/lib/notifications/sendBookingConfirmation";
 
 type BookingForPayment = {
   id: string;
@@ -77,6 +78,11 @@ export async function simulatePayment(bookingId: string): Promise<void> {
   // avancer sinon, elle resterait 'pending' indéfiniment malgré le
   // paiement approuvé.
   await supabaseAdmin.from("bookings").update({ status: "confirmed" }).eq("id", bookingId);
+
+  // Un échec d'envoi ne doit jamais bloquer une réservation déjà payée —
+  // sendBookingConfirmation() avale ses propres erreurs (voir son
+  // commentaire), rien à gérer ici au-delà de l'await.
+  await sendBookingConfirmation({ bookingId });
 
   redirect(`/reservation/${bookingId}/succes`);
 }

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { sendBookingConfirmation } from "@/lib/notifications/sendBookingConfirmation";
 
 type BookingRow = { id: string; leg: string; status: string; user_id: string };
 
@@ -47,6 +48,11 @@ export async function simulateRoundTripPayment(groupId: string): Promise<void> {
     console.error("Impossible de payer l'aller-retour :", error.message);
     redirect(`/reservation/aller-retour/${groupId}/paiement`);
   }
+
+  // Un seul e-mail pour les deux legs — voir sendBookingConfirmation() et
+  // buildBookingConfirmationPayload.ts. Échec d'envoi jamais bloquant,
+  // même raisonnement que le paiement simple.
+  await sendBookingConfirmation({ bookingGroupId: groupId });
 
   redirect(`/reservation/aller-retour/${groupId}/succes`);
 }
