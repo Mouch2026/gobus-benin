@@ -21,10 +21,10 @@ export async function resetPassword(
   const supabase = await createClient();
 
   // Pas de ré-authentification par mot de passe actuel ici, contrairement
-  // à changePassword() (/profil) : la session de recovery établie par
-  // /auth/confirm à partir du lien reçu par e-mail EST la preuve
-  // d'identité — c'est tout l'intérêt de ce flux (on ne demande pas
-  // l'ancien mot de passe qu'on a justement oublié).
+  // à changePassword() (back-office /profil) : la session de recovery
+  // établie par /auth/confirm à partir du lien reçu par e-mail EST la
+  // preuve d'identité — c'est tout l'intérêt de ce flux (on ne demande
+  // pas l'ancien mot de passe qu'on a justement oublié).
   const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
 
   if (updateError) {

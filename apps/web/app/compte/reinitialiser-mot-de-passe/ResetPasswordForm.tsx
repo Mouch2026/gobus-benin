@@ -1,56 +1,48 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState } from "react";
-import { login, type LoginState } from "./actions";
+import { resetPassword, type ResetPasswordState } from "./actions";
 
-const initialState: LoginState = { error: null };
+const initialState: ResetPasswordState = { error: null };
 
 const fieldClasses =
   "rounded-xl border border-border bg-background px-3 py-2.5 text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/25";
 const labelClasses = "text-xs font-semibold uppercase tracking-wide text-muted";
 
-export function LoginForm({ redirectTo }: { redirectTo: string }) {
-  const [state, formAction, pending] = useActionState(login, initialState);
+export function ResetPasswordForm() {
+  const [state, formAction, pending] = useActionState(resetPassword, initialState);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
-      <input type="hidden" name="redirectTo" value={redirectTo} />
-
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="email" className={labelClasses}>
-          Email
+        <label htmlFor="newPassword" className={labelClasses}>
+          Nouveau mot de passe
         </label>
         <input
-          id="email"
-          name="email"
-          type="email"
-          required
-          autoComplete="email"
-          className={fieldClasses}
-        />
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="password" className={labelClasses}>
-          Mot de passe
-        </label>
-        <input
-          id="password"
-          name="password"
+          id="newPassword"
+          name="newPassword"
           type="password"
           required
-          autoComplete="current-password"
+          minLength={6}
+          autoComplete="new-password"
           className={fieldClasses}
         />
       </div>
 
-      <Link
-        href="/compte/mot-de-passe-oublie"
-        className="-mt-2 self-end text-xs font-semibold text-primary hover:underline"
-      >
-        Mot de passe oublié ?
-      </Link>
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="confirmPassword" className={labelClasses}>
+          Confirmer le nouveau mot de passe
+        </label>
+        <input
+          id="confirmPassword"
+          name="confirmPassword"
+          type="password"
+          required
+          minLength={6}
+          autoComplete="new-password"
+          className={fieldClasses}
+        />
+      </div>
 
       {state.error ? (
         <p className="text-sm text-red-600" role="alert">
@@ -63,7 +55,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
         disabled={pending}
         className="mt-1 rounded-xl bg-primary px-4 py-3 font-display font-bold text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {pending ? "Connexion..." : "Se connecter"}
+        {pending ? "Enregistrement..." : "Réinitialiser le mot de passe"}
       </button>
     </form>
   );

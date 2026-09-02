@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireCompany } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
-import { validateNewPassword, mapWeakPasswordError } from "@/lib/password";
+import { validateNewPassword, mapWeakPasswordError } from "shared";
 
 export type ProfilFormState = { error: string | null; success: boolean };
 
