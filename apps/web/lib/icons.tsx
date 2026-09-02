@@ -68,6 +68,17 @@ export function TicketIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function QrCodeIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <rect x="3.5" y="3.5" width="6" height="6" rx="1" />
+      <rect x="14.5" y="3.5" width="6" height="6" rx="1" />
+      <rect x="3.5" y="14.5" width="6" height="6" rx="1" />
+      <path d="M14.5 15h2.5M14.5 19h2.5M18.5 15v1.5M18.5 19v1.5M20.5 15v6h-6" />
+    </Icon>
+  );
+}
+
 export function SwapIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <Icon {...props}>

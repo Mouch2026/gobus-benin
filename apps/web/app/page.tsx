@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { formatFcfa } from "shared";
-import { CompareIcon, PhoneIcon, TicketIcon } from "@/lib/icons";
+import { CompareIcon, PhoneIcon, QrCodeIcon, TicketIcon } from "@/lib/icons";
 import { getDestinationCitiesForOrigin, getOriginCities } from "@/lib/routes";
 import { SearchWidget } from "./SearchWidget";
 
@@ -207,6 +207,53 @@ export default async function Home() {
             <p className="text-sm text-muted">
               Réservez et payez en ligne, montez directement à bord le jour du départ.
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------- Application mobile ---------- */}
+      <section className="mx-auto w-full max-w-3xl px-4 pb-20">
+        <div className="grid grid-cols-1 items-center gap-10 sm:grid-cols-2">
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-2">
+              <span className="font-mono text-xs font-medium uppercase tracking-wide text-primary-hover">
+                Application mobile
+              </span>
+              <h2 className="text-balance font-display text-2xl font-extrabold text-foreground sm:text-3xl">
+                Notre application mobile
+              </h2>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                <QrCodeIcon className="h-6 w-6 text-primary-hover" />
+              </span>
+              <div className="flex flex-col gap-1">
+                <h3 className="font-display text-base font-bold text-foreground">
+                  Billets électroniques avec QR code
+                </h3>
+                <p className="text-sm text-muted">
+                  Déjà vrai aujourd&apos;hui sur le site : votre billet est généré avec un QR
+                  code dès l&apos;achat. La même expérience arrive bientôt dans l&apos;application.
+                </p>
+              </div>
+            </div>
+
+            <span className="inline-flex w-fit items-center rounded-full border border-border px-3.5 py-1.5 text-xs font-semibold text-muted">
+              Bientôt disponible
+            </span>
+          </div>
+
+          <div className="flex justify-center sm:justify-end">
+            <div className="flex h-56 w-40 flex-col items-center justify-center gap-3 rounded-[2rem] border-2 border-border bg-surface p-4">
+              <span aria-hidden className="h-1 w-8 rounded-full bg-border" />
+              <span className="flex h-20 w-20 items-center justify-center rounded-xl bg-primary/10">
+                <QrCodeIcon className="h-11 w-11 text-primary-hover" />
+              </span>
+              <span className="text-center text-[11px] font-medium text-muted">
+                Billet électronique
+              </span>
+            </div>
           </div>
         </div>
       </section>
