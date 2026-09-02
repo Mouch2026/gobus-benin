@@ -224,6 +224,12 @@ export function EditTripForm({ trip }: { trip: Trip }) {
             </p>
           ) : null}
 
+          {cancelState.warning ? (
+            <p className="text-sm text-amber-600 dark:text-amber-400" role="alert">
+              {cancelState.warning}
+            </p>
+          ) : null}
+
           <button
             type="submit"
             disabled={!canCancel || cancelPending}

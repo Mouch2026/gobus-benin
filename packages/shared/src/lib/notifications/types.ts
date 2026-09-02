@@ -39,3 +39,20 @@ export type BookingConfirmationPayload = {
   totalPaidFcfa: number; // somme des price.totalFcfa de chaque leg
   manageUrl: string;
 };
+
+// Annulation d'un trajet entier par la compagnie (cancelTrip) — un type
+// distinct, pas un détournement de BookingConfirmationPayload. Toujours
+// une seule réservation à la fois : un trajet cancel ne concerne qu'un
+// leg, jamais une paire aller-retour groupée. Si cette réservation fait
+// partie d'un aller-retour, le leg jumeau n'est ni mentionné ni affecté —
+// portée volontairement limitée à ce qui a réellement été annulé.
+export type TripCancellationPayload = {
+  recipientEmail: string;
+  bookingReference: string;
+  companyName: string;
+  originCity: string;
+  destinationCity: string;
+  departureAt: string; // ISO
+  refundedAmountFcfa: number;
+  manageUrl: string;
+};

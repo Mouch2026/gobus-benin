@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { calculateServiceFees } from "shared";
-import { sendBookingConfirmation } from "@/lib/notifications/sendBookingConfirmation";
+import { sendBookingConfirmation } from "shared/src/lib/notifications/sendBookingConfirmation";
 
 type BookingForPayment = {
   id: string;

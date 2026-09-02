@@ -34,6 +34,12 @@ Liste vivante, à mettre à jour au fil du développement (pas figée à un inst
   compagnie selon la réglementation béninoise, pas encore modélisé
   (nécessite une politique de tarif par compagnie).
 
+- Vérifier si un trajet passé à 'cancelled' peut encore recevoir de
+  nouvelles réservations entre son annulation et le traitement des
+  remboursements — /recherche filtre-t-il déjà les trajets annulés des
+  résultats ? Trou théorique de timing, pas encore confirmé comme
+  exploitable en pratique.
+
 ### Back-office
 - Normalisation de la casse sur origin_city/destination_city (routes
   créées à la volée depuis /trajets/nouveau) — actuellement seul un

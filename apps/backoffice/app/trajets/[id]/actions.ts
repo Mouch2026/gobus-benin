@@ -4,8 +4,9 @@ import { revalidatePath } from "next/cache";
 import { requireCompany } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
 import { computeArrivalAt } from "@/lib/duration";
+import { sendTripCancellationNotification } from "shared/src/lib/notifications/sendTripCancellationNotification";
 
-export type EditTripState = { error: string | null };
+export type EditTripState = { error: string | null; warning?: string | null };
 
 type TripForEdit = {
   id: string;
@@ -258,7 +259,33 @@ export async function cancelTrip(
     return { error: "Impossible d'annuler ce trajet. Réessayez." };
   }
 
+  // Rembourse intégralement (jamais de condition de délai — le voyageur
+  // n'est pas à l'origine de cette annulation, contrairement à
+  // cancel_booking) toutes les réservations confirmées de ce trajet, puis
+  // notifie chaque voyageur concerné. Un échec de remboursement est
+  // signalé (le trajet reste annulé quoi qu'il arrive — pas question de
+  // défaire ce qui vient d'être fait) ; un échec de notification est
+  // silencieux, comme partout ailleurs dans ce projet.
+  let warning: string | null = null;
+  const { data: affectedBookings, error: refundError } = await supabase.rpc(
+    "cancel_confirmed_bookings_for_trip",
+    { p_trip_id: tripId }
+  );
+
+  if (refundError) {
+    console.error(
+      "Trajet annulé mais le remboursement des réservations existantes a échoué :",
+      refundError.message
+    );
+    warning =
+      "Le trajet est annulé, mais le remboursement des réservations existantes a rencontré un problème. Contactez le support.";
+  } else {
+    for (const row of affectedBookings ?? []) {
+      await sendTripCancellationNotification({ bookingId: row.booking_id as string });
+    }
+  }
+
   revalidatePath(`/trajets/${tripId}`);
   revalidatePath("/");
-  return { error: null };
+  return { error: null, warning };
 }

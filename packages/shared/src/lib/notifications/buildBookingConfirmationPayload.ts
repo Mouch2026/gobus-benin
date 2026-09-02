@@ -1,7 +1,14 @@
 import "server-only";
-import { supabaseAdmin } from "@/lib/supabase-admin";
-import { SEAT_CLASS_LABELS } from "@/app/recherche/_shared";
+import { supabaseAdmin } from "./supabaseAdmin";
 import type { BookingConfirmationLeg, BookingConfirmationPayload } from "./types";
+
+// Dupliqué depuis apps/web/app/recherche/_shared.tsx (2 lignes) plutôt que
+// migrer ce label vers packages/shared pour un seul appelant — ce module
+// n'a plus accès à l'alias @/ propre à apps/web une fois déplacé ici.
+const SEAT_CLASS_LABELS: Record<string, string> = {
+  standard: "Standard",
+  vip: "VIP",
+};
 
 type BookingRow = {
   id: string;

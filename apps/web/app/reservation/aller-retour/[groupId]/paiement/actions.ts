@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { sendBookingConfirmation } from "@/lib/notifications/sendBookingConfirmation";
+import { sendBookingConfirmation } from "shared/src/lib/notifications/sendBookingConfirmation";
 
 type BookingRow = { id: string; leg: string; status: string; user_id: string };
 
