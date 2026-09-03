@@ -1,9 +1,24 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
+import { sweepExpiredVouchers } from "@/lib/vouchers";
 import { calculatePointsEarned, calculateServiceFees, formatFcfa } from "shared";
 import { simulateRoundTripPayment } from "./actions";
 import { SubmitButton } from "./SubmitButton";
+
+type ActiveVoucher = {
+  id: string;
+  amount_fcfa: number;
+  expires_at: string;
+};
+
+function formatExpiry(iso: string): string {
+  return new Intl.DateTimeFormat("fr-BJ", {
+    dateStyle: "short",
+    timeStyle: "short",
+    timeZone: "Africa/Porto-Novo",
+  }).format(new Date(iso));
+}
 
 type BookingWithTrip = {
   id: string;
@@ -86,6 +101,22 @@ export default async function PaiementAllerRetourPage(
 
   const simulatePaymentForGroup = simulateRoundTripPayment.bind(null, groupId);
 
+  await sweepExpiredVouchers();
+  const { data: activeVouchers } = await supabase
+    .from("vouchers")
+    .select("id, amount_fcfa, expires_at")
+    .eq("user_id", user.sub)
+    .eq("status", "active")
+    .gt("expires_at", new Date().toISOString())
+    .order("expires_at", { ascending: true })
+    .returns<ActiveVoucher[]>();
+  const vouchers = activeVouchers ?? [];
+  const selectedVoucher = vouchers[0] ?? null;
+  const voucherAppliedFcfa = selectedVoucher
+    ? Math.min(selectedVoucher.amount_fcfa, totalFcfa)
+    : 0;
+  const amountToPayFcfa = totalFcfa - voucherAppliedFcfa;
+
   return (
     <div className="flex min-h-screen flex-col items-center bg-background px-4 py-16">
       <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-8">
@@ -120,10 +151,21 @@ export default async function PaiementAllerRetourPage(
           </div>
         ))}
 
-        <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
-          <span className="font-semibold text-foreground">Total</span>
+        {voucherAppliedFcfa > 0 ? (
+          <div className="mt-4 flex items-center justify-between border-t border-border pt-3 text-primary">
+            <span>Avoir appliqué</span>
+            <span>− {formatFcfa(voucherAppliedFcfa)}</span>
+          </div>
+        ) : null}
+
+        <div
+          className={`flex items-center justify-between pt-3 ${voucherAppliedFcfa > 0 ? "" : "mt-4 border-t border-border"}`}
+        >
+          <span className="font-semibold text-foreground">
+            {voucherAppliedFcfa > 0 ? "Total à payer" : "Total"}
+          </span>
           <span className="font-display text-xl font-extrabold text-foreground">
-            {formatFcfa(totalFcfa)}
+            {formatFcfa(amountToPayFcfa)}
           </span>
         </div>
 
@@ -137,7 +179,51 @@ export default async function PaiementAllerRetourPage(
           votre aller ET votre retour ensemble, sans paiement réel.
         </p>
 
-        <form action={simulatePaymentForGroup} className="mt-4">
+        <form action={simulatePaymentForGroup} className="mt-4 flex flex-col gap-3">
+          {vouchers.length === 1 && selectedVoucher ? (
+            <label className="flex items-start gap-2 rounded-lg border border-border p-3 text-sm text-foreground">
+              <input
+                type="checkbox"
+                name="voucherId"
+                value={selectedVoucher.id}
+                defaultChecked
+                className="mt-0.5"
+              />
+              <span>
+                Utiliser mon avoir de{" "}
+                <span className="font-semibold">{formatFcfa(selectedVoucher.amount_fcfa)}</span>{" "}
+                <span className="text-muted">
+                  (valable jusqu&apos;au {formatExpiry(selectedVoucher.expires_at)})
+                </span>
+              </span>
+            </label>
+          ) : null}
+
+          {vouchers.length > 1 ? (
+            <fieldset className="flex flex-col gap-2 rounded-lg border border-border p-3 text-sm text-foreground">
+              <legend className="px-1 text-xs font-semibold text-muted">Avoir à utiliser</legend>
+              {vouchers.map((v, index) => (
+                <label key={v.id} className="flex items-start gap-2">
+                  <input
+                    type="radio"
+                    name="voucherId"
+                    value={v.id}
+                    defaultChecked={index === 0}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    <span className="font-semibold">{formatFcfa(v.amount_fcfa)}</span>{" "}
+                    <span className="text-muted">(valable jusqu&apos;au {formatExpiry(v.expires_at)})</span>
+                  </span>
+                </label>
+              ))}
+              <label className="flex items-start gap-2">
+                <input type="radio" name="voucherId" value="" className="mt-0.5" />
+                <span className="text-muted">Ne pas utiliser d&apos;avoir</span>
+              </label>
+            </fieldset>
+          ) : null}
+
           <SubmitButton />
         </form>
       </div>

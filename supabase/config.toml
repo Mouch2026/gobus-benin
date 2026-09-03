@@ -385,6 +385,16 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
+# verify_jwt désactivé : cette fonction n'est appelée que par pg_cron/pg_net
+# (machine-à-machine), jamais par un client avec sa propre session. Le
+# defaut verify_jwt=true n'aurait rien protégé de plus ici — la clé anon,
+# publique par construction, est un JWT valide et l'aurait satisfait. La
+# vraie protection est le secret partagé vérifié en tête de la fonction
+# (voir supabase/functions/expire-vouchers/index.ts et le header
+# x-cron-secret envoyé par le cron.schedule de la migration).
+[functions.expire-vouchers]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

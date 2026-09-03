@@ -4,33 +4,43 @@ import { useActionState, useState } from "react";
 import { formatFcfa } from "shared";
 import { cancelBooking, type CancelBookingState } from "./cancelBookingAction";
 
-const initialState: CancelBookingState = { error: null, refundedAmountFcfa: null };
+const initialState: CancelBookingState = { error: null, voucherAmountFcfa: null, voucherExpiresAt: null };
 
-// refundPreviewFcfa : calculé côté serveur au moment du rendu de la page
-// (même règle que cancel_booking() — > 30 min avant départ ->
-// base_amount_fcfa, sinon 0), jamais côté client. C'est une
-// prévisualisation, pas la source de vérité : le RPC recalcule strictement
-// la même règle au moment de l'exécution.
+function formatExpiry(iso: string): string {
+  return new Intl.DateTimeFormat("fr-BJ", {
+    dateStyle: "short",
+    timeStyle: "short",
+    timeZone: "Africa/Porto-Novo",
+  }).format(new Date(iso));
+}
+
+// voucherPreviewFcfa : calculé côté serveur au moment du rendu de la page
+// (même règle que cancel_booking() — toujours base_amount_fcfa tant que le
+// trajet n'est pas déjà parti, plus de condition de délai), jamais côté
+// client. C'est une prévisualisation, pas la source de vérité : le RPC
+// recalcule strictement la même règle au moment de l'exécution.
 export function CancelBookingButton({
   bookingId,
-  refundPreviewFcfa,
+  voucherPreviewFcfa,
 }: {
   bookingId: string;
-  refundPreviewFcfa: number;
+  voucherPreviewFcfa: number;
 }) {
   const [state, formAction, pending] = useActionState(cancelBooking, initialState);
   const [confirming, setConfirming] = useState(false);
 
-  if (state.refundedAmountFcfa !== null) {
+  if (state.voucherAmountFcfa !== null) {
     return (
       <p
         className="mt-4 rounded-xl border border-border bg-background p-4 text-sm text-foreground"
         role="status"
       >
         Réservation annulée.{" "}
-        {state.refundedAmountFcfa > 0
-          ? `${formatFcfa(state.refundedAmountFcfa)} vous seront remboursés.`
-          : "Aucun remboursement n'était possible à moins de 30 minutes du départ."}
+        {state.voucherAmountFcfa > 0
+          ? `Vous recevez un avoir de ${formatFcfa(state.voucherAmountFcfa)}${
+              state.voucherExpiresAt ? `, valable jusqu'au ${formatExpiry(state.voucherExpiresAt)}` : ""
+            } — utilisez-le sur une nouvelle réservation dans les 24h.`
+          : "Aucun avoir n'a pu être émis."}
       </p>
     );
   }
@@ -55,9 +65,9 @@ export function CancelBookingButton({
       <input type="hidden" name="bookingId" value={bookingId} />
 
       <p className="text-sm text-foreground">
-        {refundPreviewFcfa > 0
-          ? `Vous serez remboursé de ${formatFcfa(refundPreviewFcfa)}.`
-          : "Aucun remboursement ne sera possible : le départ est dans moins de 30 minutes."}
+        {voucherPreviewFcfa > 0
+          ? `Vous recevrez un avoir de ${formatFcfa(voucherPreviewFcfa)}, valable 24h — pas de remboursement immédiat.`
+          : "Aucun avoir ne pourra être émis."}
       </p>
 
       {state.error ? (

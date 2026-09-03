@@ -113,6 +113,17 @@ export default async function AidePage() {
                 réponse plus rapide.
               </p>
             </Question>
+
+            <Question title="Quelles sont les conditions de remboursement d'un billet ?">
+              <p>
+                Deux cas distincts. Si vous annulez vous-même votre réservation : le prix du
+                billet vous est remboursé (hors frais de service) tant que vous annulez plus de 30
+                minutes avant le départ ; à 30 minutes ou moins, l&apos;annulation reste possible
+                mais sans remboursement. Si c&apos;est la compagnie qui annule le trajet : le prix
+                du billet vous est remboursé intégralement, quel que soit le délai, et vous en êtes
+                informé par e-mail.
+              </p>
+            </Question>
           </Section>
 
           <Section id="compagnies" title="Compagnies partenaires">

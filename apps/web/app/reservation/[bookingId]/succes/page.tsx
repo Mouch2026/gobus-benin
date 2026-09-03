@@ -85,12 +85,13 @@ export default async function SuccesPage(props: PageProps<"/reservation/[booking
 
   // Prévisualisation uniquement — cancel_booking() recalcule strictement
   // la même règle côté serveur au moment de l'annulation réelle. Calculé
-  // ici (Server Component), jamais côté client.
+  // ici (Server Component), jamais côté client. Plus de condition de
+  // délai : un avoir de base_amount_fcfa est toujours accordé tant que le
+  // trajet n'est pas déjà parti.
   const approvedPayment = booking.payments.find((p) => p.status === "approved");
   const departureAt = booking.trips ? new Date(booking.trips.departure_at).getTime() : 0;
   const canCancel = booking.trips !== null && departureAt > Date.now() && !!approvedPayment;
-  const refundPreviewFcfa =
-    canCancel && departureAt - Date.now() > 30 * 60 * 1000 ? approvedPayment!.base_amount_fcfa : 0;
+  const voucherPreviewFcfa = canCancel ? approvedPayment!.base_amount_fcfa : 0;
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-background px-4 py-16">
@@ -162,7 +163,7 @@ export default async function SuccesPage(props: PageProps<"/reservation/[booking
         </Link>
 
         {canCancel ? (
-          <CancelBookingButton bookingId={booking.id} refundPreviewFcfa={refundPreviewFcfa} />
+          <CancelBookingButton bookingId={booking.id} voucherPreviewFcfa={voucherPreviewFcfa} />
         ) : null}
       </div>
     </div>

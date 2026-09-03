@@ -117,8 +117,9 @@ export default async function SuccesAllerRetourPage(
             booking.trips !== null &&
             departureAt > Date.now() &&
             !!approvedPayment;
-          const refundPreviewFcfa =
-            canCancel && departureAt - Date.now() > 30 * 60 * 1000 ? approvedPayment!.base_amount_fcfa : 0;
+          // Plus de condition de délai : un avoir de base_amount_fcfa est
+          // toujours accordé tant que le trajet n'est pas déjà parti.
+          const voucherPreviewFcfa = canCancel ? approvedPayment!.base_amount_fcfa : 0;
 
           return (
           <div key={booking.id} className="mt-4 border-t border-border pt-4 text-left text-sm">
@@ -173,7 +174,7 @@ export default async function SuccesAllerRetourPage(
               dangerouslySetInnerHTML={{ __html: qrSvg }}
             />
             {canCancel ? (
-              <CancelBookingButton bookingId={booking.id} refundPreviewFcfa={refundPreviewFcfa} />
+              <CancelBookingButton bookingId={booking.id} voucherPreviewFcfa={voucherPreviewFcfa} />
             ) : null}
           </div>
           );
