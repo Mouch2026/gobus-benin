@@ -17,12 +17,15 @@ export async function Navbar() {
           <Link href="/" className="font-display text-lg font-extrabold text-foreground">
             GoBus Bénin
           </Link>
-          <nav className="flex items-center gap-5 text-sm text-muted">
+          <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-muted">
             <Link href="/" className="hover:text-foreground">
               Accueil
             </Link>
             <Link href="/partenaires" className="hover:text-foreground">
               Compagnies partenaires
+            </Link>
+            <Link href="/gerer-ma-reservation" className="hover:text-foreground">
+              Gérer ma réservation
             </Link>
             <Link href="/aide" className="hover:text-foreground">
               Aide
