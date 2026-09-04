@@ -19,6 +19,9 @@ export function Navigation({ company }: { company: { name: string } }) {
         <Link href="/" className="hover:text-zinc-950 dark:hover:text-zinc-50">
           Trajets
         </Link>
+        <Link href="/reservations" className="hover:text-zinc-950 dark:hover:text-zinc-50">
+          Réservations
+        </Link>
         <Link href="/plans-de-bus" className="hover:text-zinc-950 dark:hover:text-zinc-50">
           Plans de bus
         </Link>
