@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { formatFcfa } from "shared";
 import { lookupBooking, type BookingSummary, type LookupState } from "./actions";
+import { BookingActions } from "./BookingActions";
 
 const initialState: LookupState = { error: null, booking: null, siblingBooking: null };
 
@@ -39,6 +40,9 @@ function formatDepartureTime(departureAt: string): string {
 }
 
 function BookingCard({ booking }: { booking: BookingSummary }) {
+  const approvedPayment = booking.payments.find((p) => p.status === "approved");
+  const voucherPreviewFcfa = approvedPayment?.base_amount_fcfa ?? 0;
+
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-border bg-background p-4">
       <div className="flex items-center gap-2">
@@ -77,6 +81,9 @@ function BookingCard({ booking }: { booking: BookingSummary }) {
           {formatFcfa(booking.total_price_fcfa)}
         </span>
       </div>
+      {booking.status === "confirmed" ? (
+        <BookingActions bookingId={booking.id} voucherPreviewFcfa={voucherPreviewFcfa} />
+      ) : null}
     </div>
   );
 }
