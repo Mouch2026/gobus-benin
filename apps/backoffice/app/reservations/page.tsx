@@ -59,9 +59,10 @@ export default async function ReservationsPage() {
           </p>
         ) : (
           <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-            <table className="w-full min-w-[860px] border-collapse text-left text-sm">
+            <table className="w-full min-w-[960px] border-collapse text-left text-sm">
               <thead>
                 <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+                  <th className="px-4 py-3 font-medium">Réservation</th>
                   <th className="px-4 py-3 font-medium">Trajet</th>
                   <th className="px-4 py-3 font-medium">Départ</th>
                   <th className="px-4 py-3 font-medium">Bus</th>
@@ -78,6 +79,9 @@ export default async function ReservationsPage() {
                     key={row.passenger_id}
                     className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
                   >
+                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                      {row.booking_reference}
+                    </td>
                     <td className="px-4 py-3 font-medium text-zinc-950 dark:text-zinc-50">
                       {row.origin_city} → {row.destination_city}
                     </td>
