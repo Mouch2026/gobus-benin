@@ -3,45 +3,8 @@ import { requireUser } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
 import { sweepExpiredVouchers } from "@/lib/vouchers";
 import { formatFcfa } from "shared";
-import {
-  EmptyState,
-  PageShell,
-  formatDepartureDateTime,
-  formatDepartureTime,
-} from "../../recherche/_shared";
-
-type ActiveVoucher = {
-  id: string;
-  amount_fcfa: number;
-  expires_at: string;
-};
-
-function formatExpiry(iso: string): string {
-  return new Intl.DateTimeFormat("fr-BJ", {
-    dateStyle: "short",
-    timeStyle: "short",
-    timeZone: "Africa/Porto-Novo",
-  }).format(new Date(iso));
-}
-
-async function getActiveVouchers(userId: string): Promise<ActiveVoucher[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("vouchers")
-    .select("id, amount_fcfa, expires_at")
-    .eq("user_id", userId)
-    .eq("status", "active")
-    .gt("expires_at", new Date().toISOString())
-    .order("expires_at", { ascending: true })
-    .returns<ActiveVoucher[]>();
-
-  if (error) {
-    console.error("Impossible de charger les avoirs :", error.message);
-    return [];
-  }
-
-  return data ?? [];
-}
+import { AccountShell } from "../_shared";
+import { EmptyState, formatDepartureDateTime, formatDepartureTime } from "../../recherche/_shared";
 
 type BookingRow = {
   id: string;
@@ -95,36 +58,16 @@ export default async function MesReservationsPage() {
   const user = await requireUser("/compte/reservations");
 
   // Couverture supplémentaire du sweep paresseux (voir aussi les pages de
-  // paiement) — purge les avoirs de cet utilisateur qui viennent d'expirer
-  // avant de lister ceux encore actifs.
+  // paiement et /compte/paiements) — purge les avoirs de cet utilisateur
+  // qui viennent d'expirer. Le détail des avoirs (montant, expiration,
+  // statut) est désormais centralisé sur /compte/paiements — pas de
+  // bannière dupliquée ici, pour éviter deux sources divergentes de la
+  // même donnée.
   await sweepExpiredVouchers();
-  const [bookings, activeVouchers] = await Promise.all([
-    getUserBookings(user.sub),
-    getActiveVouchers(user.sub),
-  ]);
+  const bookings = await getUserBookings(user.sub);
 
   return (
-    <PageShell title="Mes réservations">
-      {activeVouchers.length > 0 ? (
-        <ul className="mb-6 flex flex-col gap-2">
-          {activeVouchers.map((voucher) => (
-            <li
-              key={voucher.id}
-              className="flex flex-col gap-1 rounded-2xl border border-primary/30 bg-primary/10 p-4 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <p className="text-sm text-foreground">
-                Vous avez un avoir de{" "}
-                <span className="font-semibold">{formatFcfa(voucher.amount_fcfa)}</span>, valable
-                jusqu&apos;au {formatExpiry(voucher.expires_at)}.
-              </p>
-              <Link href="/recherche" className="text-sm font-semibold text-primary hover:underline">
-                Réserver un trajet →
-              </Link>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-
+    <AccountShell active="/compte/reservations" title="Mes réservations">
       {bookings.length === 0 ? (
         <EmptyState>
           Vous n&apos;avez pas encore de réservation.{" "}
@@ -180,6 +123,6 @@ export default async function MesReservationsPage() {
           })}
         </ul>
       )}
-    </PageShell>
+    </AccountShell>
   );
 }

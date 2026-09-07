@@ -35,7 +35,7 @@ function renderTripCancellationEmailHtml(payload: TripCancellationPayload): stri
         </p>
         <p style="margin:0 0 20px;color:${MUTED};font-size:14px;">
           La compagnie ${payload.companyName} a annulé ce trajet. Voici les détails et votre
-          remboursement.
+          avoir.
         </p>
 
         <div style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px;">
@@ -49,8 +49,13 @@ function renderTripCancellationEmailHtml(payload: TripCancellationPayload): stri
         </div>
 
         <div style="border-radius:12px;background:${PRIMARY}1a;padding:16px 20px;">
-          <p style="margin:0;color:${TEXT};font-size:15px;font-weight:700;">
-            ${formatFcfa(payload.refundedAmountFcfa)} vous ont été remboursés intégralement.
+          <p style="margin:0 0 4px;color:${TEXT};font-size:15px;font-weight:700;">
+            Vous recevez un avoir de ${formatFcfa(payload.voucherAmountFcfa)}.
+          </p>
+          <p style="margin:0;color:${TEXT};font-size:13px;">
+            Valable jusqu'au ${formatDateTime(payload.voucherExpiresAt)} — utilisez-le sur une
+            nouvelle réservation dans ce délai. Passé ce délai sans utilisation, son montant
+            passera automatiquement en remboursement.
           </p>
         </div>
 

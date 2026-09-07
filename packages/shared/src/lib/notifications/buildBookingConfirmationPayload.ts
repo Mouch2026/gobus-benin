@@ -30,6 +30,8 @@ type BookingRow = {
     platform_fee_fcfa: number;
     transaction_fee_fcfa: number;
     amount_fcfa: number;
+    voucher_amount_fcfa: number;
+    amount_charged_fcfa: number;
   }[];
 };
 
@@ -37,7 +39,7 @@ const BOOKING_SELECT =
   "id, booking_reference, leg, user_id, phone, " +
   "trips(departure_at, arrival_at, bus_number, seat_class, routes(origin_city, destination_city), companies(id, name, logo_url, email)), " +
   "passengers(full_name, seat_number), " +
-  "payments(base_amount_fcfa, platform_fee_fcfa, transaction_fee_fcfa, amount_fcfa)";
+  "payments(base_amount_fcfa, platform_fee_fcfa, transaction_fee_fcfa, amount_fcfa, voucher_amount_fcfa, amount_charged_fcfa)";
 
 function toLeg(booking: BookingRow): BookingConfirmationLeg {
   // Une seule ligne payments "approved" existe à ce stade (le paiement qui
@@ -67,6 +69,8 @@ function toLeg(booking: BookingRow): BookingConfirmationLeg {
       platformFeeFcfa: payment.platform_fee_fcfa,
       transactionFeeFcfa: payment.transaction_fee_fcfa,
       totalFcfa: payment.amount_fcfa,
+      voucherAppliedFcfa: payment.voucher_amount_fcfa,
+      amountChargedFcfa: payment.amount_charged_fcfa,
     },
   };
 }
@@ -95,7 +99,10 @@ export async function buildBookingConfirmationPayload(
   if (!data || data.length === 0) throw new Error("Réservation introuvable pour l'envoi de confirmation");
 
   const legs = data.map(toLeg);
-  const totalPaidFcfa = legs.reduce((sum, leg) => sum + leg.price.totalFcfa, 0);
+  // Somme de ce qui a réellement été facturé (après avoir éventuel), pas
+  // du prix nominal — totalPaidFcfa doit refléter ce que le voyageur a
+  // effectivement payé.
+  const totalPaidFcfa = legs.reduce((sum, leg) => sum + leg.price.amountChargedFcfa, 0);
 
   const userId = data[0].user_id;
   const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
@@ -104,6 +111,8 @@ export async function buildBookingConfirmationPayload(
   }
 
   return {
+    userId,
+    bookingIds: data.map((booking) => booking.id),
     recipientEmail: userData.user.email,
     phone: data[0].phone,
     legs,

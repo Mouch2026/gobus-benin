@@ -35,7 +35,9 @@ export async function Navbar() {
 
         {user ? (
           <div className="flex items-center gap-3 text-sm">
-            <span className="font-medium text-foreground">{displayName(user)}</span>
+            <Link href="/compte/reservations" className="font-medium text-foreground hover:underline">
+              {displayName(user)}
+            </Link>
             <form action={logout}>
               <button
                 type="submit"

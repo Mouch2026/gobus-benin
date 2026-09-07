@@ -74,10 +74,20 @@ function renderLegSection(leg: BookingConfirmationLeg): string {
           leg.price.platformFeeFcfa + leg.price.transactionFeeFcfa
         )}</td>
       </tr>
+      ${
+        leg.price.voucherAppliedFcfa > 0
+          ? `<tr>
+               <td style="color:${PRIMARY};font-size:13px;">Avoir appliqué</td>
+               <td style="color:${PRIMARY};font-size:13px;text-align:right;">− ${formatFcfa(leg.price.voucherAppliedFcfa)}</td>
+             </tr>`
+          : ""
+      }
       <tr>
-        <td style="padding-top:6px;color:${TEXT};font-size:14px;font-weight:700;">Total</td>
+        <td style="padding-top:6px;color:${TEXT};font-size:14px;font-weight:700;">${
+          leg.price.voucherAppliedFcfa > 0 ? "Total payé" : "Total"
+        }</td>
         <td style="padding-top:6px;color:${TEXT};font-size:14px;font-weight:700;text-align:right;">${formatFcfa(
-          leg.price.totalFcfa
+          leg.price.amountChargedFcfa
         )}</td>
       </tr>
     </table>

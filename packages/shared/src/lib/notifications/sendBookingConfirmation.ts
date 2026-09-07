@@ -2,6 +2,7 @@ import "server-only";
 import { buildBookingConfirmationPayload } from "./buildBookingConfirmationPayload";
 import { sendBookingConfirmationEmail } from "./channels/email";
 import { sendCompanySaleEmail } from "./channels/companySaleEmail";
+import { logNotification } from "./notificationLog";
 import type { BookingConfirmationLeg, BookingConfirmationPayload } from "./types";
 
 // Point d'entrée générique : "envoyer une confirmation de réservation",
@@ -32,13 +33,32 @@ export async function sendBookingConfirmation(
 }
 
 async function sendTravelerConfirmation(payload: BookingConfirmationPayload): Promise<void> {
+  let status: "sent" | "failed" = "sent";
+  let errorMessage: string | null = null;
   try {
     await sendBookingConfirmationEmail(payload);
   } catch (error) {
     // Ne relance jamais — appelée après un paiement déjà approuvé, ne doit
     // jamais faire échouer la réservation elle-même.
     console.error("Impossible d'envoyer la confirmation voyageur :", error);
+    status = "failed";
+    errorMessage = error instanceof Error ? error.message : String(error);
   }
+
+  // Une ligne par réservation concernée (1 en aller simple, 2 en
+  // aller-retour) — journalisé au moment de l'appel réel ci-dessus,
+  // jamais déduit après coup.
+  await Promise.all(
+    payload.bookingIds.map((bookingId) =>
+      logNotification({
+        userId: payload.userId,
+        type: "booking_confirmation",
+        bookingId,
+        status,
+        errorMessage,
+      })
+    )
+  );
 }
 
 // Une compagnie par entrée, jamais un seul e-mail groupé pour deux
