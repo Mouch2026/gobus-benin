@@ -52,11 +52,20 @@ export async function createBooking(
   });
 
   if (error || !bookingId) {
-    // 23514 = check_violation, raised by create_booking() itself or by
-    // reserve_trip_seats/assign_and_insert_passengers inside it — nothing
-    // was actually created either way.
+    // 23514 = check_violation, raised either by create_booking() itself
+    // (déjà rédigé pour l'affichage direct, ex. "Ce trajet est déjà
+    // parti...") ou par le trigger reserve_trip_seats à l'intérieur de
+    // l'insert — celui-ci lève un message brut avec le trip_id
+    // ("Plus assez de places disponibles sur ce trajet (trip_id=...)"),
+    // jamais destiné à l'affichage tel quel, contrairement à
+    // create_round_trip_booking qui le ré-emballe déjà côté SQL. Seul ce
+    // cas précis est donc reformulé ici ; tout le reste (dont le nouveau
+    // garde-fou de départ) est déjà rédigé pour le voyageur.
     if (error?.code === "23514") {
-      return { error: "Plus assez de places disponibles sur ce trajet. Réessayez avec moins de places." };
+      if (error.message.startsWith("Plus assez de places disponibles sur ce trajet")) {
+        return { error: "Plus assez de places disponibles sur ce trajet. Réessayez avec moins de places." };
+      }
+      return { error: error.message };
     }
     console.error("Impossible de créer la réservation :", error?.message);
     return { error: "Impossible de créer votre réservation. Réessayez." };

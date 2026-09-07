@@ -7,7 +7,13 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { sendBookingConfirmation } from "shared/src/lib/notifications/sendBookingConfirmation";
 import { sendVoucherRefundPendingNotification } from "shared/src/lib/notifications/sendVoucherRefundPendingNotification";
 
-type BookingRow = { id: string; leg: string; status: string; user_id: string };
+type BookingRow = {
+  id: string;
+  leg: string;
+  status: string;
+  user_id: string;
+  trips: { departure_at: string } | null;
+};
 
 // SIMULÉ — même bandeau/mécanisme que le paiement d'un billet simple
 // (apps/web/app/reservation/[bookingId]/paiement/actions.ts). La différence
@@ -30,7 +36,7 @@ export async function simulateRoundTripPayment(groupId: string, formData: FormDa
   const supabase = await createClient();
   const { data: bookings } = await supabase
     .from("bookings")
-    .select("id, leg, status, user_id")
+    .select("id, leg, status, user_id, trips(departure_at)")
     .eq("booking_group_id", groupId)
     .eq("user_id", user.sub)
     .returns<BookingRow[]>();
@@ -38,6 +44,21 @@ export async function simulateRoundTripPayment(groupId: string, formData: FormDa
   if (!bookings || bookings.length !== 2 || bookings.some((b) => b.status !== "pending")) {
     // Pas d'erreur technique : la page de paiement sait déjà afficher
     // l'état correct (introuvable / déjà payé / annulé).
+    redirect(`/reservation/aller-retour/${groupId}/paiement`);
+  }
+
+  // Un aller-retour est payé comme un tout : si l'un OU l'autre leg est
+  // déjà parti, le paiement combiné n'a plus de sens. Aucun paiement
+  // approuvé n'existe encore à ce stade — annulation directe des DEUX
+  // legs (jamais un seul), sans avoir (rien n'a été payé).
+  const anyLegDeparted = bookings.some(
+    (b) => b.trips && new Date(b.trips.departure_at).getTime() <= Date.now()
+  );
+  if (anyLegDeparted) {
+    await supabaseAdmin
+      .from("bookings")
+      .update({ status: "cancelled" })
+      .in("id", bookings.map((b) => b.id));
     redirect(`/reservation/aller-retour/${groupId}/paiement`);
   }
 

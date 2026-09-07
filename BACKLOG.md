@@ -39,6 +39,18 @@ Liste vivante, à mettre à jour au fil du développement (pas figée à un inst
   remboursements — /recherche filtre-t-il déjà les trajets annulés des
   résultats ? Trou théorique de timing, pas encore confirmé comme
   exploitable en pratique.
+- Balayage périodique des réservations 'pending' dont le trajet est parti
+  sans qu'aucun paiement n'ait jamais été tenté — le nettoyage ajouté aux
+  Server Actions de paiement (simulatePayment/simulateRoundTripPayment)
+  ne se déclenche qu'au moment où le voyageur clique réellement sur
+  payer ; une réservation abandonnée avant cette étape reste 'pending'
+  indéfiniment et bloque un siège pour rien. Un mécanisme équivalent au
+  sweep des avoirs (lazy + éventuellement pg_cron) réglerait ça.
+- Page back-office listant et traitant la file d'attente de remboursement
+  des avoirs (vouchers.status = 'refund_pending') — le système d'avoir
+  écrit déjà les lignes en base et notifie le voyageur, mais aucune page
+  ne permet aujourd'hui de marquer un remboursement comme effectivement
+  versé (hors scope du chantier qui a introduit les avoirs).
 
 ### Back-office
 - Normalisation de la casse sur origin_city/destination_city (routes

@@ -12,6 +12,7 @@ type BookingForPayment = {
   id: string;
   status: string;
   total_price_fcfa: number;
+  trips: { departure_at: string } | null;
 };
 
 type ActiveVoucher = {
@@ -36,7 +37,7 @@ export async function simulatePayment(bookingId: string, formData: FormData): Pr
   const supabase = await createClient();
   const { data: booking } = await supabase
     .from("bookings")
-    .select("id, status, total_price_fcfa")
+    .select("id, status, total_price_fcfa, trips(departure_at)")
     .eq("id", bookingId)
     .eq("user_id", user.sub)
     .maybeSingle<BookingForPayment>();
@@ -44,6 +45,17 @@ export async function simulatePayment(bookingId: string, formData: FormData): Pr
   if (!booking || booking.status !== "pending") {
     // Pas d'erreur technique : la page de paiement sait déjà afficher
     // l'état correct (introuvable / déjà payée / annulée).
+    redirect(`/reservation/${bookingId}/paiement`);
+  }
+
+  // Le trajet a pu partir pendant que le voyageur restait sur cette page
+  // (create_booking garantit seulement qu'il n'était pas encore parti au
+  // moment de la création). Aucun paiement n'a encore été approuvé à ce
+  // stade — rien à rembourser, pas d'avoir à émettre — une simple
+  // annulation directe suffit et libère le siège via le trigger existant
+  // adjust_trip_seats_on_booking_status_change.
+  if (booking.trips && new Date(booking.trips.departure_at).getTime() <= Date.now()) {
+    await supabaseAdmin.from("bookings").update({ status: "cancelled" }).eq("id", bookingId);
     redirect(`/reservation/${bookingId}/paiement`);
   }
 

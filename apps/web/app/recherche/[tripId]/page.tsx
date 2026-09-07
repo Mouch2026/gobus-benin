@@ -83,6 +83,22 @@ export default async function TripDetailPage(props: PageProps<"/recherche/[tripI
     );
   }
 
+  // Contrôle d'affichage uniquement — le vrai garde-fou est côté serveur
+  // (create_booking/create_round_trip_booking rejettent déjà un trajet
+  // déjà parti). Ceci évite seulement qu'un lien périmé (onglet resté
+  // ouvert, résultat de recherche non rafraîchi) affiche un formulaire de
+  // réservation voué à échouer au moment de la soumission.
+  if (new Date(trip.departure_at).getTime() <= Date.now()) {
+    return (
+      <PageShell title={`${trip.routes.origin_city} → ${trip.routes.destination_city}`}>
+        <EmptyState>
+          Ce trajet est déjà parti, la réservation n&apos;est plus possible. Merci de relancer
+          une recherche pour un prochain départ.
+        </EmptyState>
+      </PageShell>
+    );
+  }
+
   return (
     <PageShell title={`${trip.routes.origin_city} → ${trip.routes.destination_city}`}>
       <div className="flex flex-col gap-6">

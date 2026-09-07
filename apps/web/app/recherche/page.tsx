@@ -59,6 +59,10 @@ async function searchTrips(
     .eq("routes.destination_city", destination)
     .gte("departure_at", startOfDay)
     .lt("departure_at", endOfDay)
+    // Sans effet pour une date future (toujours vrai) — corrige le seul
+    // cas réel : une recherche pour aujourd'hui ne doit plus remonter un
+    // trajet dont l'heure de départ est déjà passée.
+    .gt("departure_at", new Date().toISOString())
     .order("price_fcfa", { ascending: true });
 
   if (error) {
