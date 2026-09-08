@@ -3,6 +3,10 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* Couleur des barres du graphique de réservations (Dashboard) — même
+     accent emerald que le badge "Confirmée" (BOOKING_STATUS_STYLES),
+     recharts a besoin d'une couleur concrète, pas d'une classe Tailwind. */
+  --chart-bar: #10b981;
 }
 
 @theme inline {
@@ -16,6 +20,7 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --chart-bar: #34d399;
   }
 }
 
