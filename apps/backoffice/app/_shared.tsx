@@ -33,6 +33,25 @@ export const BOOKING_STATUS_STYLES: Record<string, string> = {
   completed: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
 };
 
+// Distinct from STATUS_LABELS/BOOKING_STATUS_LABELS above — a payment has
+// its own, different set of status values (voucher_issued has no
+// equivalent on trips/bookings).
+export const PAYMENT_STATUS_LABELS: Record<string, string> = {
+  pending: "En attente",
+  approved: "Approuvé",
+  failed: "Échoué",
+  refunded: "Remboursé",
+  voucher_issued: "Avoir émis",
+};
+
+export const PAYMENT_STATUS_STYLES: Record<string, string> = {
+  pending: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+  approved: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
+  failed: "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300",
+  refunded: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+  voucher_issued: "bg-violet-50 text-violet-700 dark:bg-violet-950 dark:text-violet-300",
+};
+
 export function formatDepartureDateTime(departureAt: string): string {
   return new Intl.DateTimeFormat("fr-BJ", {
     dateStyle: "medium",

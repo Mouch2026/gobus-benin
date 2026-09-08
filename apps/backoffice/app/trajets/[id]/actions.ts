@@ -149,6 +149,7 @@ export async function updateTripDetails(
   }
 
   revalidatePath(`/trajets/${tripId}`);
+  revalidatePath("/voyages");
   revalidatePath("/");
   return { error: null };
 }
@@ -223,6 +224,7 @@ export async function updateTripRoute(
   }
 
   revalidatePath(`/trajets/${tripId}`);
+  revalidatePath("/voyages");
   revalidatePath("/");
   return { error: null };
 }
@@ -286,6 +288,7 @@ export async function cancelTrip(
   }
 
   revalidatePath(`/trajets/${tripId}`);
+  revalidatePath("/voyages");
   revalidatePath("/");
   return { error: null, warning };
 }

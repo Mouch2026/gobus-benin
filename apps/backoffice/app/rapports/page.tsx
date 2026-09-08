@@ -76,7 +76,10 @@ function StatCard({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-export default async function StatistiquesPage() {
+// Ex-page /statistiques — renommée en /rapports par le chantier de
+// redesign de la nav. Renommage pur (confirmé) : contenu et requêtes
+// identiques, aucune nouvelle métrique dans ce chantier.
+export default async function RapportsPage() {
   const result = await requireCompany();
 
   if (!result.ok) {
@@ -91,7 +94,7 @@ export default async function StatistiquesPage() {
       <Navigation company={result.company} />
 
       <main className="mx-auto flex max-w-3xl flex-col gap-8 px-6 py-8">
-        <h1 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">Statistiques</h1>
+        <h1 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">Rapports</h1>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <StatCard label="Réservations" value={stats.bookingsCount} />
