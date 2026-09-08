@@ -2,7 +2,11 @@
 
 import { useActionState } from "react";
 import { resetPassword, type ResetPasswordState } from "./actions";
-import { FIELD_CLASSES, LABEL_CLASSES } from "../_shared";
+// _shared.tsx vit désormais dans le groupe de routes (app) (nav
+// header+sidebar) — cette page reste volontairement hors groupe (route
+// publique, pré-authentification) mais réutilise ces deux constantes de
+// style de formulaire, génériques et non spécifiques à la nav.
+import { FIELD_CLASSES, LABEL_CLASSES } from "../(app)/_shared";
 
 const initialState: ResetPasswordState = { error: null };
 

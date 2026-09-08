@@ -1,7 +1,6 @@
 import { requireCompany } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
 import { AccessBlockedMessage } from "../_components";
-import { Navigation } from "../_navigation";
 import { ProfilForm } from "./ProfilForm";
 import { PasswordForm } from "./PasswordForm";
 
@@ -41,29 +40,25 @@ export default async function ProfilPage() {
   const profile = await getCompanyProfile(result.company.id);
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black">
-      <Navigation company={result.company} />
+    <div className="mx-auto max-w-xl px-6 py-8">
+      <h1 className="mb-6 text-lg font-semibold text-zinc-950 dark:text-zinc-50">Profil</h1>
 
-      <main className="mx-auto max-w-xl px-6 py-8">
-        <h1 className="mb-6 text-lg font-semibold text-zinc-950 dark:text-zinc-50">Profil</h1>
+      <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+        {profile ? (
+          <ProfilForm company={profile} />
+        ) : (
+          <p className="text-zinc-500 dark:text-zinc-400">
+            Impossible de charger le profil pour le moment.
+          </p>
+        )}
+      </div>
 
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-          {profile ? (
-            <ProfilForm company={profile} />
-          ) : (
-            <p className="text-zinc-500 dark:text-zinc-400">
-              Impossible de charger le profil pour le moment.
-            </p>
-          )}
-        </div>
-
-        <h2 className="mb-6 mt-8 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
-          Changer le mot de passe
-        </h2>
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-          <PasswordForm />
-        </div>
-      </main>
+      <h2 className="mb-6 mt-8 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+        Changer le mot de passe
+      </h2>
+      <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+        <PasswordForm />
+      </div>
     </div>
   );
 }

@@ -1,7 +1,6 @@
 import { requireCompany } from "@/lib/supabase/dal";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { AccessBlockedMessage } from "../_components";
-import { Navigation } from "../_navigation";
 import { formatDepartureDateTime } from "../_shared";
 
 type PassengerBookingRow = {
@@ -79,54 +78,50 @@ export default async function ClientsPage() {
   const clients = groupByEmail(rows);
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black">
-      <Navigation company={result.company} />
+    <div className="mx-auto max-w-5xl px-6 py-8">
+      <h2 className="mb-4 text-xl font-semibold text-zinc-950 dark:text-zinc-50">Clients</h2>
 
-      <main className="mx-auto max-w-5xl px-6 py-8">
-        <h2 className="mb-4 text-xl font-semibold text-zinc-950 dark:text-zinc-50">Clients</h2>
-
-        {clients.length === 0 ? (
-          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
-            Aucun client pour le moment.
-          </p>
-        ) : (
-          <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-            <table className="w-full min-w-[720px] border-collapse text-left text-sm">
-              <thead>
-                <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-                  <th className="px-4 py-3 font-medium">Nom</th>
-                  <th className="px-4 py-3 font-medium">Téléphone</th>
-                  <th className="px-4 py-3 font-medium">Email</th>
-                  <th className="px-4 py-3 font-medium">Réservations</th>
-                  <th className="px-4 py-3 font-medium">Dernier trajet</th>
+      {clients.length === 0 ? (
+        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+          Aucun client pour le moment.
+        </p>
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+          <table className="w-full min-w-[720px] border-collapse text-left text-sm">
+            <thead>
+              <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+                <th className="px-4 py-3 font-medium">Nom</th>
+                <th className="px-4 py-3 font-medium">Téléphone</th>
+                <th className="px-4 py-3 font-medium">Email</th>
+                <th className="px-4 py-3 font-medium">Réservations</th>
+                <th className="px-4 py-3 font-medium">Dernier trajet</th>
+              </tr>
+            </thead>
+            <tbody>
+              {clients.map((client) => (
+                <tr
+                  key={client.email}
+                  className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
+                >
+                  <td className="px-4 py-3 font-medium text-zinc-950 dark:text-zinc-50">
+                    {client.fullName}
+                  </td>
+                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                    {client.phone ?? "—"}
+                  </td>
+                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{client.email}</td>
+                  <td className="px-4 py-3 tabular-nums text-zinc-700 dark:text-zinc-300">
+                    {client.bookingCount}
+                  </td>
+                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                    {formatDepartureDateTime(client.lastTripAt)}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {clients.map((client) => (
-                  <tr
-                    key={client.email}
-                    className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
-                  >
-                    <td className="px-4 py-3 font-medium text-zinc-950 dark:text-zinc-50">
-                      {client.fullName}
-                    </td>
-                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
-                      {client.phone ?? "—"}
-                    </td>
-                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{client.email}</td>
-                    <td className="px-4 py-3 tabular-nums text-zinc-700 dark:text-zinc-300">
-                      {client.bookingCount}
-                    </td>
-                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
-                      {formatDepartureDateTime(client.lastTripAt)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </main>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

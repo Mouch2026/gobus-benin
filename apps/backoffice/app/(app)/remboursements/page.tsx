@@ -1,7 +1,6 @@
 import { requireCompany } from "@/lib/supabase/dal";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { AccessBlockedMessage } from "../_components";
-import { Navigation } from "../_navigation";
 import { RemboursementsTable, type RefundPendingVoucherRow } from "./RemboursementsTable";
 
 // service_role, même convention que get_company_passenger_bookings /
@@ -36,19 +35,15 @@ export default async function RemboursementsPage() {
   const vouchers = await getRefundPendingVouchers(result.company.id);
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black">
-      <Navigation company={result.company} />
+    <div className="mx-auto max-w-5xl px-6 py-8">
+      <h2 className="mb-2 text-xl font-semibold text-zinc-950 dark:text-zinc-50">Remboursements</h2>
+      <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+        Avoirs en attente de remboursement pour vos voyageurs. Cette page est informative : aucun
+        paiement n&apos;est déclenché automatiquement, marquez un avoir comme traité une fois le
+        remboursement effectué de votre côté.
+      </p>
 
-      <main className="mx-auto max-w-5xl px-6 py-8">
-        <h2 className="mb-2 text-xl font-semibold text-zinc-950 dark:text-zinc-50">Remboursements</h2>
-        <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
-          Avoirs en attente de remboursement pour vos voyageurs. Cette page est informative :
-          aucun paiement n&apos;est déclenché automatiquement, marquez un avoir comme traité une
-          fois le remboursement effectué de votre côté.
-        </p>
-
-        <RemboursementsTable vouchers={vouchers} />
-      </main>
+      <RemboursementsTable vouchers={vouchers} />
     </div>
   );
 }

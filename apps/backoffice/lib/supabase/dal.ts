@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "./server";
 
@@ -6,7 +7,15 @@ import { createClient } from "./server";
 // requests, but per Next's own guidance that's an optimistic, edge-level
 // check — this is the check that must run close to the actual page/data,
 // since proxy alone "should not be your only line of defense".
-export async function requireUser() {
+//
+// Mémoïsé par requête via React cache() : le layout partagé
+// (app/(app)/layout.tsx) ET chaque page individuelle appellent tous les
+// deux requireUser()/requireCompany() (voir plus bas) — chaque page garde
+// son propre appel pour respecter la règle CLAUDE.md ("toute page ...
+// doit appeler requireCompany()"), cache() évite juste que ça double les
+// allers-retours Supabase réels. Changement additif pur : mêmes entrées →
+// mêmes sorties dans une requête donnée, aucun changement de comportement.
+export const requireUser = cache(async () => {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getClaims();
 
@@ -15,7 +24,7 @@ export async function requireUser() {
   }
 
   return data.claims;
-}
+});
 
 export type Company = {
   id: string;
@@ -52,7 +61,7 @@ type CompanySubscriptionRow = {
 // separate subscription check a future page could forget to call — so
 // every backoffice page that scopes data by company gets both for free
 // from this single call.
-export async function requireCompany(): Promise<CompanyAccessResult> {
+export const requireCompany = cache(async (): Promise<CompanyAccessResult> => {
   const user = await requireUser();
   const supabase = await createClient();
 
@@ -103,4 +112,4 @@ export async function requireCompany(): Promise<CompanyAccessResult> {
       currentPeriodEnd: subscription.current_period_end,
     },
   };
-}
+});

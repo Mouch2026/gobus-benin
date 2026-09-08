@@ -2,7 +2,6 @@ import { requireCompany } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
 import { formatFcfa } from "shared";
 import { AccessBlockedMessage } from "../_components";
-import { Navigation } from "../_navigation";
 import { STATUS_LABELS } from "../_shared";
 
 type Stats = {
@@ -90,35 +89,31 @@ export default async function RapportsPage() {
   const statusEntries = Object.entries(stats.tripsByStatus);
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black">
-      <Navigation company={result.company} />
+    <div className="mx-auto flex max-w-3xl flex-col gap-8 px-6 py-8">
+      <h1 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">Rapports</h1>
 
-      <main className="mx-auto flex max-w-3xl flex-col gap-8 px-6 py-8">
-        <h1 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">Rapports</h1>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <StatCard label="Réservations" value={stats.bookingsCount} />
+        <StatCard label="Revenu total" value={formatFcfa(stats.totalRevenueFcfa)} />
+      </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <StatCard label="Réservations" value={stats.bookingsCount} />
-          <StatCard label="Revenu total" value={formatFcfa(stats.totalRevenueFcfa)} />
-        </div>
+      <section>
+        <h2 className="mb-4 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+          Trajets par statut
+        </h2>
 
-        <section>
-          <h2 className="mb-4 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
-            Trajets par statut
-          </h2>
-
-          {statusEntries.length === 0 ? (
-            <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
-              Aucun trajet pour le moment.
-            </p>
-          ) : (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              {statusEntries.map(([status, count]) => (
-                <StatCard key={status} label={STATUS_LABELS[status] ?? status} value={count} />
-              ))}
-            </div>
-          )}
-        </section>
-      </main>
+        {statusEntries.length === 0 ? (
+          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+            Aucun trajet pour le moment.
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {statusEntries.map(([status, count]) => (
+              <StatCard key={status} label={STATUS_LABELS[status] ?? status} value={count} />
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }
