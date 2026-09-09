@@ -52,6 +52,50 @@ export const PAYMENT_STATUS_STYLES: Record<string, string> = {
   voucher_issued: "bg-violet-50 text-violet-700 dark:bg-violet-950 dark:text-violet-300",
 };
 
+// Distinct des 3 maps de statut ci-dessus : c'est un statut AFFICHÉ,
+// dérivé (jamais stocké tel quel) — combine bookings.status et le statut
+// de l'avoir éventuellement émis pour CETTE réservation.
+export type BookingDisplayStatus = "confirmed" | "pending" | "cancelled" | "refunded";
+
+export const BOOKING_DISPLAY_STATUS_LABELS: Record<BookingDisplayStatus, string> = {
+  confirmed: "Confirmée",
+  pending: "En attente",
+  cancelled: "Annulée",
+  refunded: "Remboursée",
+};
+
+export const BOOKING_DISPLAY_STATUS_STYLES: Record<BookingDisplayStatus, string> = {
+  confirmed: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
+  pending: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+  cancelled: "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300",
+  refunded: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+};
+
+// Règle exacte de dérivation (voir le plan du chantier) : bookings.status
+// + statut de l'avoir émis pour CETTE réservation (vouchers.origin_booking_id
+// est UNIQUE — au plus un avoir par réservation).
+// - confirmed OU completed → "confirmed" (vert) : réservation honorée.
+// - pending                → "pending" (orange) : paiement en attente.
+// - cancelled ET (voucherStatus = 'refund_pending' OU 'refund_processed')
+//                          → "refunded" (bleu) : l'avoir n'a jamais été
+//   consommé comme crédit, il a fini en remboursement réel/à traiter.
+// - cancelled, tout le reste (aucun avoir, ou avoir 'active'/'used')
+//                          → "cancelled" (rouge) : annulée, aucun argent
+//   réel n'a (encore) quitté le système côté compagnie.
+export function deriveBookingDisplayStatus(
+  bookingStatus: string,
+  voucherStatus: string | null
+): BookingDisplayStatus {
+  if (bookingStatus === "confirmed" || bookingStatus === "completed") return "confirmed";
+  if (bookingStatus === "pending") return "pending";
+  if (bookingStatus === "cancelled") {
+    return voucherStatus === "refund_pending" || voucherStatus === "refund_processed"
+      ? "refunded"
+      : "cancelled";
+  }
+  return "cancelled"; // filet de sécurité — bookings.status est un enum fermé, ne devrait jamais arriver
+}
+
 export function formatDepartureDateTime(departureAt: string): string {
   return new Intl.DateTimeFormat("fr-BJ", {
     dateStyle: "medium",

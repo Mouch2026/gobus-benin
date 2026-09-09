@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireCompany } from "@/lib/supabase/dal";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getBeninMidnightToday } from "@/lib/benin-time";
+import { getBeninDateString, getBeninMidnightToday } from "@/lib/benin-time";
 import { formatFcfa } from "shared";
 import { AccessBlockedMessage } from "./_components";
 import { BOOKING_STATUS_LABELS, BOOKING_STATUS_STYLES, formatDepartureDateTime } from "./_shared";
@@ -303,7 +303,7 @@ export default async function DashboardPage(props: PageProps<"/">) {
             + Nouvelle réservation
           </Link>
           <a
-            href="/export/reservations-du-jour"
+            href={`/reservations/export?from=${getBeninDateString()}&to=${getBeninDateString()}`}
             className="rounded-lg border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
           >
             ⭳ Export du jour

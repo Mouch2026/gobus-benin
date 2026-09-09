@@ -127,14 +127,17 @@ export function AppShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-600 dark:bg-black dark:text-zinc-400 md:grid md:grid-cols-[220px_1fr]">
-      <div className="md:col-span-2">
+    <div className="min-h-screen bg-zinc-50 text-zinc-600 dark:bg-black dark:text-zinc-400 md:grid md:grid-cols-[220px_1fr] print:grid-cols-1">
+      <div className="md:col-span-2 print:hidden">
         <AppHeader company={company} />
       </div>
 
       {/* Mobile uniquement : tiroir replié par défaut, pousse le contenu
-          en dessous à l'ouverture — pas de JS, pas d'overlay à gérer. */}
-      <details className="border-b border-zinc-200 dark:border-zinc-800 md:hidden">
+          en dessous à l'ouverture — pas de JS, pas d'overlay à gérer.
+          print:hidden : une page imprimable (ex. billet) n'a jamais
+          besoin du chrome de nav, quelle que soit la largeur d'écran au
+          moment de l'impression. */}
+      <details className="border-b border-zinc-200 dark:border-zinc-800 md:hidden print:hidden">
         <summary className="cursor-pointer list-none px-6 py-3 text-sm font-medium text-zinc-950 dark:text-zinc-50">
           ☰ Menu
         </summary>
@@ -144,7 +147,7 @@ export function AppShell({
       </details>
 
       {/* Desktop uniquement : colonne fixe toujours visible. */}
-      <aside className="hidden border-r border-zinc-200 p-4 dark:border-zinc-800 md:block">
+      <aside className="hidden border-r border-zinc-200 p-4 dark:border-zinc-800 md:block print:hidden">
         <nav className="flex flex-col gap-1">
           <SidebarLinks />
         </nav>
