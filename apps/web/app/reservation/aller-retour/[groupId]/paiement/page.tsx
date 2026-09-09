@@ -115,7 +115,24 @@ export default async function PaiementAllerRetourPage(
   const voucherAppliedFcfa = selectedVoucher
     ? Math.min(selectedVoucher.amount_fcfa, totalFcfa)
     : 0;
-  const amountToPayFcfa = totalFcfa - voucherAppliedFcfa;
+
+  // GoBus Points — même calcul que le paiement simple, sur le montant
+  // combiné (la répartition par leg n'a lieu que côté serveur, dans
+  // simulate_round_trip_payment — l'aperçu combiné ici correspond
+  // exactement au total final, la somme des deux répartitions ne change
+  // jamais ce total).
+  const { data: pointsBalanceRow } = await supabase
+    .from("points_balance")
+    .select("balance")
+    .eq("user_id", user.sub)
+    .maybeSingle<{ balance: number }>();
+  const pointsBalance = pointsBalanceRow?.balance ?? 0;
+  const combinedBaseFcfa = outbound.total_price_fcfa + returnLeg.total_price_fcfa;
+  const voucherAppliedToBaseFcfa = Math.min(voucherAppliedFcfa, combinedBaseFcfa);
+  const remainingBaseAfterVoucher = combinedBaseFcfa - voucherAppliedToBaseFcfa;
+  const pointsToRedeemFcfa = pointsBalance > 0 ? Math.min(remainingBaseAfterVoucher, pointsBalance) : 0;
+
+  const amountToPayFcfa = totalFcfa - voucherAppliedFcfa - pointsToRedeemFcfa;
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-background px-4 py-16">
@@ -157,12 +174,20 @@ export default async function PaiementAllerRetourPage(
             <span>− {formatFcfa(voucherAppliedFcfa)}</span>
           </div>
         ) : null}
+        {pointsToRedeemFcfa > 0 ? (
+          <div
+            className={`flex items-center justify-between text-primary ${voucherAppliedFcfa > 0 ? "pt-1" : "mt-4 border-t border-border pt-3"}`}
+          >
+            <span>Points utilisés</span>
+            <span>− {formatFcfa(pointsToRedeemFcfa)}</span>
+          </div>
+        ) : null}
 
         <div
-          className={`flex items-center justify-between pt-3 ${voucherAppliedFcfa > 0 ? "" : "mt-4 border-t border-border"}`}
+          className={`flex items-center justify-between pt-3 ${voucherAppliedFcfa > 0 || pointsToRedeemFcfa > 0 ? "" : "mt-4 border-t border-border"}`}
         >
           <span className="font-semibold text-foreground">
-            {voucherAppliedFcfa > 0 ? "Total à payer" : "Total"}
+            {voucherAppliedFcfa > 0 || pointsToRedeemFcfa > 0 ? "Total à payer" : "Total"}
           </span>
           <span className="font-display text-xl font-extrabold text-foreground">
             {formatFcfa(amountToPayFcfa)}
@@ -222,6 +247,16 @@ export default async function PaiementAllerRetourPage(
                 <span className="text-muted">Ne pas utiliser d&apos;avoir</span>
               </label>
             </fieldset>
+          ) : null}
+
+          {pointsBalance > 0 ? (
+            <label className="flex items-start gap-2 rounded-lg border border-border p-3 text-sm text-foreground">
+              <input type="checkbox" name="usePoints" value="1" defaultChecked className="mt-0.5" />
+              <span>
+                Utiliser mes points disponibles{" "}
+                <span className="font-semibold">(solde : {pointsBalance} points)</span>
+              </span>
+            </label>
           ) : null}
 
           <SubmitButton />

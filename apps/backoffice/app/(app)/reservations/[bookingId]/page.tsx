@@ -19,6 +19,8 @@ type BookingDetail = {
   status: string;
   total_price_fcfa: number;
   created_at: string;
+  payment_token: string | null;
+  payment_token_expires_at: string | null;
   trips: {
     departure_at: string;
     bus_number: string;
@@ -51,7 +53,7 @@ async function getOwnedBooking(
   const { data: booking, error } = await supabase
     .from("bookings")
     .select(
-      "id, booking_reference, phone, status, total_price_fcfa, created_at, trips(departure_at, bus_number, routes(origin_city, destination_city)), passengers(id, full_name, seat_number)"
+      "id, booking_reference, phone, status, total_price_fcfa, created_at, payment_token, payment_token_expires_at, trips(departure_at, bus_number, routes(origin_city, destination_city)), passengers(id, full_name, seat_number)"
     )
     .eq("id", bookingId)
     .eq("company_id", companyId)
@@ -162,6 +164,26 @@ export default async function BookingDetailPage(props: PageProps<"/reservations/
           Total : {formatFcfa(booking.total_price_fcfa)}
         </div>
       </div>
+
+      {booking.payment_token && booking.status === "pending" ? (
+        <div className="flex flex-col gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm dark:border-amber-900 dark:bg-amber-950">
+          <p className="font-medium text-amber-900 dark:text-amber-200">
+            Réservation créée pour un client — lien de paiement en attente
+          </p>
+          <p className="text-amber-800 dark:text-amber-300">
+            Envoyé par e-mail au client. Si l&apos;envoi a échoué (ou pour le transmettre
+            autrement), voici le lien direct :
+          </p>
+          <code className="break-all rounded-lg bg-white px-3 py-2 text-xs text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
+            {`${process.env.NEXT_PUBLIC_WEB_URL}/paiement-securise/${booking.payment_token}`}
+          </code>
+          {booking.payment_token_expires_at ? (
+            <p className="text-xs text-amber-700 dark:text-amber-400">
+              Expire le {formatDepartureDateTime(booking.payment_token_expires_at)}.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
       <section>
         <h2 className="mb-3 text-sm font-semibold text-zinc-950 dark:text-zinc-50">Passagers</h2>

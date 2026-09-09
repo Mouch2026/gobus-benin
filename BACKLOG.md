@@ -10,6 +10,12 @@ Liste vivante, à mettre à jour au fil du développement (pas figée à un inst
 - Changement de plan d'abonnement (upgrade/downgrade) depuis le
   back-office — actuellement /abonnement est en lecture seule, aucune
   proration ni changement de plan en cours d'abonnement n'est géré.
+- Réclamation atomique du paiement (simulatePayment ET payViaToken) —
+  actuellement une simple lecture puis écriture, pas un update ... where
+  status = 'pending' returning ... comme pour les avoirs. Deux clics
+  rapprochés sur le même paiement pourraient créer deux paiements pour la
+  même réservation. À corriger sur les deux flux ensemble pour rester
+  cohérent.
 
 ### Communication voyageur
 - Envoi par e-mail de la confirmation de réservation : facture + billet
@@ -21,6 +27,14 @@ Liste vivante, à mettre à jour au fil du développement (pas figée à un inst
   la confirmation de réservation classique par e-mail. Urgent une fois
   qu'un vrai incident survient en usage réel, contrairement à la
   confirmation qui peut attendre.
+- Canal SMS/WhatsApp pour le lien de paiement (réservations créées par la
+  compagnie pour un client) — l'envoi automatique par e-mail existe déjà
+  (sendBookingPaymentLinkNotification) ; le lien reste aussi
+  consultable/copiable manuellement sur /reservations/[bookingId] en
+  secours (panne d'envoi, ou canal alternatif). Deux options pour ajouter
+  un canal plus immédiat : SMS via un fournisseur tiers (Twilio, Africa's
+  Talking, ou un opérateur local béninois), ou WhatsApp Business API.
+  Aucune des deux n'est choisie ni budgétée.
 
 ### Communication compagnie
 - E-mail de confirmation à la compagnie à chaque vente de billet.

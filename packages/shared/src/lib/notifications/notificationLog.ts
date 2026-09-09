@@ -1,7 +1,11 @@
 import "server-only";
 import { supabaseAdmin } from "./supabaseAdmin";
 
-export type NotificationType = "booking_confirmation" | "trip_cancellation" | "voucher_refund_pending";
+export type NotificationType =
+  | "booking_confirmation"
+  | "trip_cancellation"
+  | "voucher_refund_pending"
+  | "booking_payment_link";
 
 // Utilisée par les 3 send*Notification — un seul point d'écriture plutôt
 // que de tripler le try/catch. Ne doit jamais faire échouer l'appelant :

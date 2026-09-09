@@ -89,3 +89,22 @@ export type VoucherRefundPendingPayload = {
   originBookingReference: string;
   manageUrl: string;
 };
+
+// Réservation créée par la compagnie pour un client qui ne peut pas la
+// faire lui-même (chantier "+ Nouvelle réservation" côté compagnie) — ce
+// client n'a jamais de session (compte "discret", mot de passe aléatoire
+// jamais communiqué), le seul moyen de payer est ce lien à durée limitée.
+// paymentUrl pointe vers /paiement-securise/[token], jamais vers la page
+// de paiement authentifiée habituelle.
+export type BookingPaymentLinkPayload = {
+  userId: string;
+  recipientEmail: string;
+  bookingReference: string;
+  companyName: string;
+  originCity: string;
+  destinationCity: string;
+  departureAt: string; // ISO
+  amountDueFcfa: number; // amount_charged_fcfa (base + frais, aucun avoir/point possible sur ce compte neuf)
+  paymentUrl: string;
+  expiresAt: string; // ISO — payment_token_expires_at, affiché pour que le client sache jusqu'à quand agir
+};

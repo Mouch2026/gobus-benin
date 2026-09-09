@@ -70,10 +70,17 @@ export async function simulateRoundTripPayment(groupId: string, formData: FormDa
   const voucherIdRaw = String(formData.get("voucherId") ?? "").trim();
   const voucherId = voucherIdRaw || null;
 
+  // GoBus Points — jamais de montant transmis, juste l'intention brute :
+  // le montant réel (priorité 2, après l'avoir, jamais les frais) est
+  // entièrement recalculé et réclamé à l'intérieur de la fonction SQL,
+  // dans la même transaction que le reste du paiement.
+  const usePoints = formData.get("usePoints") === "1";
+
   const { error } = await supabaseAdmin.rpc("simulate_round_trip_payment", {
     p_booking_group_id: groupId,
     p_user_id: user.sub,
     p_voucher_id: voucherId,
+    p_use_points: usePoints,
   });
 
   if (error) {

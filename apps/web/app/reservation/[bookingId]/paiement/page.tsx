@@ -112,7 +112,23 @@ export default async function PaiementPage(props: PageProps<"/reservation/[booki
   const voucherAppliedFcfa = selectedVoucher
     ? Math.min(selectedVoucher.amount_fcfa, totalFcfa)
     : 0;
-  const amountToPayFcfa = totalFcfa - voucherAppliedFcfa;
+
+  // GoBus Points — priorité 2, seulement sur le reliquat du prix du
+  // billet après l'avoir (jamais les frais de service), plafonné au
+  // solde disponible. Même calcul que dans actions.ts, pour que
+  // l'aperçu affiché corresponde exactement à ce que le serveur
+  // recalculera à la soumission.
+  const { data: pointsBalanceRow } = await supabase
+    .from("points_balance")
+    .select("balance")
+    .eq("user_id", user.sub)
+    .maybeSingle<{ balance: number }>();
+  const pointsBalance = pointsBalanceRow?.balance ?? 0;
+  const voucherAppliedToBaseFcfa = Math.min(voucherAppliedFcfa, booking.total_price_fcfa);
+  const remainingBaseAfterVoucher = booking.total_price_fcfa - voucherAppliedToBaseFcfa;
+  const pointsToRedeemFcfa = pointsBalance > 0 ? Math.min(remainingBaseAfterVoucher, pointsBalance) : 0;
+
+  const amountToPayFcfa = totalFcfa - voucherAppliedFcfa - pointsToRedeemFcfa;
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-background px-4 py-16">
@@ -144,9 +160,15 @@ export default async function PaiementPage(props: PageProps<"/reservation/[booki
               <span>− {formatFcfa(voucherAppliedFcfa)}</span>
             </div>
           ) : null}
+          {pointsToRedeemFcfa > 0 ? (
+            <div className="flex items-center justify-between text-primary">
+              <span>Points utilisés</span>
+              <span>− {formatFcfa(pointsToRedeemFcfa)}</span>
+            </div>
+          ) : null}
           <div className="mt-1 flex items-center justify-between border-t border-border pt-2">
             <span className="font-semibold text-foreground">
-              {voucherAppliedFcfa > 0 ? "Total à payer" : "Total"}
+              {voucherAppliedFcfa > 0 || pointsToRedeemFcfa > 0 ? "Total à payer" : "Total"}
             </span>
             <span className="font-display text-xl font-extrabold text-foreground">
               {formatFcfa(amountToPayFcfa)}
@@ -207,6 +229,16 @@ export default async function PaiementPage(props: PageProps<"/reservation/[booki
                 <span className="text-muted">Ne pas utiliser d&apos;avoir</span>
               </label>
             </fieldset>
+          ) : null}
+
+          {pointsBalance > 0 ? (
+            <label className="flex items-start gap-2 rounded-lg border border-border p-3 text-sm text-foreground">
+              <input type="checkbox" name="usePoints" value="1" defaultChecked className="mt-0.5" />
+              <span>
+                Utiliser mes points disponibles{" "}
+                <span className="font-semibold">(solde : {pointsBalance} points)</span>
+              </span>
+            </label>
           ) : null}
 
           <SubmitButton />

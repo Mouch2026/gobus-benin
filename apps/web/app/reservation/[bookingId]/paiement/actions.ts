@@ -122,6 +122,51 @@ export async function simulatePayment(bookingId: string, formData: FormData): Pr
     }
   }
 
+  // GoBus Points — priorité 2, seulement sur le reliquat du prix du
+  // billet après l'avoir (jamais les frais de service), plafonné au
+  // solde disponible. Jamais de saisie d'un montant côté page : une
+  // simple case à cocher, le montant réel est toujours recalculé ici.
+  let pointsRedeemedFcfa = 0;
+  const usePoints = formData.get("usePoints") === "1";
+
+  if (usePoints) {
+    const voucherAppliedToBaseFcfa = Math.min(appliedVoucherFcfa, baseAmountFcfa);
+    const remainingBaseAfterVoucher = baseAmountFcfa - voucherAppliedToBaseFcfa;
+
+    if (remainingBaseAfterVoucher > 0) {
+      const { data: balanceRow } = await supabase
+        .from("points_balance")
+        .select("balance")
+        .eq("user_id", user.sub)
+        .maybeSingle<{ balance: number }>();
+
+      const pointsToRedeem = Math.min(remainingBaseAfterVoucher, balanceRow?.balance ?? 0);
+
+      if (pointsToRedeem > 0) {
+        // L'insert EST la réclamation atomique : le trigger
+        // apply_points_ledger_entry retranche du solde via un upsert, et
+        // points_balance_balance_check échoue (donc annule cet insert,
+        // rien d'autre) si le solde réel — relu par le trigger au moment
+        // de l'écriture, pas la valeur ci-dessus qui peut être légèrement
+        // périmée — ne suffit plus. Jamais bloquant : en cas d'échec, on
+        // retombe simplement sur 0 point appliqué, même philosophie que
+        // l'avoir déjà consommé.
+        const { error: pointsError } = await supabaseAdmin.from("points_ledger").insert({
+          booking_id: bookingId,
+          user_id: user.sub,
+          points_amount: -pointsToRedeem,
+          reason: "booking_redemption",
+        });
+
+        if (!pointsError) {
+          pointsRedeemedFcfa = pointsToRedeem;
+        } else {
+          console.error("Impossible d'appliquer les points :", pointsError.message);
+        }
+      }
+    }
+  }
+
   // payments reste volontairement "lecture seule pour le client" (RLS ne
   // définit qu'une policy select) — ces deux écritures passent par
   // service_role, comme pour l'abonnement compagnie, pas par un nouveau
@@ -141,6 +186,7 @@ export async function simulatePayment(bookingId: string, formData: FormData): Pr
       transaction_fee_fcfa: transactionFeeFcfa,
       voucher_id: claimedVoucherId,
       voucher_amount_fcfa: appliedVoucherFcfa,
+      points_redeemed_fcfa: pointsRedeemedFcfa,
       provider: "simulated",
       status: "pending",
     })
