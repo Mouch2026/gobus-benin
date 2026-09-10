@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { requireCompany } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { calculateServiceFees } from "shared";
+import { sendBookingConfirmation } from "shared/src/lib/notifications/sendBookingConfirmation";
 import { sendBookingPaymentLinkNotification } from "shared/src/lib/notifications/sendBookingPaymentLinkNotification";
 
 export type NewBookingState = { error: string | null };
@@ -59,9 +61,24 @@ export async function createBookingForCustomer(
   const tripId = String(formData.get("tripId") ?? "");
   const email = String(formData.get("email") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
-  const passengerNames = (formData.getAll("passengerName") as string[])
-    .map((name) => name.trim())
-    .filter(Boolean);
+
+  // Zippé par position AVANT filtrage des lignes vides : les champs
+  // seatNumber-<i> sont nommés par l'index du champ nom correspondant, un
+  // filter() sur les noms seul romprait cet alignement dès qu'une ligne du
+  // milieu est laissée vide.
+  const rawNames = formData.getAll("passengerName") as string[];
+  const passengerNames: string[] = [];
+  const requestedSeats: (string | null)[] = [];
+  rawNames.forEach((raw, i) => {
+    const name = raw.trim();
+    if (!name) return;
+    passengerNames.push(name);
+    const seat = String(formData.get(`seatNumber-${i}`) ?? "").trim();
+    requestedSeats.push(seat || null);
+  });
+
+  const paymentMode = String(formData.get("paymentMode") ?? "link");
+  const receivedMethod = String(formData.get("receivedMethod") ?? "");
 
   if (!tripId) {
     return { error: "Merci de choisir un trajet." };
@@ -74,6 +91,9 @@ export async function createBookingForCustomer(
   }
   if (passengerNames.length === 0) {
     return { error: "Merci de renseigner au moins un passager." };
+  }
+  if (paymentMode === "received" && receivedMethod !== "cash" && receivedMethod !== "card") {
+    return { error: "Merci de choisir un moyen de paiement (espèces ou carte)." };
   }
 
   // Departure_at nécessaire pour plafonner l'expiration du jeton — lu via
@@ -108,6 +128,7 @@ export async function createBookingForCustomer(
       p_passenger_names: passengerNames,
       p_user_id: userId,
       p_company_id: access.company.id,
+      p_requested_seats: requestedSeats,
     }
   );
 
@@ -117,6 +138,74 @@ export async function createBookingForCustomer(
       return { error: bookingError.message };
     }
     return { error: "Impossible de créer cette réservation. Réessayez." };
+  }
+
+  if (paymentMode === "received") {
+    const { data: bookingRow, error: bookingFetchError } = await supabaseAdmin
+      .from("bookings")
+      .select("total_price_fcfa")
+      .eq("id", bookingId)
+      .single();
+
+    if (bookingFetchError || !bookingRow) {
+      console.error(
+        "Réservation créée mais son montant n'a pas pu être relu :",
+        bookingFetchError?.message
+      );
+      return {
+        error: "Réservation créée mais son montant n'a pas pu être relu. Contactez le support.",
+      };
+    }
+
+    // platform_fee_fcfa suit le même calcul que le paiement en ligne
+    // (payViaToken) — jamais recalculé ou omis ailleurs
+    // (packages/shared/src/lib/pricing.ts) : la commission plateforme
+    // reste due, encaissée en espèces/carte par la compagnie en même temps
+    // que le prix du billet.
+    // transaction_fee_fcfa reste à 0 en revanche : aucun traitement
+    // électronique n'a réellement eu lieu (pas de FedaPay, pas de
+    // prestataire de paiement) pour ce paiement comptoir.
+    // platform_fee_collected: false — la compagnie doit encore cette
+    // commission à la plateforme, contrairement à un paiement en ligne où
+    // l'argent transite par nous.
+    const baseAmountFcfa = bookingRow.total_price_fcfa;
+    const { platformFeeFcfa } = calculateServiceFees(baseAmountFcfa);
+
+    const { data: payment, error: insertError } = await supabaseAdmin
+      .from("payments")
+      .insert({
+        booking_id: bookingId,
+        base_amount_fcfa: baseAmountFcfa,
+        platform_fee_fcfa: platformFeeFcfa,
+        transaction_fee_fcfa: 0,
+        platform_fee_collected: false,
+        provider: "manual",
+        method: receivedMethod,
+        status: "pending",
+      })
+      .select("id")
+      .single();
+
+    if (insertError || !payment) {
+      console.error("Réservation créée mais le paiement n'a pas pu être enregistré :", insertError?.message);
+      return {
+        error: "Réservation créée mais le paiement n'a pas pu être enregistré. Contactez le support.",
+      };
+    }
+
+    // Deux temps (pending -> approved), jamais une seule insertion à
+    // status: 'approved' : nécessaire pour déclencher
+    // award_points_on_payment_approved (compare old.status <> 'approved').
+    await supabaseAdmin
+      .from("payments")
+      .update({ status: "approved", paid_at: new Date().toISOString() })
+      .eq("id", payment.id);
+
+    await supabaseAdmin.from("bookings").update({ status: "confirmed" }).eq("id", bookingId);
+
+    await sendBookingConfirmation({ bookingId });
+
+    redirect(`/reservations/${bookingId}`);
   }
 
   // Jeton de paiement : 256 bits d'entropie (crypto.randomBytes, jamais

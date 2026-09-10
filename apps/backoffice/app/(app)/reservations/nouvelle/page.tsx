@@ -3,6 +3,37 @@ import { createClient } from "@/lib/supabase/server";
 import { AccessBlockedMessage } from "../../_components";
 import { NewBookingForm, type BookableTrip } from "./NewBookingForm";
 
+// Sièges du plan de bus d'un trajet, et ceux déjà occupés (toutes
+// réservations non annulées confondues) — même patron exact que
+// getSeatAvailability dans /reservations/[bookingId]/modifier/page.tsx,
+// sans le paramètre bookingId à exclure puisqu'aucune réservation n'existe
+// encore ici. Une requête par trajet (pas un join agrégé) : le nombre de
+// trajets réservables affichés reste faible, et ceci reproduit fidèlement
+// un patron déjà en production plutôt que d'introduire une requête
+// nouvelle et non vérifiée.
+async function getSeatAvailability(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  tripId: string
+): Promise<{ seatLabels: string[]; occupiedSeats: string[] }> {
+  const { data: trip } = await supabase
+    .from("trips")
+    .select("bus_layouts(seat_labels)")
+    .eq("id", tripId)
+    .maybeSingle<{ bus_layouts: { seat_labels: string[] } | null }>();
+
+  const { data: passengers } = await supabase
+    .from("passengers")
+    .select("seat_number, bookings!inner(status)")
+    .eq("trip_id", tripId)
+    .not("seat_number", "is", null);
+
+  const occupiedSeats = (passengers ?? [])
+    .filter((p) => (p.bookings as unknown as { status: string }).status !== "cancelled")
+    .map((p) => p.seat_number as string);
+
+  return { seatLabels: trip?.bus_layouts?.seat_labels ?? [], occupiedSeats };
+}
+
 // Même forme de requête que /voyages (routes!inner, mêmes champs) — pas
 // une nouvelle recherche, juste des filtres en plus adaptés à "encore
 // réservable" : départ futur (même convention que getUpcomingTripsCount
@@ -28,7 +59,14 @@ async function getBookableTrips(companyId: string): Promise<BookableTrip[]> {
     return [];
   }
 
-  return (data ?? []) as unknown as BookableTrip[];
+  const trips = (data ?? []) as unknown as Omit<BookableTrip, "seatLabels" | "occupiedSeats">[];
+
+  return Promise.all(
+    trips.map(async (trip) => {
+      const { seatLabels, occupiedSeats } = await getSeatAvailability(supabase, trip.id);
+      return { ...trip, seatLabels, occupiedSeats };
+    })
+  );
 }
 
 export default async function NewBookingPage() {
