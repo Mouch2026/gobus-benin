@@ -37,18 +37,33 @@ function Message({ children }: { children: React.ReactNode }) {
 // action financière n'est possible depuis cette page. Pas de bouton
 // d'annulation ici (portée volontairement exclue, voir le plan) : ce
 // client n'a pas de session pour appeler cancel_booking de toute façon.
+//
+// Depuis le chantier "paiements scindés" : le jeton identifie une PART de
+// paiement, pas la réservation — on résout d'abord la réservation via
+// cette part, puis on affiche exactement comme avant. Si la réservation
+// est confirmée, TOUTES ses parts (y compris celle-ci) sont 'approved'
+// par construction (record_payment_part_received les bascule ensemble) —
+// pas besoin de revérifier le statut de cette part précise.
 export default async function PaiementSecuriseSuccesPage(
   props: PageProps<"/paiement-securise/[token]/succes">
 ) {
   const { token } = await props.params;
 
-  const { data: booking } = await supabaseAdmin
-    .from("bookings")
-    .select(
-      "id, booking_reference, status, total_price_fcfa, trips(departure_at, arrival_at, bus_number, routes(origin_city, destination_city)), passengers(id, full_name, seat_number)"
-    )
+  const { data: paymentRow } = await supabaseAdmin
+    .from("payments")
+    .select("booking_id")
     .eq("payment_token", token)
-    .maybeSingle<BookingWithTrip>();
+    .maybeSingle<{ booking_id: string }>();
+
+  const { data: booking } = paymentRow
+    ? await supabaseAdmin
+        .from("bookings")
+        .select(
+          "id, booking_reference, status, total_price_fcfa, trips(departure_at, arrival_at, bus_number, routes(origin_city, destination_city)), passengers(id, full_name, seat_number)"
+        )
+        .eq("id", paymentRow.booking_id)
+        .maybeSingle<BookingWithTrip>()
+    : { data: null };
 
   if (!booking) {
     return <Message>Cette réservation n&apos;existe pas.</Message>;

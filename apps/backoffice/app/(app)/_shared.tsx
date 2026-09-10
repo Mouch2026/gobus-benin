@@ -38,6 +38,10 @@ export const BOOKING_STATUS_STYLES: Record<string, string> = {
 // equivalent on trips/bookings).
 export const PAYMENT_STATUS_LABELS: Record<string, string> = {
   pending: "En attente",
+  // Part d'un paiement scindé : reçue, mais la somme des parts n'atteint
+  // pas encore total_price_fcfa (voir record_payment_part_received) —
+  // distinct de "approved", jamais confondu avec un paiement complet.
+  received: "Reçu (paiement scindé, en attente du reste)",
   approved: "Approuvé",
   failed: "Échoué",
   refunded: "Remboursé",
@@ -46,6 +50,7 @@ export const PAYMENT_STATUS_LABELS: Record<string, string> = {
 
 export const PAYMENT_STATUS_STYLES: Record<string, string> = {
   pending: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+  received: "bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-300",
   approved: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
   failed: "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300",
   refunded: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",

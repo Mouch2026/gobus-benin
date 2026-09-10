@@ -19,8 +19,6 @@ type BookingDetail = {
   status: string;
   total_price_fcfa: number;
   created_at: string;
-  payment_token: string | null;
-  payment_token_expires_at: string | null;
   trips: {
     departure_at: string;
     bus_number: string;
@@ -40,6 +38,8 @@ type PaymentRow = {
   points_redeemed_fcfa: number;
   paid_at: string | null;
   created_at: string;
+  payment_token: string | null;
+  payment_token_expires_at: string | null;
 };
 
 // Même patron que getOwnedTrip (trajets/[id]/page.tsx) : requête via le
@@ -53,7 +53,7 @@ async function getOwnedBooking(
   const { data: booking, error } = await supabase
     .from("bookings")
     .select(
-      "id, booking_reference, phone, status, total_price_fcfa, created_at, payment_token, payment_token_expires_at, trips(departure_at, bus_number, routes(origin_city, destination_city)), passengers(id, full_name, seat_number)"
+      "id, booking_reference, phone, status, total_price_fcfa, created_at, trips(departure_at, bus_number, routes(origin_city, destination_city)), passengers(id, full_name, seat_number)"
     )
     .eq("id", bookingId)
     .eq("company_id", companyId)
@@ -81,7 +81,7 @@ async function getPaymentHistory(
   const { data, error } = await supabase
     .from("payments")
     .select(
-      "id, provider, method, status, base_amount_fcfa, amount_charged_fcfa, voucher_amount_fcfa, points_redeemed_fcfa, paid_at, created_at"
+      "id, provider, method, status, base_amount_fcfa, amount_charged_fcfa, voucher_amount_fcfa, points_redeemed_fcfa, paid_at, created_at, payment_token, payment_token_expires_at"
     )
     .eq("booking_id", bookingId)
     .order("created_at", { ascending: false });
@@ -165,25 +165,34 @@ export default async function BookingDetailPage(props: PageProps<"/reservations/
         </div>
       </div>
 
-      {booking.payment_token && booking.status === "pending" ? (
-        <div className="flex flex-col gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm dark:border-amber-900 dark:bg-amber-950">
-          <p className="font-medium text-amber-900 dark:text-amber-200">
-            Réservation créée pour un client — lien de paiement en attente
-          </p>
-          <p className="text-amber-800 dark:text-amber-300">
-            Envoyé par e-mail au client. Si l&apos;envoi a échoué (ou pour le transmettre
-            autrement), voici le lien direct :
-          </p>
-          <code className="break-all rounded-lg bg-white px-3 py-2 text-xs text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
-            {`${process.env.NEXT_PUBLIC_WEB_URL}/paiement-securise/${booking.payment_token}`}
-          </code>
-          {booking.payment_token_expires_at ? (
-            <p className="text-xs text-amber-700 dark:text-amber-400">
-              Expire le {formatDepartureDateTime(booking.payment_token_expires_at)}.
+      {/* Un jeton PAR PART de paiement (Mobile Money/Carte, chantier
+          "paiements scindés") — une réservation peut avoir plusieurs liens
+          encore en attente en même temps, chacun affiché séparément. */}
+      {payments
+        .filter((payment) => payment.payment_token && payment.status === "pending")
+        .map((payment) => (
+          <div
+            key={payment.id}
+            className="flex flex-col gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm dark:border-amber-900 dark:bg-amber-950"
+          >
+            <p className="font-medium text-amber-900 dark:text-amber-200">
+              Part {payment.method === "card" ? "Carte bancaire" : "Mobile Money"} —{" "}
+              {formatFcfa(payment.amount_charged_fcfa)} en attente
             </p>
-          ) : null}
-        </div>
-      ) : null}
+            <p className="text-amber-800 dark:text-amber-300">
+              Envoyé par e-mail au client. Si l&apos;envoi a échoué (ou pour le transmettre
+              autrement), voici le lien direct :
+            </p>
+            <code className="break-all rounded-lg bg-white px-3 py-2 text-xs text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
+              {`${process.env.NEXT_PUBLIC_WEB_URL}/paiement-securise/${payment.payment_token}`}
+            </code>
+            {payment.payment_token_expires_at ? (
+              <p className="text-xs text-amber-700 dark:text-amber-400">
+                Expire le {formatDepartureDateTime(payment.payment_token_expires_at)}.
+              </p>
+            ) : null}
+          </div>
+        ))}
 
       <section>
         <h2 className="mb-3 text-sm font-semibold text-zinc-950 dark:text-zinc-50">Passagers</h2>

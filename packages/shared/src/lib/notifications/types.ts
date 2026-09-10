@@ -92,19 +92,27 @@ export type VoucherRefundPendingPayload = {
 
 // Réservation créée par la compagnie pour un client qui ne peut pas la
 // faire lui-même (chantier "+ Nouvelle réservation" côté compagnie) — ce
-// client n'a jamais de session (compte "discret", mot de passe aléatoire
-// jamais communiqué), le seul moyen de payer est ce lien à durée limitée.
-// paymentUrl pointe vers /paiement-securise/[token], jamais vers la page
-// de paiement authentifiée habituelle.
+// client n'a jamais de session, le seul moyen de payer est ce lien à
+// durée limitée. paymentUrl pointe vers /paiement-securise/[token],
+// jamais vers la page de paiement authentifiée habituelle.
+//
+// Depuis le chantier "paiements scindés" : le jeton est porté par UNE
+// PART de paiement (payments.payment_token), pas par la réservation
+// entière — une réservation peut avoir plusieurs parts "par lien"
+// (Mobile Money ET Carte), chacune avec son propre e-mail. paymentMethodLabel
+// permet au client de distinguer les e-mails reçus lorsqu'il y en a
+// plusieurs pour la même réservation.
 export type BookingPaymentLinkPayload = {
   userId: string;
+  bookingId: string; // pour journaliser dans notification_log (clé sur booking_id, pas payment_id)
   recipientEmail: string;
   bookingReference: string;
   companyName: string;
   originCity: string;
   destinationCity: string;
   departureAt: string; // ISO
-  amountDueFcfa: number; // amount_charged_fcfa (base + frais, aucun avoir/point possible sur ce compte neuf)
+  paymentMethodLabel: string; // "Mobile Money (MTN)" | "Mobile Money (Moov)" | "Carte bancaire"
+  amountDueFcfa: number; // payments.amount_charged_fcfa de CETTE part (base + frais/avoir/points si attachés à cette part)
   paymentUrl: string;
-  expiresAt: string; // ISO — payment_token_expires_at, affiché pour que le client sache jusqu'à quand agir
+  expiresAt: string; // ISO — payments.payment_token_expires_at, affiché pour que le client sache jusqu'à quand agir
 };

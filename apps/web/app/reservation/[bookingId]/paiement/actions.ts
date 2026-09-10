@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { calculateServiceFees } from "shared";
+import { applyVoucherAndPoints } from "shared/src/lib/applyVoucherAndPoints";
 import { sendBookingConfirmation } from "shared/src/lib/notifications/sendBookingConfirmation";
 import { sendVoucherRefundPendingNotification } from "shared/src/lib/notifications/sendVoucherRefundPendingNotification";
 
@@ -13,13 +14,6 @@ type BookingForPayment = {
   status: string;
   total_price_fcfa: number;
   trips: { departure_at: string } | null;
-};
-
-type ActiveVoucher = {
-  id: string;
-  amount_fcfa: number;
-  status: string;
-  expires_at: string;
 };
 
 // SIMULÉ — à remplacer par une vraie intégration FedaPay (create-payment /
@@ -64,108 +58,22 @@ export async function simulatePayment(bookingId: string, formData: FormData): Pr
 
   // Avoir éventuellement sélectionné sur la page — jamais confiance dans
   // un montant envoyé par le client, seul l'id est utilisé pour relire
-  // l'état réel de l'avoir au moment du paiement.
+  // l'état réel de l'avoir au moment du paiement. Logique d'application
+  // (réclamation atomique de l'avoir + rachat de points plafonné)
+  // extraite dans applyVoucherAndPoints — réutilisée telle quelle par le
+  // back-office pour un client déjà existant, jamais dupliquée une
+  // seconde fois.
   const voucherIdRaw = formData.get("voucherId");
-  let voucherIdToApply: string | null = null;
-  let voucherAmountFcfa = 0;
-
-  if (voucherIdRaw) {
-    const { data: voucher } = await supabase
-      .from("vouchers")
-      .select("id, amount_fcfa, status, expires_at")
-      .eq("id", String(voucherIdRaw))
-      .eq("user_id", user.sub)
-      .maybeSingle<ActiveVoucher>();
-
-    if (voucher && voucher.status === "active" && new Date(voucher.expires_at) > new Date()) {
-      voucherIdToApply = voucher.id;
-      voucherAmountFcfa = voucher.amount_fcfa;
-    }
-  }
-
-  let appliedVoucherFcfa = 0;
-  let claimedVoucherId: string | null = null;
-
-  if (voucherIdToApply) {
-    appliedVoucherFcfa = Math.min(voucherAmountFcfa, totalFcfa);
-    const leftover = voucherAmountFcfa - appliedVoucherFcfa;
-    const now = new Date().toISOString();
-
-    // Réclame l'avoir AVANT d'écrire le paiement — la clause "status =
-    // 'active'" ferme la course avec une autre utilisation concurrente du
-    // même avoir (un autre onglet, une double soumission). Si la
-    // réclamation échoue (avoir déjà consommé/expiré entre-temps), on
-    // retombe simplement sur un paiement plein tarif sans avoir, jamais
-    // une erreur bloquante.
-    const { data: claimed } = await supabaseAdmin
-      .from("vouchers")
-      .update(
-        leftover > 0
-          ? {
-              status: "refund_pending",
-              consumed_booking_id: bookingId,
-              consumed_at: now,
-              refund_pending_amount_fcfa: leftover,
-              refund_pending_at: now,
-            }
-          : { status: "used", consumed_booking_id: bookingId, consumed_at: now }
-      )
-      .eq("id", voucherIdToApply)
-      .eq("status", "active")
-      .select("id")
-      .maybeSingle();
-
-    if (claimed) {
-      claimedVoucherId = claimed.id;
-    } else {
-      appliedVoucherFcfa = 0;
-    }
-  }
-
-  // GoBus Points — priorité 2, seulement sur le reliquat du prix du
-  // billet après l'avoir (jamais les frais de service), plafonné au
-  // solde disponible. Jamais de saisie d'un montant côté page : une
-  // simple case à cocher, le montant réel est toujours recalculé ici.
-  let pointsRedeemedFcfa = 0;
   const usePoints = formData.get("usePoints") === "1";
 
-  if (usePoints) {
-    const voucherAppliedToBaseFcfa = Math.min(appliedVoucherFcfa, baseAmountFcfa);
-    const remainingBaseAfterVoucher = baseAmountFcfa - voucherAppliedToBaseFcfa;
-
-    if (remainingBaseAfterVoucher > 0) {
-      const { data: balanceRow } = await supabase
-        .from("points_balance")
-        .select("balance")
-        .eq("user_id", user.sub)
-        .maybeSingle<{ balance: number }>();
-
-      const pointsToRedeem = Math.min(remainingBaseAfterVoucher, balanceRow?.balance ?? 0);
-
-      if (pointsToRedeem > 0) {
-        // L'insert EST la réclamation atomique : le trigger
-        // apply_points_ledger_entry retranche du solde via un upsert, et
-        // points_balance_balance_check échoue (donc annule cet insert,
-        // rien d'autre) si le solde réel — relu par le trigger au moment
-        // de l'écriture, pas la valeur ci-dessus qui peut être légèrement
-        // périmée — ne suffit plus. Jamais bloquant : en cas d'échec, on
-        // retombe simplement sur 0 point appliqué, même philosophie que
-        // l'avoir déjà consommé.
-        const { error: pointsError } = await supabaseAdmin.from("points_ledger").insert({
-          booking_id: bookingId,
-          user_id: user.sub,
-          points_amount: -pointsToRedeem,
-          reason: "booking_redemption",
-        });
-
-        if (!pointsError) {
-          pointsRedeemedFcfa = pointsToRedeem;
-        } else {
-          console.error("Impossible d'appliquer les points :", pointsError.message);
-        }
-      }
-    }
-  }
+  const { claimedVoucherId, appliedVoucherFcfa, pointsRedeemedFcfa, leftoverVoucherFcfa } = await applyVoucherAndPoints({
+    userId: user.sub,
+    bookingId,
+    baseAmountFcfa,
+    totalFcfa,
+    voucherId: voucherIdRaw ? String(voucherIdRaw) : null,
+    usePoints,
+  });
 
   // payments reste volontairement "lecture seule pour le client" (RLS ne
   // définit qu'une policy select) — ces deux écritures passent par
@@ -222,7 +130,7 @@ export async function simulatePayment(bookingId: string, formData: FormData): Pr
   // Avoir appliqué à une réservation moins chère : le reliquat vient d'être
   // mis en attente de remboursement ci-dessus, il reste à en informer le
   // voyageur (gabarit distinct de la confirmation de réservation).
-  if (claimedVoucherId && voucherAmountFcfa - appliedVoucherFcfa > 0) {
+  if (claimedVoucherId && leftoverVoucherFcfa > 0) {
     await sendVoucherRefundPendingNotification({ voucherId: claimedVoucherId });
   }
 

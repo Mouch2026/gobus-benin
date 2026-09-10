@@ -2,90 +2,67 @@
 
 import { redirect } from "next/navigation";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { calculateServiceFees } from "shared";
 import { sendBookingConfirmation } from "shared/src/lib/notifications/sendBookingConfirmation";
 
-type BookingForTokenPayment = {
+type PaymentForTokenPayment = {
   id: string;
+  booking_id: string;
   status: string;
-  total_price_fcfa: number;
   payment_token_expires_at: string | null;
-  trips: { departure_at: string } | null;
+  bookings: { status: string; trips: { departure_at: string } | null } | null;
 };
 
-// Pas de requireUser() ici — c'est tout le sens de cette page : le client
-// n'a pas de session, seul le jeton (déjà vérifié une première fois par
-// la page elle-même) fait foi. Revérifié intégralement ici (jamais
-// confiance dans le seul rendu de la page précédente) : jeton, statut
-// 'pending', expiration, trajet pas parti — même esprit que la
-// revalidation déjà en place sur le flux authentifié
-// (simulatePayment, apps/web/app/reservation/[bookingId]/paiement/actions.ts).
+// Depuis le chantier "paiements scindés" : le jeton identifie une PART de
+// paiement (payments.payment_token), pas la réservation entière — cette
+// action ne fait que confirmer CETTE part. record_payment_part_received
+// (SQL) décide seul si la somme des parts reçues atteint désormais
+// total_price_fcfa ; ce n'est QUE dans ce cas que la réservation passe à
+// 'confirmed' et que la confirmation est envoyée — jamais avant, même si
+// cette part-ci est payée avec succès (voir le plan, réponse au point 3).
 export async function payViaToken(token: string): Promise<void> {
-  const { data: booking } = await supabaseAdmin
-    .from("bookings")
-    .select("id, status, total_price_fcfa, payment_token_expires_at, trips(departure_at)")
+  const { data: payment } = await supabaseAdmin
+    .from("payments")
+    .select("id, booking_id, status, payment_token_expires_at, bookings(status, trips(departure_at))")
     .eq("payment_token", token)
-    .maybeSingle<BookingForTokenPayment>();
+    .maybeSingle<PaymentForTokenPayment>();
 
   if (
-    !booking ||
-    booking.status !== "pending" ||
-    !booking.payment_token_expires_at ||
-    new Date(booking.payment_token_expires_at) <= new Date()
+    !payment ||
+    payment.status !== "pending" ||
+    !payment.payment_token_expires_at ||
+    new Date(payment.payment_token_expires_at) <= new Date() ||
+    !payment.bookings ||
+    payment.bookings.status === "cancelled"
   ) {
-    // Message générique affiché par la page elle-même (jeton introuvable,
-    // déjà utilisé ou expiré — jamais distingué ici, pas d'oracle).
     redirect(`/paiement-securise/${token}`);
   }
 
-  // Le trajet a pu partir depuis l'envoi du lien — aucun paiement approuvé
-  // n'existe encore à ce stade, une simple annulation suffit et libère le
-  // siège via le trigger existant (même logique que simulatePayment).
+  const booking = payment!.bookings!;
+
   if (booking.trips && new Date(booking.trips.departure_at).getTime() <= Date.now()) {
-    await supabaseAdmin.from("bookings").update({ status: "cancelled" }).eq("id", booking.id);
+    // Aucune autre part n'a encore été confirmée à ce stade (cette part
+    // est encore 'pending') — une simple annulation directe suffit, comme
+    // pour le flux voyageur normal. Si d'autres parts de cette réservation
+    // sont déjà 'received'/'approved', cancel_booking_by_company reste la
+    // voie pour les récupérer sous forme d'avoir — hors de portée d'un
+    // client sans session sur cette page.
+    await supabaseAdmin.from("bookings").update({ status: "cancelled" }).eq("id", payment!.booking_id);
     redirect(`/paiement-securise/${token}`);
   }
 
-  const baseAmountFcfa = booking.total_price_fcfa;
-  const { platformFeeFcfa, transactionFeeFcfa } = calculateServiceFees(baseAmountFcfa);
+  const { data: result, error: rpcError } = await supabaseAdmin
+    .rpc("record_payment_part_received", { p_payment_id: payment!.id })
+    .single<{ booking_confirmed: boolean }>();
 
-  // Aucun avoir/point possible sur ce paiement : le compte du client vient
-  // d'être créé (ou n'a jamais eu l'occasion d'en accumuler dans ce
-  // contexte) — voucher_id/voucher_amount_fcfa/points_redeemed_fcfa
-  // restent à leurs valeurs par défaut (null/0).
-  const { data: payment, error: insertError } = await supabaseAdmin
-    .from("payments")
-    .insert({
-      booking_id: booking.id,
-      base_amount_fcfa: baseAmountFcfa,
-      platform_fee_fcfa: platformFeeFcfa,
-      transaction_fee_fcfa: transactionFeeFcfa,
-      provider: "simulated",
-      status: "pending",
-    })
-    .select("id")
-    .single();
-
-  if (insertError || !payment) {
-    console.error("Impossible de créer le paiement :", insertError?.message);
+  if (rpcError || !result) {
+    console.error("Impossible de valider cette part de paiement :", rpcError?.message);
     redirect(`/paiement-securise/${token}`);
   }
 
-  // Update séparé (pas dans l'insert) pour déclencher
-  // award_points_on_payment_approved (before update of status), qui
-  // compare old.status <> 'approved' — inexistant à l'insert. Même
-  // séquence que simulatePayment.
-  await supabaseAdmin
-    .from("payments")
-    .update({ status: "approved", paid_at: new Date().toISOString() })
-    .eq("id", payment.id);
+  if (result!.booking_confirmed) {
+    await sendBookingConfirmation({ bookingId: payment!.booking_id });
+    redirect(`/paiement-securise/${token}/succes`);
+  }
 
-  await supabaseAdmin.from("bookings").update({ status: "confirmed" }).eq("id", booking.id);
-
-  // sendBookingConfirmation est générique (juste un bookingId) — déjà
-  // utilisée pour les réservations créées par le voyageur lui-même,
-  // réutilisée telle quelle ici sans aucune modification.
-  await sendBookingConfirmation({ bookingId: booking.id });
-
-  redirect(`/paiement-securise/${token}/succes`);
+  redirect(`/paiement-securise/${token}/en-attente`);
 }

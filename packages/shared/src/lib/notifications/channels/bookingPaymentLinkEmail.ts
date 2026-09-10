@@ -49,6 +49,9 @@ function renderBookingPaymentLinkEmailHtml(payload: BookingPaymentLinkPayload): 
         </div>
 
         <div style="border-radius:12px;background:${PRIMARY}1a;padding:16px 20px;margin-bottom:20px;">
+          <p style="margin:0 0 4px;color:${TEXT};font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.02em;">
+            ${payload.paymentMethodLabel}
+          </p>
           <p style="margin:0 0 4px;color:${TEXT};font-size:15px;font-weight:700;">
             Montant à payer : ${formatFcfa(payload.amountDueFcfa)}
           </p>
@@ -74,7 +77,7 @@ export async function sendBookingPaymentLinkEmail(payload: BookingPaymentLinkPay
   const { error } = await resend.emails.send({
     from: process.env.RESEND_FROM_EMAIL!,
     to: payload.recipientEmail,
-    subject: `Payez votre réservation ${payload.bookingReference}`,
+    subject: `Payez votre réservation ${payload.bookingReference} (${payload.paymentMethodLabel})`,
     html: renderBookingPaymentLinkEmailHtml(payload),
   });
 

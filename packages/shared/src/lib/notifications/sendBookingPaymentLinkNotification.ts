@@ -5,15 +5,16 @@ import { logNotification } from "./notificationLog";
 import type { BookingPaymentLinkPayload } from "./types";
 
 // Même forme non bloquante que sendTripCancellationNotification : appelée
-// une seule fois, juste après que le back-office a créé la réservation et
-// généré le jeton de paiement — un échec d'envoi ne doit jamais faire
-// échouer la création de la réservation elle-même (déjà actée à ce
-// stade). Pas de réclamation atomique ici (contrairement à
-// sendVoucherRefundPendingNotification) : cette notification n'est
-// déclenchée qu'une fois, par un seul appelant, jamais par un mécanisme
-// concurrent (sweep, trigger) susceptible de la redéclencher.
+// une fois par PART de paiement "par lien" créée (Mobile Money ou Carte —
+// une réservation scindée peut en avoir plusieurs, chacune avec son
+// propre jeton) — un échec d'envoi ne doit jamais faire échouer la
+// création de la réservation elle-même (déjà actée à ce stade). Pas de
+// réclamation atomique ici (contrairement à
+// sendVoucherRefundPendingNotification) : chaque part ne déclenche cette
+// notification qu'une fois, jamais par un mécanisme concurrent (sweep,
+// trigger) susceptible de la redéclencher.
 export async function sendBookingPaymentLinkNotification(target: {
-  bookingId: string;
+  paymentId: string;
 }): Promise<void> {
   let payload: BookingPaymentLinkPayload;
   try {
@@ -36,7 +37,7 @@ export async function sendBookingPaymentLinkNotification(target: {
   await logNotification({
     userId: payload.userId,
     type: "booking_payment_link",
-    bookingId: target.bookingId,
+    bookingId: payload.bookingId,
     status,
     errorMessage,
   });
