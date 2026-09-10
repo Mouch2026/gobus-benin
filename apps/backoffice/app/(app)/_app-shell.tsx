@@ -113,6 +113,12 @@ function SidebarLinks() {
           >
             Plans de bus
           </Link>
+          <Link
+            href="/agences"
+            className="rounded-md px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+          >
+            Agences
+          </Link>
         </div>
       </details>
     </>
