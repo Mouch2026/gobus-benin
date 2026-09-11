@@ -19,5 +19,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     return <AccessBlockedMessage reason={result.reason} />;
   }
 
-  return <AppShell company={result.company}>{children}</AppShell>;
+  return (
+    <AppShell
+      company={result.company}
+      role={result.role}
+      memberName={result.memberName}
+      agencyName={result.agency?.name ?? null}
+    >
+      {children}
+    </AppShell>
+  );
 }

@@ -1,11 +1,33 @@
 import Link from "next/link";
 import { logout } from "../actions";
+import type { CompanyRole } from "@/lib/supabase/dal";
 
 // Remplace _navigation.tsx : header + sidebar consolidés en un seul
 // composant partagé par app/(app)/layout.tsx, plutôt que chaque page
 // répétant son propre <Navigation/> + wrapper <main>.
 
-function AppHeader({ company }: { company: { name: string } }) {
+const ROLE_LABELS: Record<CompanyRole, string> = {
+  owner: "Propriétaire",
+  agency_manager: "Chef d'agence",
+  agent: "Agent",
+};
+
+function AppHeader({
+  company,
+  role,
+  memberName,
+  agencyName,
+}: {
+  company: { name: string };
+  role: CompanyRole;
+  memberName: string;
+  agencyName: string | null;
+}) {
+  // Le propriétaire garde le nom de la compagnie en résumé (comme avant) —
+  // un employé voit plutôt SON nom, la compagnie apparaissant dans le menu
+  // déroulant à la place.
+  const summaryLabel = role === "owner" ? company.name : memberName;
+
   return (
     <header className="flex items-center justify-between gap-4 border-b border-zinc-200 bg-white px-6 py-4 dark:border-zinc-800 dark:bg-zinc-900">
       <Link href="/" className="flex items-baseline gap-3">
@@ -23,9 +45,19 @@ function AppHeader({ company }: { company: { name: string } }) {
           sous-menu Administration (voir SidebarLinks ci-dessous). */}
       <details className="group relative">
         <summary className="cursor-pointer list-none text-sm font-medium text-zinc-700 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-zinc-50">
-          {company.name} ▾
+          {summaryLabel} ▾
         </summary>
-        <div className="absolute right-0 top-full z-10 mt-2 flex w-48 flex-col gap-1 rounded-lg border border-zinc-200 bg-white p-2 shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="absolute right-0 top-full z-10 mt-2 flex w-56 flex-col gap-1 rounded-lg border border-zinc-200 bg-white p-2 shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="px-3 py-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+            {ROLE_LABELS[role]}
+            {agencyName ? ` · ${agencyName}` : ""}
+            {role !== "owner" ? (
+              <>
+                <br />
+                {company.name}
+              </>
+            ) : null}
+          </div>
           <Link
             href="/profil"
             className="rounded-md px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
@@ -48,7 +80,7 @@ function AppHeader({ company }: { company: { name: string } }) {
 
 // Extrait de AppShell pour être rendu deux fois (colonne desktop + tiroir
 // mobile) sans dupliquer le JSX à la main.
-function SidebarLinks() {
+function SidebarLinks({ role }: { role: CompanyRole }) {
   return (
     <>
       <Link href="/" className="rounded-md px-3 py-2 text-sm font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800">
@@ -119,6 +151,18 @@ function SidebarLinks() {
           >
             Agences
           </Link>
+          {/* Gestion des employés : réservée au propriétaire (chantier
+              "comptes multi-agents") — les restrictions par rôle plus
+              fines viennent au chantier suivant, celle-ci est la seule
+              posée dès maintenant, explicitement demandée. */}
+          {role === "owner" ? (
+            <Link
+              href="/employes"
+              className="rounded-md px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            >
+              Employés
+            </Link>
+          ) : null}
         </div>
       </details>
     </>
@@ -127,15 +171,21 @@ function SidebarLinks() {
 
 export function AppShell({
   company,
+  role,
+  memberName,
+  agencyName,
   children,
 }: {
   company: { name: string };
+  role: CompanyRole;
+  memberName: string;
+  agencyName: string | null;
   children: React.ReactNode;
 }) {
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-600 dark:bg-black dark:text-zinc-400 md:grid md:grid-cols-[220px_1fr] print:grid-cols-1">
       <div className="md:col-span-2 print:hidden">
-        <AppHeader company={company} />
+        <AppHeader company={company} role={role} memberName={memberName} agencyName={agencyName} />
       </div>
 
       {/* Mobile uniquement : tiroir replié par défaut, pousse le contenu
@@ -148,14 +198,14 @@ export function AppShell({
           ☰ Menu
         </summary>
         <nav className="flex flex-col gap-1 px-4 pb-4">
-          <SidebarLinks />
+          <SidebarLinks role={role} />
         </nav>
       </details>
 
       {/* Desktop uniquement : colonne fixe toujours visible. */}
       <aside className="hidden border-r border-zinc-200 p-4 dark:border-zinc-800 md:block print:hidden">
         <nav className="flex flex-col gap-1">
-          <SidebarLinks />
+          <SidebarLinks role={role} />
         </nav>
       </aside>
 
