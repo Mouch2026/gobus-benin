@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireCompany } from "@/lib/supabase/dal";
+import { requirePermission } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { computeArrivalAt } from "@/lib/duration";
 import { sendTripCancellationNotification } from "shared/src/lib/notifications/sendTripCancellationNotification";
@@ -47,6 +48,8 @@ export async function updateTripDetails(
   formData: FormData
 ): Promise<EditTripState> {
   const access = await requireCompany();
+  const guardError = requirePermission(access, "trips.manage");
+  if (guardError) return guardError;
   if (!access.ok) {
     return { error: "Votre session ou votre abonnement ne permet plus cette action." };
   }
@@ -167,6 +170,8 @@ export async function updateTripRoute(
   formData: FormData
 ): Promise<EditTripState> {
   const access = await requireCompany();
+  const guardError = requirePermission(access, "trips.manage");
+  if (guardError) return guardError;
   if (!access.ok) {
     return { error: "Votre session ou votre abonnement ne permet plus cette action." };
   }
@@ -234,6 +239,8 @@ export async function cancelTrip(
   formData: FormData
 ): Promise<EditTripState> {
   const access = await requireCompany();
+  const guardError = requirePermission(access, "trips.manage");
+  if (guardError) return guardError;
   if (!access.ok) {
     return { error: "Votre session ou votre abonnement ne permet plus cette action." };
   }

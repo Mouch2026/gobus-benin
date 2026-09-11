@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { logout } from "../actions";
-import type { CompanyRole } from "@/lib/supabase/dal";
+import { can, type CompanyRole } from "@/lib/permissions";
 
 // Remplace _navigation.tsx : header + sidebar consolidés en un seul
 // composant partagé par app/(app)/layout.tsx, plutôt que chaque page
@@ -151,11 +151,7 @@ function SidebarLinks({ role }: { role: CompanyRole }) {
           >
             Agences
           </Link>
-          {/* Gestion des employés : réservée au propriétaire (chantier
-              "comptes multi-agents") — les restrictions par rôle plus
-              fines viennent au chantier suivant, celle-ci est la seule
-              posée dès maintenant, explicitement demandée. */}
-          {role === "owner" ? (
+          {can(role, "employees.manage") ? (
             <Link
               href="/employes"
               className="rounded-md px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"

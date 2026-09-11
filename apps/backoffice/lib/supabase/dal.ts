@@ -3,6 +3,9 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "./server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import type { CompanyRole } from "@/lib/permissions";
+
+export type { CompanyRole } from "@/lib/permissions";
 
 // The real authorization boundary. proxy.ts also redirects unauthenticated
 // requests, but per Next's own guidance that's an optimistic, edge-level
@@ -34,8 +37,6 @@ export type Company = {
 };
 
 export type UserClaims = Awaited<ReturnType<typeof requireUser>>;
-
-export type CompanyRole = "owner" | "agency_manager" | "agent";
 
 export type CompanyAccessDenialReason =
   | "no-company"

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireCompany } from "@/lib/supabase/dal";
+import { can } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { AccessBlockedMessage } from "../_components";
 import { AgenceForm, type StationOption } from "./AgenceForm";
@@ -59,25 +60,28 @@ export default async function AgencesPage() {
     getActiveStations(supabase),
     getCompanyAgencies(supabase, result.company.id),
   ]);
+  const canManage = can(result.role, "agencies.manage");
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8 px-6 py-8">
-      <section>
-        <h1 className="mb-2 text-lg font-semibold text-zinc-950 dark:text-zinc-50">Nouvelle agence</h1>
-        <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
-          Un guichet de votre compagnie, rattaché à une gare. La liste des gares est gérée par
-          GoBus — contactez-nous si la vôtre n&apos;y figure pas encore.
-        </p>
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-          {stations.length === 0 ? (
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Aucune gare disponible pour le moment. Contactez GoBus pour en faire ajouter une.
-            </p>
-          ) : (
-            <AgenceForm stations={stations} />
-          )}
-        </div>
-      </section>
+      {canManage ? (
+        <section>
+          <h1 className="mb-2 text-lg font-semibold text-zinc-950 dark:text-zinc-50">Nouvelle agence</h1>
+          <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+            Un guichet de votre compagnie, rattaché à une gare. La liste des gares est gérée par
+            GoBus — contactez-nous si la vôtre n&apos;y figure pas encore.
+          </p>
+          <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+            {stations.length === 0 ? (
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                Aucune gare disponible pour le moment. Contactez GoBus pour en faire ajouter une.
+              </p>
+            ) : (
+              <AgenceForm stations={stations} />
+            )}
+          </div>
+        </section>
+      ) : null}
 
       <section>
         <h2 className="mb-4 text-lg font-semibold text-zinc-950 dark:text-zinc-50">Vos agences</h2>

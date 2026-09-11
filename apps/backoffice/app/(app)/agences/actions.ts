@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireCompany } from "@/lib/supabase/dal";
+import { requirePermission } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 
 export type AgencyFormState = { error: string | null };
@@ -30,6 +31,8 @@ export async function createAgency(
   formData: FormData
 ): Promise<AgencyFormState> {
   const access = await requireCompany();
+  const guardError = requirePermission(access, "agencies.manage");
+  if (guardError) return guardError;
   if (!access.ok) {
     return { error: "Votre session ou votre abonnement ne permet plus cette action." };
   }
@@ -92,6 +95,8 @@ export async function updateAgency(
   formData: FormData
 ): Promise<EditAgencyState> {
   const access = await requireCompany();
+  const guardError = requirePermission(access, "agencies.manage");
+  if (guardError) return { ...guardError, success: false };
   if (!access.ok) {
     return { error: "Votre session ou votre abonnement ne permet plus cette action.", success: false };
   }
@@ -139,6 +144,8 @@ export async function setAgencyActive(
   formData: FormData
 ): Promise<EditAgencyState> {
   const access = await requireCompany();
+  const guardError = requirePermission(access, "agencies.manage");
+  if (guardError) return { ...guardError, success: false };
   if (!access.ok) {
     return { error: "Votre session ou votre abonnement ne permet plus cette action.", success: false };
   }

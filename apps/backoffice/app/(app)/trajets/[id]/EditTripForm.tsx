@@ -25,7 +25,7 @@ type Trip = {
   };
 };
 
-export function EditTripForm({ trip }: { trip: Trip }) {
+export function EditTripForm({ trip, canManage }: { trip: Trip; canManage: boolean }) {
   const [detailsState, detailsAction, detailsPending] = useActionState(
     updateTripDetails,
     initialState
@@ -34,11 +34,17 @@ export function EditTripForm({ trip }: { trip: Trip }) {
   const [routeState, routeAction, routePending] = useActionState(updateTripRoute, initialState);
 
   const booked = trip.total_seats - trip.available_seats;
-  const canCancel = trip.status !== "cancelled" && trip.status !== "completed";
+  const canCancel = canManage && trip.status !== "cancelled" && trip.status !== "completed";
   const currentDuration = splitDuration(trip.departure_at, trip.arrival_at);
 
   return (
     <div className="flex flex-col gap-6">
+      {!canManage ? (
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          Réservé au propriétaire et aux chefs d&apos;agence.
+        </p>
+      ) : null}
+
       <form action={detailsAction} className="flex flex-col gap-4">
         <input type="hidden" name="tripId" value={trip.id} />
 
@@ -52,6 +58,7 @@ export function EditTripForm({ trip }: { trip: Trip }) {
             type="number"
             min={0}
             required
+            disabled={!canManage}
             defaultValue={trip.price_fcfa}
             className={FIELD_CLASSES}
           />
@@ -66,6 +73,7 @@ export function EditTripForm({ trip }: { trip: Trip }) {
             name="busNumber"
             type="text"
             required
+            disabled={!canManage}
             defaultValue={trip.bus_number}
             className={FIELD_CLASSES}
           />
@@ -84,6 +92,7 @@ export function EditTripForm({ trip }: { trip: Trip }) {
               name="durationHours"
               type="number"
               min={0}
+              disabled={!canManage}
               defaultValue={currentDuration.hours}
               className={FIELD_CLASSES}
             />
@@ -98,6 +107,7 @@ export function EditTripForm({ trip }: { trip: Trip }) {
               type="number"
               min={0}
               max={59}
+              disabled={!canManage}
               defaultValue={currentDuration.minutes}
               className={FIELD_CLASSES}
             />
@@ -128,7 +138,7 @@ export function EditTripForm({ trip }: { trip: Trip }) {
 
         <button
           type="submit"
-          disabled={detailsPending}
+          disabled={!canManage || detailsPending}
           className="self-start rounded-lg bg-zinc-950 px-4 py-2.5 font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
         >
           {detailsPending ? "Enregistrement..." : "Enregistrer"}
@@ -154,6 +164,7 @@ export function EditTripForm({ trip }: { trip: Trip }) {
                 name="originCity"
                 type="text"
                 required
+                disabled={!canManage}
                 defaultValue={trip.routes.origin_city}
                 className={FIELD_CLASSES}
               />
@@ -167,6 +178,7 @@ export function EditTripForm({ trip }: { trip: Trip }) {
                 name="destinationCity"
                 type="text"
                 required
+                disabled={!canManage}
                 defaultValue={trip.routes.destination_city}
                 className={FIELD_CLASSES}
               />
@@ -180,6 +192,7 @@ export function EditTripForm({ trip }: { trip: Trip }) {
                 name="distanceKm"
                 type="number"
                 min={1}
+                disabled={!canManage}
                 defaultValue={trip.routes.distance_km ?? ""}
                 className={FIELD_CLASSES}
               />
@@ -192,6 +205,7 @@ export function EditTripForm({ trip }: { trip: Trip }) {
                 id="lineNumber"
                 name="lineNumber"
                 type="text"
+                disabled={!canManage}
                 defaultValue={trip.routes.line_number ?? ""}
                 className={FIELD_CLASSES}
               />
@@ -206,7 +220,7 @@ export function EditTripForm({ trip }: { trip: Trip }) {
 
           <button
             type="submit"
-            disabled={routePending}
+            disabled={!canManage || routePending}
             className="self-start rounded-lg border border-zinc-300 px-4 py-2.5 font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
           >
             {routePending ? "Enregistrement..." : "Enregistrer la route"}
@@ -239,7 +253,9 @@ export function EditTripForm({ trip }: { trip: Trip }) {
               ? "Annulation..."
               : canCancel
                 ? "Annuler ce trajet"
-                : "Trajet déjà terminé ou annulé"}
+                : !canManage
+                  ? "Réservé au propriétaire et aux chefs d'agence"
+                  : "Trajet déjà terminé ou annulé"}
           </button>
         </form>
       </div>

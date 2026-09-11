@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireCompany } from "@/lib/supabase/dal";
+import { requirePermission } from "@/lib/permissions";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export type EmployeeFormState = { error: string | null };
@@ -21,26 +22,12 @@ function mapAuthError(error: { code?: string; message: string }): string {
   return "Impossible de créer le compte. Vérifiez les informations et réessayez.";
 }
 
-// Cette page/action n'a de sens QUE pour le propriétaire — la demande le
-// dit explicitement ("Réservée au propriétaire pour l'instant"). Ce n'est
-// pas une restriction par rôle façon chantier 3 (qui-peut-faire-quoi de
-// façon générale) : c'est la seule garde posée dès ce chantier.
-function requireOwner(access: Awaited<ReturnType<typeof requireCompany>>) {
-  if (!access.ok) {
-    return { error: "Votre session ou votre abonnement ne permet plus cette action." };
-  }
-  if (access.role !== "owner") {
-    return { error: "Cette action est réservée au propriétaire du compte." };
-  }
-  return null;
-}
-
 export async function createEmployee(
   _prevState: EmployeeFormState,
   formData: FormData
 ): Promise<EmployeeFormState> {
   const access = await requireCompany();
-  const guardError = requireOwner(access);
+  const guardError = requirePermission(access, "employees.manage");
   if (guardError) return guardError;
   if (!access.ok) return { error: "Votre session ou votre abonnement ne permet plus cette action." };
 
@@ -130,7 +117,7 @@ export async function setEmployeeActive(
   formData: FormData
 ): Promise<EmployeeFormState> {
   const access = await requireCompany();
-  const guardError = requireOwner(access);
+  const guardError = requirePermission(access, "employees.manage");
   if (guardError) return guardError;
   if (!access.ok) return { error: "Votre session ou votre abonnement ne permet plus cette action." };
 

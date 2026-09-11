@@ -1,4 +1,5 @@
 import { requireCompany } from "@/lib/supabase/dal";
+import { can } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { AccessBlockedMessage } from "../_components";
 import { BusLayoutForm } from "./BusLayoutForm";
@@ -33,6 +34,7 @@ export default async function PlansDeBusPage() {
   }
 
   const busLayouts = await getCompanyBusLayouts(result.company.id);
+  const canManage = can(result.role, "busLayouts.manage");
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8 px-6 py-8">
@@ -40,9 +42,15 @@ export default async function PlansDeBusPage() {
         <h1 className="mb-4 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
           Nouveau plan de bus
         </h1>
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-          <BusLayoutForm />
-        </div>
+        {canManage ? (
+          <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+            <BusLayoutForm />
+          </div>
+        ) : (
+          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+            Réservé au propriétaire du compte.
+          </p>
+        )}
       </section>
 
       <section>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireCompany } from "@/lib/supabase/dal";
+import { can } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { formatFcfa } from "shared";
 import { AccessBlockedMessage } from "../../_components";
@@ -129,7 +130,7 @@ export default async function TripDetailPage(props: PageProps<"/trajets/[id]">) 
       </div>
 
       <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-        <EditTripForm trip={trip} />
+        <EditTripForm trip={trip} canManage={can(result.role, "trips.manage")} />
       </div>
 
       <section>

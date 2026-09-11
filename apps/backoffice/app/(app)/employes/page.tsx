@@ -1,4 +1,5 @@
 import { requireCompany } from "@/lib/supabase/dal";
+import { can } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { AccessBlockedMessage } from "../_components";
@@ -50,10 +51,9 @@ export default async function EmployesPage() {
     return <AccessBlockedMessage reason={result.reason} />;
   }
 
-  // Réservée au propriétaire pour l'instant (demande explicite) — pas un
-  // CompanyAccessDenialReason (ce n'est pas un refus d'accès à la
+  // Pas un CompanyAccessDenialReason (ce n'est pas un refus d'accès à la
   // compagnie, juste à CETTE page).
-  if (result.role !== "owner") {
+  if (!can(result.role, "employees.manage")) {
     return (
       <div className="mx-auto max-w-xl px-6 py-8">
         <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">

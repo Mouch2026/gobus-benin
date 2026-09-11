@@ -16,15 +16,23 @@ function stationLabel(s: StationOption): string {
 export function EditAgenceForm({
   agency,
   stations,
+  canManage,
 }: {
   agency: Agency;
   stations: StationOption[];
+  canManage: boolean;
 }) {
   const [detailsState, detailsAction, detailsPending] = useActionState(updateAgency, initialState);
   const [activeState, activeAction, activePending] = useActionState(setAgencyActive, initialState);
 
   return (
     <div className="flex flex-col gap-8">
+      {!canManage ? (
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          Réservé au propriétaire du compte.
+        </p>
+      ) : null}
+
       <form action={detailsAction} className="flex flex-col gap-4">
         <input type="hidden" name="agencyId" value={agency.id} />
 
@@ -37,6 +45,7 @@ export function EditAgenceForm({
             name="name"
             type="text"
             required
+            disabled={!canManage}
             defaultValue={agency.name}
             className={FIELD_CLASSES}
           />
@@ -50,6 +59,7 @@ export function EditAgenceForm({
             id="stationId"
             name="stationId"
             required
+            disabled={!canManage}
             defaultValue={agency.station_id}
             className={FIELD_CLASSES}
           >
@@ -72,7 +82,7 @@ export function EditAgenceForm({
 
         <button
           type="submit"
-          disabled={detailsPending}
+          disabled={!canManage || detailsPending}
           className="self-start rounded-lg bg-zinc-950 px-4 py-2.5 font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
         >
           {detailsPending ? "Enregistrement..." : "Enregistrer"}
@@ -97,7 +107,7 @@ export function EditAgenceForm({
         ) : null}
         <button
           type="submit"
-          disabled={activePending}
+          disabled={!canManage || activePending}
           className="self-start rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
         >
           {activePending

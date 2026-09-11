@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { requireCompany } from "@/lib/supabase/dal";
+import { requirePermission } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { computeArrivalAt } from "@/lib/duration";
@@ -115,6 +116,8 @@ export async function createTrip(
   formData: FormData
 ): Promise<NewTripState> {
   const access = await requireCompany();
+  const guardError = requirePermission(access, "trips.manage");
+  if (guardError) return guardError;
   if (!access.ok) {
     return { error: "Votre session ou votre abonnement ne permet plus cette action." };
   }

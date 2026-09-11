@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireCompany } from "@/lib/supabase/dal";
+import { can } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { AccessBlockedMessage } from "../../_components";
 import { NewTripForm } from "./NewTripForm";
@@ -48,6 +49,16 @@ export default async function NewTripPage() {
 
   if (!result.ok) {
     return <AccessBlockedMessage reason={result.reason} />;
+  }
+
+  if (!can(result.role, "trips.manage")) {
+    return (
+      <div className="mx-auto max-w-xl px-6 py-8">
+        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+          Cette page est réservée au propriétaire et aux chefs d&apos;agence.
+        </p>
+      </div>
+    );
   }
 
   const [cities, busLayouts] = await Promise.all([

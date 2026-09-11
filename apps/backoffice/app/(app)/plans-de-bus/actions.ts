@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireCompany } from "@/lib/supabase/dal";
+import { requirePermission } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 
 export type BusLayoutFormState = { error: string | null };
@@ -11,6 +12,8 @@ export async function createBusLayout(
   formData: FormData
 ): Promise<BusLayoutFormState> {
   const access = await requireCompany();
+  const guardError = requirePermission(access, "busLayouts.manage");
+  if (guardError) return guardError;
   if (!access.ok) {
     return { error: "Votre session ou votre abonnement ne permet plus cette action." };
   }

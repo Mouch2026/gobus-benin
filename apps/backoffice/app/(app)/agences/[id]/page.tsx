@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireCompany } from "@/lib/supabase/dal";
+import { can } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { AccessBlockedMessage } from "../../_components";
 import { EditAgenceForm } from "./EditAgenceForm";
@@ -85,7 +86,11 @@ export default async function EditAgencePage(props: PageProps<"/agences/[id]">) 
         Modifier l&apos;agence
       </h1>
       <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-        <EditAgenceForm agency={agency} stations={stations} />
+        <EditAgenceForm
+          agency={agency}
+          stations={stations}
+          canManage={can(result.role, "agencies.manage")}
+        />
       </div>
       <Link
         href="/agences"
