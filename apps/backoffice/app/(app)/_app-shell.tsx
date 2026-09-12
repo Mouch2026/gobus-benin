@@ -64,10 +64,15 @@ function AppHeader({
   const summaryLabel = role === "owner" ? company.name : memberName;
 
   return (
-    <header className="flex items-center justify-between gap-4 border-b border-zinc-200 bg-white px-6 py-4 dark:border-zinc-800 dark:bg-zinc-900">
-      <Link href="/" className="flex items-center gap-3">
+    // Grille 3 colonnes plutôt que justify-between : les colonnes latérales
+    // (1fr) absorbent la différence de largeur entre le logo et le menu
+    // utilisateur, ce qui centre réellement le bloc du milieu (gare +
+    // heure) dans la barre — un simple flex l'aurait décalé selon la
+    // longueur du nom affiché à droite.
+    <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 border-b border-zinc-200 bg-white px-6 py-4 dark:border-zinc-800 dark:bg-zinc-900">
+      <Link href="/" className="flex min-w-0 items-center gap-3">
         <CompanyLogo name={company.name} logoUrl={company.logoUrl} />
-        <span className="hidden text-sm text-zinc-500 dark:text-zinc-400 sm:inline">
+        <span className="hidden truncate text-sm text-zinc-500 dark:text-zinc-400 sm:inline">
           Back-office réservation
         </span>
       </Link>
@@ -77,18 +82,17 @@ function AppHeader({
         <span className="hidden text-sm tabular-nums text-zinc-500 dark:text-zinc-400 sm:inline">
           <LiveBeninClock initialTime={currentTime} />
         </span>
-        <span className="hidden text-sm text-zinc-500 dark:text-zinc-400 sm:inline">
-          {ROLE_LABELS[role]}
-          {/* Pour un propriétaire (pas d'agence), on n'affiche que le
-              rôle — agencyName est de toute façon toujours null ici. */}
-          {agencyName ? ` · ${agencyName}` : ""}
-        </span>
+      </div>
 
+      <div className="flex min-w-0 items-center justify-end gap-4">
+        {/* Rôle et agence ne sont plus répétés ici : ils vivent dans le
+            menu déroulant ci-dessous. La barre ne porte que l'identité,
+            sous la forme « <Rôle> : <nom> ». */}
         {/* Menu utilisateur : même patron <details>/<summary> sans JS que
             le sous-menu Administration (voir SidebarLinks ci-dessous). */}
         <details className="group relative">
-          <summary className="cursor-pointer list-none text-sm font-medium text-zinc-700 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-zinc-50">
-            {summaryLabel} ▾
+          <summary className="cursor-pointer list-none truncate text-sm font-medium text-zinc-700 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-zinc-50">
+            {ROLE_LABELS[role]} : {summaryLabel} ▾
           </summary>
           <div className="absolute right-0 top-full z-10 mt-2 flex w-56 flex-col gap-1 rounded-lg border border-zinc-200 bg-white p-2 shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
             <div className="px-3 py-1.5 text-xs text-zinc-500 dark:text-zinc-400">

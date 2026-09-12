@@ -1,14 +1,14 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import { ALL_STATIONS, stationLabel, type StationOption } from "@/lib/stations";
 import { setSelectedStation } from "./_station-actions";
 
-// Le filtre ne s'applique qu'à ces deux écrans — l'afficher ailleurs
-// serait un contrôle mort qui laisserait croire que Réservations /
-// Clients / Paiements / Dashboard sont filtrés eux aussi.
-const FILTERED_PATHS = ["/voyages", "/reservations/nouvelle"];
-
+// Visible sur TOUS les écrans, mais ne FILTRE que /voyages et
+// /reservations/nouvelle : ailleurs il ne fait que mémoriser le choix
+// (cookie), pour que la sélection soit toujours celle attendue au retour
+// sur Voyages. C'est aussi ce qui rend la topbar stable d'un écran à
+// l'autre, au lieu de voir le sélecteur apparaître et disparaître.
+//
 // Îlot client minimal (même esprit que _live-clock.tsx) : il n'existe que
 // pour se soumettre au changement, tout le reste est rendu côté serveur.
 export function StationSelect({
@@ -18,16 +18,18 @@ export function StationSelect({
   stations: StationOption[];
   selectedStationId: string | null;
 }) {
-  const pathname = usePathname();
-
-  if (!FILTERED_PATHS.includes(pathname) || stations.length === 0) {
+  if (stations.length === 0) {
     return null;
   }
 
   return (
-    <form action={setSelectedStation}>
-      <label htmlFor="stationId" className="sr-only">
-        Filtrer les trajets par gare
+    <form action={setSelectedStation} className="flex items-center gap-2">
+      <label
+        htmlFor="stationId"
+        className="text-sm text-zinc-500 dark:text-zinc-400"
+        title="Filtre les écrans de trajets (Voyages, nouvelle réservation) sur les départs ou arrivées de cette gare. Les autres écrans ne sont pas filtrés."
+      >
+        Gare :
       </label>
       {/* key : un <select> non contrôlé ne re-synchronise pas son
           defaultValue lors d'un re-rendu RSC — sans ce remontage forcé,
