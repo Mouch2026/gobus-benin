@@ -1,5 +1,6 @@
 import { requireCompany } from "@/lib/supabase/dal";
 import { getBeninTimeString } from "@/lib/benin-time";
+import { getActiveStations, getSelectedStation } from "@/lib/station-selection";
 import { AccessBlockedMessage } from "./_components";
 import { AppShell } from "./_app-shell";
 
@@ -20,6 +21,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     return <AccessBlockedMessage reason={result.reason} />;
   }
 
+  // Mémoïsés par requête (React cache()) : les pages filtrées rappellent
+  // getSelectedStation() sans second aller-retour.
+  const [stations, selectedStation] = await Promise.all([
+    getActiveStations(),
+    getSelectedStation(),
+  ]);
+
   return (
     <AppShell
       company={result.company}
@@ -27,6 +35,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       memberName={result.memberName}
       agencyName={result.agency?.name ?? null}
       currentTime={getBeninTimeString()}
+      stations={stations}
+      selectedStationId={selectedStation?.id ?? null}
     >
       {children}
     </AppShell>

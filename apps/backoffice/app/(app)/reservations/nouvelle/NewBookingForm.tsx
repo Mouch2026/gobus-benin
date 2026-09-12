@@ -11,7 +11,12 @@ export type BookableTrip = {
   price_fcfa: number;
   available_seats: number;
   total_seats: number;
-  routes: { origin_city: string; destination_city: string };
+  routes: {
+    origin_city: string;
+    destination_city: string;
+    origin_station_id: string | null;
+    destination_station_id: string | null;
+  };
   seatLabels: string[];
   occupiedSeats: string[];
 };

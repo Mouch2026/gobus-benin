@@ -1,6 +1,10 @@
 import { requireCompany } from "@/lib/supabase/dal";
+import { getSelectedStation } from "@/lib/station-selection";
+import { stationLabel, type StationOption } from "@/lib/stations";
 import { createClient } from "@/lib/supabase/server";
 import { AccessBlockedMessage } from "../../_components";
+import { filterTripsByStation } from "../../_station-filter";
+import { OrphanTripsNotice, ShowAllStationsButton } from "../../_station-notice";
 import { NewBookingForm, type BookableTrip } from "./NewBookingForm";
 
 // Sièges du plan de bus d'un trajet, et ceux déjà occupés (toutes
@@ -41,12 +45,15 @@ async function getSeatAvailability(
 // revérifie de toute façon le départ et le nombre de places au moment de
 // la soumission — ces filtres ne sont qu'une aide au choix, pas la
 // garantie réelle.
-async function getBookableTrips(companyId: string): Promise<BookableTrip[]> {
+async function getBookableTrips(
+  companyId: string,
+  station: StationOption | null
+): Promise<{ trips: BookableTrip[]; hiddenOrphanCount: number }> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("trips")
     .select(
-      "id, departure_at, price_fcfa, available_seats, total_seats, routes!inner(origin_city, destination_city)"
+      "id, departure_at, price_fcfa, available_seats, total_seats, routes!inner(origin_city, destination_city, origin_station_id, destination_station_id)"
     )
     .eq("company_id", companyId)
     .gt("departure_at", new Date().toISOString())
@@ -56,17 +63,24 @@ async function getBookableTrips(companyId: string): Promise<BookableTrip[]> {
 
   if (error) {
     console.error("Impossible de charger les trajets réservables :", error.message);
-    return [];
+    return { trips: [], hiddenOrphanCount: 0 };
   }
 
-  const trips = (data ?? []) as unknown as Omit<BookableTrip, "seatLabels" | "occupiedSeats">[];
+  const allTrips = (data ?? []) as unknown as Omit<BookableTrip, "seatLabels" | "occupiedSeats">[];
 
-  return Promise.all(
-    trips.map(async (trip) => {
+  // Filtre d'affichage par gare AVANT l'enrichissement : getSeatAvailability
+  // fait une requête par trajet, inutile de la payer pour des trajets qui
+  // ne seront pas proposés.
+  const { visible, hiddenOrphanCount } = filterTripsByStation(allTrips, station);
+
+  const trips = await Promise.all(
+    visible.map(async (trip) => {
       const { seatLabels, occupiedSeats } = await getSeatAvailability(supabase, trip.id);
       return { ...trip, seatLabels, occupiedSeats };
     })
   );
+
+  return { trips, hiddenOrphanCount };
 }
 
 export default async function NewBookingPage() {
@@ -75,7 +89,8 @@ export default async function NewBookingPage() {
     return <AccessBlockedMessage reason={result.reason} />;
   }
 
-  const trips = await getBookableTrips(result.company.id);
+  const selectedStation = await getSelectedStation();
+  const { trips, hiddenOrphanCount } = await getBookableTrips(result.company.id, selectedStation);
 
   return (
     <div className="mx-auto max-w-xl px-6 py-8">
@@ -88,15 +103,23 @@ export default async function NewBookingPage() {
       </p>
 
       {trips.length === 0 ? (
-        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
-          Aucun trajet encore réservable pour le moment (départ futur, non annulé, places
-          disponibles).
-        </p>
+        <div className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+          {selectedStation ? (
+            <>
+              Aucun trajet réservable au départ ou à l&apos;arrivée de{" "}
+              {stationLabel(selectedStation)}. <ShowAllStationsButton />
+            </>
+          ) : (
+            "Aucun trajet encore réservable pour le moment (départ futur, non annulé, places disponibles)."
+          )}
+        </div>
       ) : (
         <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
           <NewBookingForm trips={trips} />
         </div>
       )}
+
+      <OrphanTripsNotice count={hiddenOrphanCount} />
     </div>
   );
 }

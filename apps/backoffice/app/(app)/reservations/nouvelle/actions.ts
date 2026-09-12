@@ -116,6 +116,10 @@ export async function lookupCustomer(email: string): Promise<CustomerLookupResul
 
 type PartInput = { mode: "mtn_money" | "moov_money" | "card" | "cash"; amountFcfa: number };
 
+// Ne lit JAMAIS la gare sélectionnée dans la topbar : c'est un filtre
+// d'affichage des trajets, pas un rattachement. L'imputation d'une
+// réservation reste l'agence de l'agent, quelle que soit la gare qu'il
+// consultait au moment de la créer.
 export async function createBookingForCustomer(
   _prevState: NewBookingState,
   formData: FormData

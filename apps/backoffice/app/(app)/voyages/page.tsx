@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { requireCompany } from "@/lib/supabase/dal";
+import { getSelectedStation } from "@/lib/station-selection";
+import { stationLabel } from "@/lib/stations";
 import { createClient } from "@/lib/supabase/server";
 import { AccessBlockedMessage } from "../_components";
 import { SEAT_CLASS_LABELS, STATUS_LABELS, STATUS_STYLES, formatDepartureDateTime } from "../_shared";
+import { filterTripsByStation, isOrphanRoute } from "../_station-filter";
+import { OrphanRouteBadge, OrphanTripsNotice, ShowAllStationsButton } from "../_station-notice";
 import { formatFcfa } from "shared";
 
 type CompanyTrip = {
@@ -14,7 +18,12 @@ type CompanyTrip = {
   total_seats: number;
   status: string;
   bus_number: string;
-  routes: { origin_city: string; destination_city: string };
+  routes: {
+    origin_city: string;
+    destination_city: string;
+    origin_station_id: string | null;
+    destination_station_id: string | null;
+  };
 };
 
 async function getCompanyTrips(companyId: string): Promise<CompanyTrip[]> {
@@ -22,7 +31,7 @@ async function getCompanyTrips(companyId: string): Promise<CompanyTrip[]> {
   const { data, error } = await supabase
     .from("trips")
     .select(
-      "id, departure_at, seat_class, price_fcfa, available_seats, total_seats, status, bus_number, routes!inner(origin_city, destination_city)"
+      "id, departure_at, seat_class, price_fcfa, available_seats, total_seats, status, bus_number, routes!inner(origin_city, destination_city, origin_station_id, destination_station_id)"
     )
     .eq("company_id", companyId)
     .order("departure_at", { ascending: true });
@@ -46,16 +55,37 @@ export default async function VoyagesPage() {
   }
 
   const { company } = result;
-  const trips = await getCompanyTrips(company.id);
+  const [allTrips, selectedStation] = await Promise.all([
+    getCompanyTrips(company.id),
+    getSelectedStation(),
+  ]);
+  // Filtre d'AFFICHAGE piloté par le sélecteur de la topbar : la gare est
+  // départ OU arrivée. Aucune incidence sur les droits ni sur
+  // l'imputation d'une réservation.
+  const { visible: trips, hiddenOrphanCount } = filterTripsByStation(allTrips, selectedStation);
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
-      <h2 className="mb-4 text-xl font-semibold text-zinc-950 dark:text-zinc-50">Voyages</h2>
+      <h2 className="mb-4 text-xl font-semibold text-zinc-950 dark:text-zinc-50">
+        Voyages
+        {selectedStation ? (
+          <span className="ml-2 text-base font-normal text-zinc-500 dark:text-zinc-400">
+            · {stationLabel(selectedStation)}
+          </span>
+        ) : null}
+      </h2>
 
       {trips.length === 0 ? (
-        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
-          Aucun trajet programmé pour le moment.
-        </p>
+        <div className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+          {selectedStation ? (
+            <>
+              Aucun trajet au départ ou à l&apos;arrivée de {stationLabel(selectedStation)}.{" "}
+              <ShowAllStationsButton />
+            </>
+          ) : (
+            "Aucun trajet programmé pour le moment."
+          )}
+        </div>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
           <table className="w-full min-w-[720px] border-collapse text-left text-sm">
@@ -82,6 +112,7 @@ export default async function VoyagesPage() {
                       className="block px-4 py-3 font-medium text-zinc-950 dark:text-zinc-50"
                     >
                       {trip.routes.origin_city} → {trip.routes.destination_city}
+                      {isOrphanRoute(trip.routes) ? <OrphanRouteBadge /> : null}
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
@@ -113,6 +144,8 @@ export default async function VoyagesPage() {
           </table>
         </div>
       )}
+
+      <OrphanTripsNotice count={hiddenOrphanCount} />
     </div>
   );
 }

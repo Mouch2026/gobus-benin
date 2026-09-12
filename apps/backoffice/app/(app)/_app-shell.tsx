@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { logout } from "../actions";
 import { can, type CompanyRole } from "@/lib/permissions";
+import type { StationOption } from "@/lib/stations";
 import { LiveBeninClock } from "./_live-clock";
+import { StationSelect } from "./_station-select";
 
 // Remplace _navigation.tsx : header + sidebar consolidés en un seul
 // composant partagé par app/(app)/layout.tsx, plutôt que chaque page
@@ -45,12 +47,16 @@ function AppHeader({
   memberName,
   agencyName,
   currentTime,
+  stations,
+  selectedStationId,
 }: {
   company: { name: string; logoUrl: string | null };
   role: CompanyRole;
   memberName: string;
   agencyName: string | null;
   currentTime: string;
+  stations: StationOption[];
+  selectedStationId: string | null;
 }) {
   // Le propriétaire garde le nom de la compagnie en résumé (comme avant) —
   // un employé voit plutôt SON nom, la compagnie apparaissant dans le menu
@@ -67,6 +73,7 @@ function AppHeader({
       </Link>
 
       <div className="flex items-center gap-4">
+        <StationSelect stations={stations} selectedStationId={selectedStationId} />
         <span className="hidden text-sm tabular-nums text-zinc-500 dark:text-zinc-400 sm:inline">
           <LiveBeninClock initialTime={currentTime} />
         </span>
@@ -208,6 +215,8 @@ export function AppShell({
   memberName,
   agencyName,
   currentTime,
+  stations,
+  selectedStationId,
   children,
 }: {
   company: { name: string; logoUrl: string | null };
@@ -215,6 +224,8 @@ export function AppShell({
   memberName: string;
   agencyName: string | null;
   currentTime: string;
+  stations: StationOption[];
+  selectedStationId: string | null;
   children: React.ReactNode;
 }) {
   return (
@@ -226,6 +237,8 @@ export function AppShell({
           memberName={memberName}
           agencyName={agencyName}
           currentTime={currentTime}
+          stations={stations}
+          selectedStationId={selectedStationId}
         />
       </div>
 

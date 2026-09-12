@@ -54,7 +54,9 @@ export type CompanyAccessResult =
       // purement additifs — voir le plan pour la vérification exhaustive
       // qu'aucun appelant existant n'est affecté par cet ajout.
       role: CompanyRole;
-      agency: { id: string; name: string } | null; // null pour un propriétaire
+      // null pour un propriétaire. stationId : la gare du guichet
+      // (agencies.station_id, not null) — défaut du sélecteur de gare.
+      agency: { id: string; name: string; stationId: string } | null;
       memberName: string; // full_name saisi à la création, ou email à défaut
       subscription: { planName: string; currentPeriodEnd: string | null };
     }
@@ -68,6 +70,7 @@ type GetCompanyAccessRow = {
   member_role: string;
   agency_id: string | null;
   agency_name: string | null;
+  agency_station_id: string | null;
   member_name: string;
   subscription_status: string | null;
   current_period_end: string | null;
@@ -131,7 +134,9 @@ export const requireCompany = cache(async (): Promise<CompanyAccessResult> => {
       logoUrl: data.company_logo_url,
     },
     role: data.member_role as CompanyRole,
-    agency: data.agency_id ? { id: data.agency_id, name: data.agency_name! } : null,
+    agency: data.agency_id
+      ? { id: data.agency_id, name: data.agency_name!, stationId: data.agency_station_id! }
+      : null,
     memberName: data.member_name,
     subscription: {
       planName: data.plan_name ?? "—",
