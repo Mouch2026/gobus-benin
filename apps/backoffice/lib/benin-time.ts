@@ -28,3 +28,13 @@ export function getBeninMidnightToday(): Date {
   // calendaire béninoise, toujours getBeninDateString() à la place.
   return new Date(`${getBeninDateString()}T00:00:00+01:00`);
 }
+
+// Même décalage explicite (+1h) que getBeninDateString() ci-dessus,
+// lu jusqu'aux minutes plutôt que tronqué à la date — pour l'horloge de
+// la topbar back-office (_live-clock.tsx interroge /heure-benin, qui
+// appelle cette fonction, plutôt que de dupliquer ce calcul côté client).
+export function getBeninTimeString(): string {
+  const now = new Date();
+  const beninNow = new Date(now.getTime() + 60 * 60 * 1000);
+  return beninNow.toISOString().slice(11, 16);
+}

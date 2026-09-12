@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { logout } from "../actions";
 import { can, type CompanyRole } from "@/lib/permissions";
+import { LiveBeninClock } from "./_live-clock";
 
 // Remplace _navigation.tsx : header + sidebar consolidés en un seul
 // composant partagé par app/(app)/layout.tsx, plutôt que chaque page
@@ -12,16 +13,44 @@ const ROLE_LABELS: Record<CompanyRole, string> = {
   agent: "Agent",
 };
 
+// Repli neutre quand companies.logo_url est absent — même logique que
+// CompanyLogo côté apps/web (app/recherche/_shared.tsx) : une pastille
+// avec l'initiale du nom, pas un logo générique inventé. Dupliqué plutôt
+// que partagé via packages/shared : composant JSX + classes Tailwind
+// propres à ce projet Next, pas de la logique métier.
+function CompanyLogo({ name, logoUrl }: { name: string; logoUrl: string | null }) {
+  if (logoUrl) {
+    return (
+      <img
+        src={logoUrl}
+        alt={name}
+        className="h-9 w-9 shrink-0 rounded-lg object-cover"
+      />
+    );
+  }
+
+  return (
+    <span
+      aria-hidden
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zinc-950 text-sm font-bold text-white dark:bg-white dark:text-zinc-950"
+    >
+      {name.charAt(0).toUpperCase()}
+    </span>
+  );
+}
+
 function AppHeader({
   company,
   role,
   memberName,
   agencyName,
+  currentTime,
 }: {
-  company: { name: string };
+  company: { name: string; logoUrl: string | null };
   role: CompanyRole;
   memberName: string;
   agencyName: string | null;
+  currentTime: string;
 }) {
   // Le propriétaire garde le nom de la compagnie en résumé (comme avant) —
   // un employé voit plutôt SON nom, la compagnie apparaissant dans le menu
@@ -30,50 +59,58 @@ function AppHeader({
 
   return (
     <header className="flex items-center justify-between gap-4 border-b border-zinc-200 bg-white px-6 py-4 dark:border-zinc-800 dark:bg-zinc-900">
-      <Link href="/" className="flex items-baseline gap-3">
-        {/* Nom du projet en placeholder texte — aucun logo image n'existe
-            encore. */}
-        <span className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">
-          GoBus Bénin
-        </span>
+      <Link href="/" className="flex items-center gap-3">
+        <CompanyLogo name={company.name} logoUrl={company.logoUrl} />
         <span className="hidden text-sm text-zinc-500 dark:text-zinc-400 sm:inline">
           Back-office réservation
         </span>
       </Link>
 
-      {/* Menu utilisateur : même patron <details>/<summary> sans JS que le
-          sous-menu Administration (voir SidebarLinks ci-dessous). */}
-      <details className="group relative">
-        <summary className="cursor-pointer list-none text-sm font-medium text-zinc-700 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-zinc-50">
-          {summaryLabel} ▾
-        </summary>
-        <div className="absolute right-0 top-full z-10 mt-2 flex w-56 flex-col gap-1 rounded-lg border border-zinc-200 bg-white p-2 shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="px-3 py-1.5 text-xs text-zinc-500 dark:text-zinc-400">
-            {ROLE_LABELS[role]}
-            {agencyName ? ` · ${agencyName}` : ""}
-            {role !== "owner" ? (
-              <>
-                <br />
-                {company.name}
-              </>
-            ) : null}
-          </div>
-          <Link
-            href="/profil"
-            className="rounded-md px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-          >
-            Profil
-          </Link>
-          <form action={logout}>
-            <button
-              type="submit"
-              className="w-full rounded-md px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+      <div className="flex items-center gap-4">
+        <span className="hidden text-sm tabular-nums text-zinc-500 dark:text-zinc-400 sm:inline">
+          <LiveBeninClock initialTime={currentTime} />
+        </span>
+        <span className="hidden text-sm text-zinc-500 dark:text-zinc-400 sm:inline">
+          {ROLE_LABELS[role]}
+          {/* Pour un propriétaire (pas d'agence), on n'affiche que le
+              rôle — agencyName est de toute façon toujours null ici. */}
+          {agencyName ? ` · ${agencyName}` : ""}
+        </span>
+
+        {/* Menu utilisateur : même patron <details>/<summary> sans JS que
+            le sous-menu Administration (voir SidebarLinks ci-dessous). */}
+        <details className="group relative">
+          <summary className="cursor-pointer list-none text-sm font-medium text-zinc-700 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-zinc-50">
+            {summaryLabel} ▾
+          </summary>
+          <div className="absolute right-0 top-full z-10 mt-2 flex w-56 flex-col gap-1 rounded-lg border border-zinc-200 bg-white p-2 shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="px-3 py-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+              {ROLE_LABELS[role]}
+              {agencyName ? ` · ${agencyName}` : ""}
+              {role !== "owner" ? (
+                <>
+                  <br />
+                  {company.name}
+                </>
+              ) : null}
+            </div>
+            <Link
+              href="/profil"
+              className="rounded-md px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
-              Se déconnecter
-            </button>
-          </form>
-        </div>
-      </details>
+              Profil
+            </Link>
+            <form action={logout}>
+              <button
+                type="submit"
+                className="w-full rounded-md px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              >
+                Se déconnecter
+              </button>
+            </form>
+          </div>
+        </details>
+      </div>
     </header>
   );
 }
@@ -170,18 +207,26 @@ export function AppShell({
   role,
   memberName,
   agencyName,
+  currentTime,
   children,
 }: {
-  company: { name: string };
+  company: { name: string; logoUrl: string | null };
   role: CompanyRole;
   memberName: string;
   agencyName: string | null;
+  currentTime: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-600 dark:bg-black dark:text-zinc-400 md:grid md:grid-cols-[220px_1fr] print:grid-cols-1">
       <div className="md:col-span-2 print:hidden">
-        <AppHeader company={company} role={role} memberName={memberName} agencyName={agencyName} />
+        <AppHeader
+          company={company}
+          role={role}
+          memberName={memberName}
+          agencyName={agencyName}
+          currentTime={currentTime}
+        />
       </div>
 
       {/* Mobile uniquement : tiroir replié par défaut, pousse le contenu

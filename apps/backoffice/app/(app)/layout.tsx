@@ -1,4 +1,5 @@
 import { requireCompany } from "@/lib/supabase/dal";
+import { getBeninTimeString } from "@/lib/benin-time";
 import { AccessBlockedMessage } from "./_components";
 import { AppShell } from "./_app-shell";
 
@@ -25,6 +26,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       role={result.role}
       memberName={result.memberName}
       agencyName={result.agency?.name ?? null}
+      currentTime={getBeninTimeString()}
     >
       {children}
     </AppShell>

@@ -34,6 +34,7 @@ export type Company = {
   id: string;
   name: string;
   slug: string;
+  logoUrl: string | null;
 };
 
 export type UserClaims = Awaited<ReturnType<typeof requireUser>>;
@@ -63,6 +64,7 @@ type GetCompanyAccessRow = {
   company_id: string;
   company_name: string;
   company_slug: string;
+  company_logo_url: string | null;
   member_role: string;
   agency_id: string | null;
   agency_name: string | null;
@@ -122,7 +124,12 @@ export const requireCompany = cache(async (): Promise<CompanyAccessResult> => {
   return {
     ok: true,
     user,
-    company: { id: data.company_id, name: data.company_name, slug: data.company_slug },
+    company: {
+      id: data.company_id,
+      name: data.company_name,
+      slug: data.company_slug,
+      logoUrl: data.company_logo_url,
+    },
     role: data.member_role as CompanyRole,
     agency: data.agency_id ? { id: data.agency_id, name: data.agency_name! } : null,
     memberName: data.member_name,
