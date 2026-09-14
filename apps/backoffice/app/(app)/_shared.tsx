@@ -101,6 +101,21 @@ export function deriveBookingDisplayStatus(
   return "cancelled"; // filet de sécurité — bookings.status est un enum fermé, ne devrait jamais arriver
 }
 
+// Niveaux visuels d'une notification (cloche back-office) — pas un statut
+// métier comme les maps ci-dessus, un niveau de gravité générique partagé
+// par tous les types (présents et futurs).
+export const NOTIFICATION_LEVEL_LABELS: Record<string, string> = {
+  critical: "Critique",
+  warning: "Attention",
+  info: "Info",
+};
+
+export const NOTIFICATION_LEVEL_STYLES: Record<string, string> = {
+  critical: "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300",
+  warning: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+  info: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+};
+
 export function formatDepartureDateTime(departureAt: string): string {
   return new Intl.DateTimeFormat("fr-BJ", {
     dateStyle: "medium",

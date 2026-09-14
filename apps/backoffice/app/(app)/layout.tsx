@@ -1,6 +1,7 @@
 import { requireCompany } from "@/lib/supabase/dal";
 import { getBeninTimeString } from "@/lib/benin-time";
 import { getActiveStations, getSelectedStation } from "@/lib/station-selection";
+import { getCompanyNotifications, getUnreadNotificationCount } from "@/lib/notifications";
 import { AccessBlockedMessage } from "./_components";
 import { AppShell } from "./_app-shell";
 
@@ -22,10 +23,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
 
   // Mémoïsés par requête (React cache()) : les pages filtrées rappellent
-  // getSelectedStation() sans second aller-retour.
-  const [stations, selectedStation] = await Promise.all([
+  // getSelectedStation() sans second aller-retour, même chose pour la
+  // page d'historique et getCompanyNotifications().
+  const [stations, selectedStation, notifications, unreadCount] = await Promise.all([
     getActiveStations(),
     getSelectedStation(),
+    getCompanyNotifications(),
+    getUnreadNotificationCount(),
   ]);
 
   return (
@@ -37,6 +41,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       currentTime={getBeninTimeString()}
       stations={stations}
       selectedStationId={selectedStation?.id ?? null}
+      notifications={notifications}
+      unreadCount={unreadCount}
     >
       {children}
     </AppShell>

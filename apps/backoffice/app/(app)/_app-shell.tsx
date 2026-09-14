@@ -2,8 +2,10 @@ import Link from "next/link";
 import { logout } from "../actions";
 import { can, type CompanyRole } from "@/lib/permissions";
 import type { StationOption } from "@/lib/stations";
+import type { CompanyNotification } from "@/lib/notifications";
 import { LiveBeninClock } from "./_live-clock";
 import { StationSelect } from "./_station-select";
+import { NotificationBell } from "./_notification-bell";
 
 // Remplace _navigation.tsx : header + sidebar consolidés en un seul
 // composant partagé par app/(app)/layout.tsx, plutôt que chaque page
@@ -49,6 +51,8 @@ function AppHeader({
   currentTime,
   stations,
   selectedStationId,
+  notifications,
+  unreadCount,
 }: {
   company: { name: string; logoUrl: string | null };
   role: CompanyRole;
@@ -57,6 +61,8 @@ function AppHeader({
   currentTime: string;
   stations: StationOption[];
   selectedStationId: string | null;
+  notifications: CompanyNotification[];
+  unreadCount: number;
 }) {
   // Le propriétaire garde le nom de la compagnie en résumé (comme avant) —
   // un employé voit plutôt SON nom, la compagnie apparaissant dans le menu
@@ -88,6 +94,8 @@ function AppHeader({
         {/* Rôle et agence ne sont plus répétés ici : ils vivent dans le
             menu déroulant ci-dessous. La barre ne porte que l'identité,
             sous la forme « <Rôle> : <nom> ». */}
+        <NotificationBell notifications={notifications} unreadCount={unreadCount} />
+
         {/* Menu utilisateur : même patron <details>/<summary> sans JS que
             le sous-menu Administration (voir SidebarLinks ci-dessous). */}
         <details className="group relative">
@@ -221,6 +229,8 @@ export function AppShell({
   currentTime,
   stations,
   selectedStationId,
+  notifications,
+  unreadCount,
   children,
 }: {
   company: { name: string; logoUrl: string | null };
@@ -230,6 +240,8 @@ export function AppShell({
   currentTime: string;
   stations: StationOption[];
   selectedStationId: string | null;
+  notifications: CompanyNotification[];
+  unreadCount: number;
   children: React.ReactNode;
 }) {
   return (
@@ -243,6 +255,8 @@ export function AppShell({
           currentTime={currentTime}
           stations={stations}
           selectedStationId={selectedStationId}
+          notifications={notifications}
+          unreadCount={unreadCount}
         />
       </div>
 
