@@ -38,6 +38,27 @@ async function getOwnedBookingForPrint(
   return data as unknown as BookingForPrint | null;
 }
 
+// La remise est attachée à la PREMIÈRE part de paiement enregistrée (voir
+// reservations/nouvelle/actions.ts) — la plus ancienne par created_at,
+// jamais les suivantes qui portent toujours 0.
+async function getBookingDiscount(
+  bookingId: string
+): Promise<{ discountPercent: number; discountAmountFcfa: number } | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("payments")
+    .select("discount_percent, discount_amount_fcfa")
+    .eq("booking_id", bookingId)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle<{ discount_percent: number; discount_amount_fcfa: number }>();
+
+  if (error || !data || data.discount_amount_fcfa <= 0) {
+    return null;
+  }
+  return { discountPercent: data.discount_percent, discountAmountFcfa: data.discount_amount_fcfa };
+}
+
 // Vue imprimable simple (mise en page navigateur, window.print() — pas de
 // nouvelle dépendance PDF). Le chrome de nav (header/sidebar) se masque
 // via print:hidden sur _app-shell.tsx, partagé par toute l'app — cette
@@ -51,6 +72,7 @@ export default async function PrintBookingPage(props: PageProps<"/reservations/[
   }
 
   const booking = await getOwnedBookingForPrint(bookingId, result.company.id);
+  const discount = booking ? await getBookingDiscount(bookingId) : null;
 
   if (!booking) {
     return (
@@ -112,6 +134,16 @@ export default async function PrintBookingPage(props: PageProps<"/reservations/[
               {formatFcfa(booking.total_price_fcfa)}
             </p>
           </div>
+          {discount ? (
+            <div>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 print:text-black">
+                Remise ({discount.discountPercent} %)
+              </p>
+              <p className="font-medium text-zinc-950 dark:text-zinc-50 print:text-black">
+                − {formatFcfa(discount.discountAmountFcfa)}
+              </p>
+            </div>
+          ) : null}
         </div>
 
         <table className="w-full border-collapse text-left text-sm">

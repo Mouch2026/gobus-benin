@@ -34,6 +34,8 @@ type PaymentRow = {
   status: string;
   base_amount_fcfa: number;
   amount_charged_fcfa: number;
+  discount_percent: number;
+  discount_amount_fcfa: number;
   voucher_amount_fcfa: number;
   points_redeemed_fcfa: number;
   paid_at: string | null;
@@ -81,7 +83,7 @@ async function getPaymentHistory(
   const { data, error } = await supabase
     .from("payments")
     .select(
-      "id, provider, method, status, base_amount_fcfa, amount_charged_fcfa, voucher_amount_fcfa, points_redeemed_fcfa, paid_at, created_at, payment_token, payment_token_expires_at"
+      "id, provider, method, status, base_amount_fcfa, amount_charged_fcfa, discount_percent, discount_amount_fcfa, voucher_amount_fcfa, points_redeemed_fcfa, paid_at, created_at, payment_token, payment_token_expires_at"
     )
     .eq("booking_id", bookingId)
     .order("created_at", { ascending: false });
@@ -227,6 +229,7 @@ export default async function BookingDetailPage(props: PageProps<"/reservations/
                   <th className="px-4 py-3 font-medium">Date</th>
                   <th className="px-4 py-3 font-medium">Fournisseur</th>
                   <th className="px-4 py-3 font-medium">Base</th>
+                  <th className="px-4 py-3 font-medium">Remise</th>
                   <th className="px-4 py-3 font-medium">Avoir</th>
                   <th className="px-4 py-3 font-medium">Points</th>
                   <th className="px-4 py-3 font-medium">Payé</th>
@@ -247,6 +250,11 @@ export default async function BookingDetailPage(props: PageProps<"/reservations/
                     </td>
                     <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
                       {formatFcfa(payment.base_amount_fcfa)}
+                    </td>
+                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                      {payment.discount_amount_fcfa > 0
+                        ? `− ${formatFcfa(payment.discount_amount_fcfa)} (${payment.discount_percent} %)`
+                        : "—"}
                     </td>
                     <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
                       {payment.voucher_amount_fcfa > 0 ? `− ${formatFcfa(payment.voucher_amount_fcfa)}` : "—"}

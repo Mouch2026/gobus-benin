@@ -11,6 +11,8 @@ type CompanyPaymentRow = {
   base_amount_fcfa: number;
   platform_fee_fcfa: number;
   transaction_fee_fcfa: number;
+  discount_percent: number;
+  discount_amount_fcfa: number;
   voucher_amount_fcfa: number;
   points_redeemed_fcfa: number;
   amount_charged_fcfa: number;
@@ -64,6 +66,7 @@ export default async function PaiementsPage() {
                 <th className="px-4 py-3 font-medium">Réservation</th>
                 <th className="px-4 py-3 font-medium">Trajet</th>
                 <th className="px-4 py-3 font-medium">Base</th>
+                <th className="px-4 py-3 font-medium">Remise</th>
                 <th className="px-4 py-3 font-medium">Frais</th>
                 <th className="px-4 py-3 font-medium">Avoir</th>
                 <th className="px-4 py-3 font-medium">Points</th>
@@ -87,6 +90,11 @@ export default async function PaiementsPage() {
                   </td>
                   <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
                     {formatFcfa(payment.base_amount_fcfa)}
+                  </td>
+                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                    {payment.discount_amount_fcfa > 0
+                      ? `− ${formatFcfa(payment.discount_amount_fcfa)} (${payment.discount_percent} %)`
+                      : "—"}
                   </td>
                   <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
                     {formatFcfa(payment.platform_fee_fcfa + payment.transaction_fee_fcfa)}

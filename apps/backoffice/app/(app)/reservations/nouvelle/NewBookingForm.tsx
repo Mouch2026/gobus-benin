@@ -58,6 +58,7 @@ export function NewBookingForm({ trips }: { trips: BookableTrip[] }) {
   const [isLookingUp, startLookup] = useTransition();
   const [voucherId, setVoucherId] = useState("");
   const [usePoints, setUsePoints] = useState(false);
+  const [discountPercent, setDiscountPercent] = useState("");
 
   const [parts, setParts] = useState<PaymentPart[]>([{ mode: "mtn_money", amountFcfa: "" }]);
 
@@ -69,6 +70,14 @@ export function NewBookingForm({ trips }: { trips: BookableTrip[] }) {
   const totalPriceFcfa = (selectedTrip?.price_fcfa ?? 0) * activePassengerCount;
   const partsSum = parts.reduce((sum, p) => sum + (Number(p.amountFcfa) || 0), 0);
   const sumMatches = parts.length > 0 && partsSum === totalPriceFcfa && totalPriceFcfa > 0;
+
+  // Aperçu uniquement — comme l'avoir et les points, la remise ne change
+  // ni totalPriceFcfa ni ce que les moyens de paiement doivent atteindre
+  // (voir actions.ts : elle réduit le plafond de l'avoir/des points, pas
+  // le prix affiché ici).
+  const discountAmountPreviewFcfa = Math.round(
+    (totalPriceFcfa * (Number(discountPercent) || 0)) / 100
+  );
 
   function syncSinglePartAmount(newTotal: number) {
     setParts((prev) => (prev.length === 1 ? [{ ...prev[0], amountFcfa: newTotal > 0 ? String(newTotal) : "" }] : prev));
@@ -162,6 +171,28 @@ export function NewBookingForm({ trips }: { trips: BookableTrip[] }) {
           Téléphone de contact
         </label>
         <input id="phone" name="phone" type="tel" required className={FIELD_CLASSES} />
+      </div>
+
+      <div className="flex flex-col gap-1.5 border-t border-zinc-200 pt-4 dark:border-zinc-800">
+        <label htmlFor="discountPercent" className={LABEL_CLASSES}>
+          Remise (%)
+        </label>
+        <input
+          id="discountPercent"
+          name="discountPercent"
+          type="number"
+          min={0}
+          max={100}
+          placeholder="0"
+          value={discountPercent}
+          onChange={(e) => setDiscountPercent(e.target.value)}
+          className={FIELD_CLASSES}
+        />
+        {discountAmountPreviewFcfa > 0 ? (
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+            Remise ({Number(discountPercent)} %) : − {formatFcfa(discountAmountPreviewFcfa)}
+          </span>
+        ) : null}
       </div>
 
       {lookupResult?.existing && (lookupResult.vouchers.length > 0 || lookupResult.pointsBalance > 0) ? (

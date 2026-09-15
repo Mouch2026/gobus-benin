@@ -151,6 +151,15 @@ export async function createBookingForCustomer(
   const voucherIdRaw = String(formData.get("voucherId") ?? "").trim();
   const usePoints = formData.get("usePoints") === "1";
 
+  // Remise agent, en pourcentage — jamais un montant saisi directement,
+  // pour que le pourcentage réellement accordé reste traçable (chantier
+  // 3c, audit log) même si le prix du trajet change plus tard.
+  const discountPercentRaw = String(formData.get("discountPercent") ?? "").trim();
+  const discountPercent = discountPercentRaw ? Number(discountPercentRaw) : 0;
+  if (!Number.isInteger(discountPercent) || discountPercent < 0 || discountPercent > 100) {
+    return { error: "La remise doit être un pourcentage entier entre 0 et 100." };
+  }
+
   // Parts de paiement — même zippage par index que les passagers, une
   // ligne du formulaire laissée vide (amount vide) est simplement ignorée.
   const parts: PartInput[] = [];
@@ -242,8 +251,20 @@ export async function createBookingForCustomer(
 
   // Frais de service calculés UNE SEULE FOIS pour toute la réservation,
   // jamais répartis entre les parts — attachés à la première part
-  // enregistrée ci-dessous, quel que soit son mode.
-  const { platformFeeFcfa, transactionFeeFcfa, totalFcfa } = calculateServiceFees(totalPriceFcfa);
+  // enregistrée ci-dessous, quel que soit son mode. TOUJOURS sur le prix
+  // PLEIN (totalPriceFcfa), jamais sur le prix remisé : la remise ne
+  // s'applique JAMAIS aux frais de service.
+  const { platformFeeFcfa, transactionFeeFcfa } = calculateServiceFees(totalPriceFcfa);
+
+  // Remise d'abord : elle ne réduit pas totalPriceFcfa/base_amount_fcfa
+  // (qui restent le prix plein, par cohérence de stockage avec
+  // avoir/points — voir le plan), elle réduit le PLAFOND que voient
+  // l'avoir puis les points. applyVoucherAndPoints elle-même n'est pas
+  // modifiée : lui passer un plafond déjà amputé de la remise suffit à
+  // garantir que remise+avoir+points ne peut jamais dépasser le prix du
+  // billet, sans vérification supplémentaire ici.
+  const discountFcfa = Math.round((totalPriceFcfa * discountPercent) / 100);
+  const discountedBaseFcfa = totalPriceFcfa - discountFcfa;
 
   // Avoir/points d'un client déjà existant (étape "Recherche du client") —
   // même logique EXACTE que le parcours voyageur normal
@@ -255,8 +276,8 @@ export async function createBookingForCustomer(
   const { claimedVoucherId, appliedVoucherFcfa, pointsRedeemedFcfa } = await applyVoucherAndPoints({
     userId,
     bookingId,
-    baseAmountFcfa: totalPriceFcfa,
-    totalFcfa,
+    baseAmountFcfa: discountedBaseFcfa,
+    totalFcfa: discountedBaseFcfa + platformFeeFcfa + transactionFeeFcfa,
     voucherId: voucherIdRaw || null,
     usePoints,
   });
@@ -279,6 +300,9 @@ export async function createBookingForCustomer(
     };
     if (isFirst) {
       insertPayload.platform_fee_collected = !isCash;
+      insertPayload.discount_percent = discountPercent;
+      insertPayload.discount_amount_fcfa = discountFcfa;
+      insertPayload.discount_granted_by = discountFcfa > 0 ? access.user.sub : null;
       insertPayload.voucher_id = claimedVoucherId;
       insertPayload.voucher_amount_fcfa = appliedVoucherFcfa;
       insertPayload.points_redeemed_fcfa = pointsRedeemedFcfa;
