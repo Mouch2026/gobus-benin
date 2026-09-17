@@ -215,6 +215,14 @@ function SidebarLinks({ role }: { role: CompanyRole }) {
               Employés
             </Link>
           ) : null}
+          {can(role, "promoCodes.manage") ? (
+            <Link
+              href="/codes-promo"
+              className="rounded-md px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            >
+              Codes promo
+            </Link>
+          ) : null}
         </div>
       </details>
     </>

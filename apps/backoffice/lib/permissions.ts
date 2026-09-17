@@ -13,6 +13,7 @@ export type CompanyAction =
   | "busLayouts.manage" // créer un plan de bus
   | "agencies.manage" // créer/éditer/activer une agence
   | "employees.manage" // créer/gérer un compte employé
+  | "promoCodes.manage" // créer/désactiver un code promo — réduit le revenu de la compagnie
   | "subscription.manage"; // aucune action de mutation n'existe encore — prêt pour plus tard
 
 const PERMISSIONS: Record<CompanyAction, readonly CompanyRole[]> = {
@@ -20,6 +21,7 @@ const PERMISSIONS: Record<CompanyAction, readonly CompanyRole[]> = {
   "busLayouts.manage": ["owner"],
   "agencies.manage": ["owner"],
   "employees.manage": ["owner"],
+  "promoCodes.manage": ["owner"],
   "subscription.manage": ["owner"],
 };
 

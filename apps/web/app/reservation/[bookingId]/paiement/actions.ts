@@ -6,12 +6,16 @@ import { createClient } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { calculateServiceFees } from "shared";
 import { applyVoucherAndPoints } from "shared/src/lib/applyVoucherAndPoints";
+import { redeemPromoCode } from "shared/src/lib/redeemPromoCode";
 import { sendBookingConfirmation } from "shared/src/lib/notifications/sendBookingConfirmation";
 import { sendVoucherRefundPendingNotification } from "shared/src/lib/notifications/sendVoucherRefundPendingNotification";
+
+export type PaymentState = { error: string | null };
 
 type BookingForPayment = {
   id: string;
   status: string;
+  company_id: string;
   total_price_fcfa: number;
   trips: { departure_at: string } | null;
 };
@@ -22,7 +26,16 @@ type BookingForPayment = {
 // apps/web/app/partenaires/paiement/actions.ts (insert 'pending' PUIS
 // update 'approved', pour déclencher le trigger existant qui ne réagit
 // qu'à un update de `status`).
-export async function simulatePayment(bookingId: string, formData: FormData): Promise<void> {
+//
+// Signature compatible useActionState (prevState, formData) — nécessaire
+// depuis le chantier des codes promo : un code invalide doit afficher un
+// message, contrairement à l'avoir/aux points (identité-scopés, jamais
+// saisis à la main, jamais en échec côté client).
+export async function simulatePayment(
+  bookingId: string,
+  _prevState: PaymentState,
+  formData: FormData
+): Promise<PaymentState> {
   const user = await requireUser(`/reservation/${bookingId}/paiement`);
 
   // Relu via le client SSR authentifié, pas service_role : RLS
@@ -31,7 +44,7 @@ export async function simulatePayment(bookingId: string, formData: FormData): Pr
   const supabase = await createClient();
   const { data: booking } = await supabase
     .from("bookings")
-    .select("id, status, total_price_fcfa, trips(departure_at)")
+    .select("id, status, company_id, total_price_fcfa, trips(departure_at)")
     .eq("id", bookingId)
     .eq("user_id", user.sub)
     .maybeSingle<BookingForPayment>();
@@ -54,7 +67,39 @@ export async function simulatePayment(bookingId: string, formData: FormData): Pr
   }
 
   const baseAmountFcfa = booking.total_price_fcfa;
-  const { platformFeeFcfa, transactionFeeFcfa, totalFcfa } = calculateServiceFees(baseAmountFcfa);
+
+  // Code promo éventuellement saisi — prend la même place que la remise
+  // agent (chantier 3b-1) dans le calcul : réduit uniquement le prix du
+  // billet, jamais les frais, calculés ci-dessous sur le prix PLEIN.
+  // Voir redeemPromoCode.ts pour l'ordre des vérifications et les
+  // messages. Un échec ici renvoie l'erreur au formulaire sans rien
+  // écrire d'autre — aucun avoir/point n'est encore réclamé à ce stade.
+  let promoCodeId: string | null = null;
+  let discountPercent = 0;
+  let discountAmountFcfa = 0;
+
+  const promoCodeRaw = String(formData.get("promoCode") ?? "").trim();
+  if (promoCodeRaw) {
+    const promoResult = await redeemPromoCode({
+      userId: user.sub,
+      bookingId,
+      companyId: booking.company_id,
+      code: promoCodeRaw,
+      baseAmountFcfa,
+    });
+
+    if (!promoResult.ok) {
+      return { error: promoResult.error };
+    }
+
+    promoCodeId = promoResult.promoCodeId;
+    discountPercent = promoResult.discountPercent;
+    discountAmountFcfa = promoResult.discountAmountFcfa;
+  }
+
+  const discountedBaseFcfa = baseAmountFcfa - discountAmountFcfa;
+  const { platformFeeFcfa, transactionFeeFcfa } = calculateServiceFees(baseAmountFcfa);
+  const totalFcfa = discountedBaseFcfa + platformFeeFcfa + transactionFeeFcfa;
 
   // Avoir éventuellement sélectionné sur la page — jamais confiance dans
   // un montant envoyé par le client, seul l'id est utilisé pour relire
@@ -69,7 +114,7 @@ export async function simulatePayment(bookingId: string, formData: FormData): Pr
   const { claimedVoucherId, appliedVoucherFcfa, pointsRedeemedFcfa, leftoverVoucherFcfa } = await applyVoucherAndPoints({
     userId: user.sub,
     bookingId,
-    baseAmountFcfa,
+    baseAmountFcfa: discountedBaseFcfa,
     totalFcfa,
     voucherId: voucherIdRaw ? String(voucherIdRaw) : null,
     usePoints,
@@ -92,6 +137,9 @@ export async function simulatePayment(bookingId: string, formData: FormData): Pr
       base_amount_fcfa: baseAmountFcfa,
       platform_fee_fcfa: platformFeeFcfa,
       transaction_fee_fcfa: transactionFeeFcfa,
+      discount_percent: discountPercent,
+      discount_amount_fcfa: discountAmountFcfa,
+      promo_code_id: promoCodeId,
       voucher_id: claimedVoucherId,
       voucher_amount_fcfa: appliedVoucherFcfa,
       points_redeemed_fcfa: pointsRedeemedFcfa,

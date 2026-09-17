@@ -73,6 +73,15 @@ Liste vivante, à mettre à jour au fil du développement (pas figée à un inst
   comme deux villes distinctes. À surveiller si ça pose problème en usage
   réel avec plusieurs compagnies.
 
+### Bugs latents
+- Bug latent découvert (chantier codes promo) : notification_log.booking_id
+  a ON DELETE SET NULL, mais notification_log_target_check exige
+  booking_id OU voucher_id non nul — supprimer une réservation n'ayant
+  qu'une ligne de log "confirmation email" violerait cette contrainte au
+  moment du SET NULL. Sans impact aujourd'hui (aucune réservation n'est
+  jamais supprimée en production, seulement annulée), mais à corriger si
+  un jour une vraie suppression est introduite.
+
 ### Produits
 - Application Admin (interne, pas pour les compagnies).
 - Application mobile (Expo) — pas commencée.
