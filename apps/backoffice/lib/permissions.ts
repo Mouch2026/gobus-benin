@@ -14,6 +14,7 @@ export type CompanyAction =
   | "agencies.manage" // créer/éditer/activer une agence
   | "employees.manage" // créer/gérer un compte employé
   | "promoCodes.manage" // créer/désactiver un code promo — réduit le revenu de la compagnie
+  | "supervisorApprovals.manage" // valider/refuser une remise ou une annulation, sur place ou à distance
   | "subscription.manage"; // aucune action de mutation n'existe encore — prêt pour plus tard
 
 const PERMISSIONS: Record<CompanyAction, readonly CompanyRole[]> = {
@@ -22,6 +23,7 @@ const PERMISSIONS: Record<CompanyAction, readonly CompanyRole[]> = {
   "agencies.manage": ["owner"],
   "employees.manage": ["owner"],
   "promoCodes.manage": ["owner"],
+  "supervisorApprovals.manage": ["owner", "agency_manager"],
   "subscription.manage": ["owner"],
 };
 

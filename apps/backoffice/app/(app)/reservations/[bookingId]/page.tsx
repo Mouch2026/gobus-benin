@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { requireCompany } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase-admin";
+import { sweepExpiredApprovalRequests } from "@/lib/supervisorApproval";
 import { formatFcfa } from "shared";
 import { AccessBlockedMessage } from "../../_components";
 import {
@@ -11,6 +13,19 @@ import {
   deriveBookingDisplayStatus,
   formatDepartureDateTime,
 } from "../../_shared";
+import { ApprovalWaitingBanner } from "./ApprovalWaitingBanner";
+
+// Chantier 3c — pas via le client de session : la portée par compagnie
+// est déjà garantie par l'appelant (booking déjà relu via getOwnedBooking).
+async function hasPendingApprovalRequest(bookingId: string): Promise<boolean> {
+  const { data } = await supabaseAdmin
+    .from("supervisor_approval_requests")
+    .select("id")
+    .eq("booking_id", bookingId)
+    .eq("status", "pending")
+    .maybeSingle();
+  return !!data;
+}
 
 type BookingDetail = {
   id: string;
@@ -103,6 +118,8 @@ export default async function BookingDetailPage(props: PageProps<"/reservations/
     return <AccessBlockedMessage reason={result.reason} />;
   }
 
+  await sweepExpiredApprovalRequests();
+
   const supabase = await createClient();
   const owned = await getOwnedBooking(supabase, bookingId, result.company.id);
 
@@ -122,9 +139,12 @@ export default async function BookingDetailPage(props: PageProps<"/reservations/
   const { booking, voucherStatus } = owned;
   const payments = await getPaymentHistory(supabase, bookingId);
   const displayStatus = deriveBookingDisplayStatus(booking.status, voucherStatus);
+  const pendingApproval = await hasPendingApprovalRequest(bookingId);
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-8">
+      {pendingApproval ? <ApprovalWaitingBanner bookingId={bookingId} /> : null}
+
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">
           Réservation {booking.booking_reference}

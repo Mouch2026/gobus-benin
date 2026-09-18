@@ -5,30 +5,22 @@ import { redirect } from "next/navigation";
 import { requireCompany } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { calculateServiceFees } from "shared";
-import { applyVoucherAndPoints } from "shared/src/lib/applyVoucherAndPoints";
-import { sendBookingConfirmation } from "shared/src/lib/notifications/sendBookingConfirmation";
-import { sendBookingPaymentLinkNotification } from "shared/src/lib/notifications/sendBookingPaymentLinkNotification";
+import { findExistingUserByEmail } from "@/lib/customers";
+import {
+  verifySupervisorOnSite,
+  createResolvedApprovalRequest,
+  createPendingApprovalRequest,
+  notifySupervisors,
+} from "@/lib/supervisorApproval";
+import { finalizeCounterBookingPayment } from "./finalizeCounterBookingPayment";
 
 export type NewBookingState = { error: string | null };
 
-const PAYMENT_TOKEN_MAX_VALIDITY_MS = 48 * 60 * 60 * 1000; // 48h
 const MAX_PARTS = 4;
-const LINK_METHODS = new Set(["mtn_money", "moov_money", "card"]);
 const VALID_METHODS = new Set(["mtn_money", "moov_money", "card", "cash"]);
-
-// Utilisée par findOrCreateDiscreetCustomer (email déjà pris) ET par
-// lookupCustomer (étape "Recherche du client") — jamais dupliquée : les
-// deux ont besoin de la même correspondance exacte, jamais d'un filtre
-// ?email= (voir la règle CLAUDE.md sur auth.admin.listUsers/getUserByEmail).
-async function findExistingUserByEmail(email: string): Promise<string | null> {
-  const { data: list, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-  if (listError) {
-    throw new Error(`Impossible de vérifier l'utilisateur existant : ${listError.message}`);
-  }
-  const existing = list.users.find((u) => u.email?.toLowerCase() === email.toLowerCase());
-  return existing?.id ?? null;
-}
+// Chantier 3c : au-delà de ce seuil, un agent (jamais un owner/
+// agency_manager — ils SONT le superviseur) a besoin d'une validation.
+const DISCOUNT_APPROVAL_THRESHOLD_PERCENT = 10;
 
 // Trouve le compte voyageur existant pour cet email, ou en crée un
 // "discret" (mot de passe aléatoire jamais stocké/loggé/envoyé — ce
@@ -220,6 +212,33 @@ export async function createBookingForCustomer(
     };
   }
 
+  // Chantier 3c — un owner/agency_manager EST le superviseur : la porte
+  // ne s'applique qu'à un agent. Vérifiée indépendamment de ce que le
+  // formulaire affichait côté navigateur.
+  const requiresApproval = access.role === "agent" && discountPercent > DISCOUNT_APPROVAL_THRESHOLD_PERCENT;
+  const approvalMode = String(formData.get("approvalMode") ?? "");
+  let onSiteSupervisorUserId: string | null = null;
+
+  if (requiresApproval) {
+    if (approvalMode !== "on_site" && approvalMode !== "remote") {
+      return { error: "Une remise de plus de 10% nécessite une validation. Merci de choisir un mode." };
+    }
+    if (approvalMode === "on_site") {
+      // Vérifiée AVANT toute écriture : un mot de passe incorrect ne doit
+      // laisser aucune réservation orpheline derrière lui.
+      const verification = await verifySupervisorOnSite({
+        companyId: access.company.id,
+        agencyId: access.agency!.id, // un agent a toujours une agence (company_members_agency_matches_role)
+        email: String(formData.get("supervisorEmail") ?? ""),
+        password: String(formData.get("supervisorPassword") ?? ""),
+      });
+      if (!verification.ok) {
+        return { error: verification.error };
+      }
+      onSiteSupervisorUserId = verification.supervisorUserId;
+    }
+  }
+
   let userId: string;
   try {
     userId = await findOrCreateDiscreetCustomer(email);
@@ -249,118 +268,87 @@ export async function createBookingForCustomer(
     return { error: "Impossible de créer cette réservation. Réessayez." };
   }
 
-  // Frais de service calculés UNE SEULE FOIS pour toute la réservation,
-  // jamais répartis entre les parts — attachés à la première part
-  // enregistrée ci-dessous, quel que soit son mode. TOUJOURS sur le prix
-  // PLEIN (totalPriceFcfa), jamais sur le prix remisé : la remise ne
-  // s'applique JAMAIS aux frais de service.
-  const { platformFeeFcfa, transactionFeeFcfa } = calculateServiceFees(totalPriceFcfa);
-
-  // Remise d'abord : elle ne réduit pas totalPriceFcfa/base_amount_fcfa
-  // (qui restent le prix plein, par cohérence de stockage avec
-  // avoir/points — voir le plan), elle réduit le PLAFOND que voient
-  // l'avoir puis les points. applyVoucherAndPoints elle-même n'est pas
-  // modifiée : lui passer un plafond déjà amputé de la remise suffit à
-  // garantir que remise+avoir+points ne peut jamais dépasser le prix du
-  // billet, sans vérification supplémentaire ici.
-  const discountFcfa = Math.round((totalPriceFcfa * discountPercent) / 100);
-  const discountedBaseFcfa = totalPriceFcfa - discountFcfa;
-
-  // Avoir/points d'un client déjà existant (étape "Recherche du client") —
-  // même logique EXACTE que le parcours voyageur normal
-  // (packages/shared/src/lib/applyVoucherAndPoints.ts, jamais dupliquée),
-  // appliqués une seule fois, également attachés à la première part.
-  // Pour un nouveau client, voucherId est vide et usePoints est
-  // nécessairement false (aucune UI ne les propose) — l'appel reste sûr,
-  // il ne fait rien.
-  const { claimedVoucherId, appliedVoucherFcfa, pointsRedeemedFcfa } = await applyVoucherAndPoints({
-    userId,
-    bookingId,
-    baseAmountFcfa: discountedBaseFcfa,
-    totalFcfa: discountedBaseFcfa + platformFeeFcfa + transactionFeeFcfa,
-    voucherId: voucherIdRaw || null,
-    usePoints,
-  });
-
-  let bookingConfirmedDuringCreation = false;
-
-  for (let i = 0; i < parts.length; i++) {
-    const part = parts[i];
-    const isFirst = i === 0;
-    const isCash = part.mode === "cash";
-
-    const insertPayload: Record<string, unknown> = {
-      booking_id: bookingId,
-      base_amount_fcfa: part.amountFcfa,
-      platform_fee_fcfa: isFirst ? platformFeeFcfa : 0,
-      transaction_fee_fcfa: isFirst && !isCash ? transactionFeeFcfa : 0,
-      provider: isCash ? "manual" : "simulated",
-      method: part.mode,
-      status: "pending",
+  // Le siège est déjà retenu au nom de ce client (RPC ci-dessus) — tout
+  // ce qui suit décide seulement QUAND (et par qui) le paiement est
+  // effectivement inséré. finalizeCounterBookingPayment fait le calcul
+  // des frais, l'application avoir/points et l'écriture des paiements —
+  // jamais dupliquée, appelée soit ici, soit plus tard par
+  // validations/actions.ts::reviewApprovalRequest.
+  if (requiresApproval) {
+    const discountFcfa = Math.round((totalPriceFcfa * discountPercent) / 100);
+    const agencyId = access.agency!.id;
+    const discountPayload = {
+      discountPercent,
+      discountAmountFcfa: discountFcfa,
+      paymentParts: parts,
+      voucherId: voucherIdRaw || null,
+      usePoints,
     };
-    if (isFirst) {
-      insertPayload.platform_fee_collected = !isCash;
-      insertPayload.discount_percent = discountPercent;
-      insertPayload.discount_amount_fcfa = discountFcfa;
-      insertPayload.discount_granted_by = discountFcfa > 0 ? access.user.sub : null;
-      insertPayload.voucher_id = claimedVoucherId;
-      insertPayload.voucher_amount_fcfa = appliedVoucherFcfa;
-      insertPayload.points_redeemed_fcfa = pointsRedeemedFcfa;
-    }
 
-    let paymentToken: string | null = null;
-    let paymentTokenExpiresAt: string | null = null;
-    if (LINK_METHODS.has(part.mode)) {
-      // Un jeton PAR PART (pas par réservation) — Mobile Money et Carte
-      // suivent désormais toutes deux ce même mécanisme de lien.
-      paymentToken = randomBytes(32).toString("hex");
-      paymentTokenExpiresAt = new Date(
-        Math.min(Date.now() + PAYMENT_TOKEN_MAX_VALIDITY_MS, new Date(trip.departure_at).getTime())
-      ).toISOString();
-      insertPayload.payment_token = paymentToken;
-      insertPayload.payment_token_expires_at = paymentTokenExpiresAt;
-    }
+    if (approvalMode === "on_site") {
+      await createResolvedApprovalRequest({
+        companyId: access.company.id,
+        agencyId,
+        requestedBy: access.user.sub,
+        actionType: "discount",
+        bookingId,
+        reviewedBy: onSiteSupervisorUserId!,
+        discount: discountPayload,
+      });
 
-    const { data: payment, error: insertError } = await supabaseAdmin
-      .from("payments")
-      .insert(insertPayload)
-      .select("id")
-      .single();
-
-    if (insertError || !payment) {
-      console.error("Réservation créée mais une part de paiement n'a pas pu être enregistrée :", insertError?.message);
-      return {
-        error: "Réservation créée mais le paiement n'a pas pu être entièrement enregistré. Contactez le support.",
-      };
-    }
-
-    if (isCash) {
-      // Espèces : auto-attesté par la compagnie, reçu immédiatement.
-      // record_payment_part_received est le SEUL endroit qui décide si la
-      // somme des parts reçues atteint désormais total_price_fcfa — voir
-      // le plan pour la justification complète (jamais de crédit de
-      // points ni de confirmation avant que ce soit réellement le cas).
-      const { data: result, error: rpcError } = await supabaseAdmin
-        .rpc("record_payment_part_received", { p_payment_id: payment.id })
-        .single<{ booking_confirmed: boolean }>();
-
-      if (rpcError) {
-        console.error("Impossible de valider la part espèces :", rpcError.message);
-        return { error: "Réservation créée mais le paiement en espèces n'a pas pu être validé. Contactez le support." };
+      const result = await finalizeCounterBookingPayment({
+        bookingId,
+        userId,
+        discountPercent,
+        discountGrantedBy: onSiteSupervisorUserId!,
+        voucherIdRaw,
+        usePoints,
+        parts,
+      });
+      if (result.error) {
+        return { error: result.error };
       }
-      if (result?.booking_confirmed) {
-        bookingConfirmedDuringCreation = true;
-      }
-    } else {
-      // Mobile Money / Carte : jamais auto-attesté, jamais approuvé ici —
-      // seul le client, en cliquant son lien, peut faire avancer cette
-      // part (voir apps/web/app/paiement-securise/[token]/actions.ts).
-      await sendBookingPaymentLinkNotification({ paymentId: payment.id });
+      redirect(`/reservations/${bookingId}`);
     }
+
+    // À distance : rien de plus n'est écrit tant que ce n'est pas validé —
+    // le bandeau d'attente sur /reservations/[bookingId] prend le relais.
+    await createPendingApprovalRequest({
+      companyId: access.company.id,
+      agencyId,
+      requestedBy: access.user.sub,
+      actionType: "discount",
+      bookingId,
+      discount: discountPayload,
+    });
+
+    const { data: bookingRow } = await supabaseAdmin
+      .from("bookings")
+      .select("booking_reference")
+      .eq("id", bookingId)
+      .single<{ booking_reference: string }>();
+
+    await notifySupervisors({
+      companyId: access.company.id,
+      agencyId,
+      title: "Validation requise — remise",
+      body: `Remise ${discountPercent}% (${discountFcfa} FCFA) sur ${bookingRow?.booking_reference ?? bookingId}.`,
+    });
+
+    redirect(`/reservations/${bookingId}`);
   }
 
-  if (bookingConfirmedDuringCreation) {
-    await sendBookingConfirmation({ bookingId });
+  const result = await finalizeCounterBookingPayment({
+    bookingId,
+    userId,
+    discountPercent,
+    discountGrantedBy: discountPercent > 0 ? access.user.sub : null,
+    voucherIdRaw,
+    usePoints,
+    parts,
+  });
+  if (result.error) {
+    return { error: result.error };
   }
 
   redirect(`/reservations/${bookingId}`);

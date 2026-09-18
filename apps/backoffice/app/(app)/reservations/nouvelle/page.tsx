@@ -115,7 +115,7 @@ export default async function NewBookingPage() {
         </div>
       ) : (
         <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-          <NewBookingForm trips={trips} />
+          <NewBookingForm trips={trips} isAgent={result.role === "agent"} />
         </div>
       )}
 

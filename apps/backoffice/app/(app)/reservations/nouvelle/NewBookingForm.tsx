@@ -39,6 +39,10 @@ const initialState: NewBookingState = { error: null };
 // le nombre de noms doit correspondre au nombre de places).
 const MAX_PASSENGERS = 6;
 const MAX_PARTS = 4;
+// Chantier 3c — doit rester identique au seuil serveur
+// (DISCOUNT_APPROVAL_THRESHOLD_PERCENT dans actions.ts) : ce n'est qu'un
+// affichage, le serveur revalide indépendamment.
+const DISCOUNT_APPROVAL_THRESHOLD_PERCENT = 10;
 
 function formatVoucherExpiry(iso: string): string {
   return new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium" }).format(new Date(iso));
@@ -47,7 +51,7 @@ function formatVoucherExpiry(iso: string): string {
 // Patron de formulaire identique à NewTripForm.tsx (trajets/nouveau) :
 // useActionState, FIELD_CLASSES/LABEL_CLASSES, une seule erreur affichée,
 // redirect() côté serveur en cas de succès.
-export function NewBookingForm({ trips }: { trips: BookableTrip[] }) {
+export function NewBookingForm({ trips, isAgent }: { trips: BookableTrip[]; isAgent: boolean }) {
   const [state, action, pending] = useActionState(createBookingForCustomer, initialState);
   const [tripId, setTripId] = useState(trips[0]?.id ?? "");
   const [seatAssignments, setSeatAssignments] = useState<Record<number, string>>({});
@@ -59,6 +63,7 @@ export function NewBookingForm({ trips }: { trips: BookableTrip[] }) {
   const [voucherId, setVoucherId] = useState("");
   const [usePoints, setUsePoints] = useState(false);
   const [discountPercent, setDiscountPercent] = useState("");
+  const [approvalMode, setApprovalMode] = useState<"on_site" | "remote">("on_site");
 
   const [parts, setParts] = useState<PaymentPart[]>([{ mode: "mtn_money", amountFcfa: "" }]);
 
@@ -78,6 +83,10 @@ export function NewBookingForm({ trips }: { trips: BookableTrip[] }) {
   const discountAmountPreviewFcfa = Math.round(
     (totalPriceFcfa * (Number(discountPercent) || 0)) / 100
   );
+
+  // Un owner/agency_manager EST le superviseur — la porte ne s'affiche
+  // que pour un agent (le serveur revalide indépendamment de ceci).
+  const requiresApproval = isAgent && (Number(discountPercent) || 0) > DISCOUNT_APPROVAL_THRESHOLD_PERCENT;
 
   function syncSinglePartAmount(newTotal: number) {
     setParts((prev) => (prev.length === 1 ? [{ ...prev[0], amountFcfa: newTotal > 0 ? String(newTotal) : "" }] : prev));
@@ -192,6 +201,65 @@ export function NewBookingForm({ trips }: { trips: BookableTrip[] }) {
           <span className="text-xs text-zinc-500 dark:text-zinc-400">
             Remise ({Number(discountPercent)} %) : − {formatFcfa(discountAmountPreviewFcfa)}
           </span>
+        ) : null}
+
+        {requiresApproval ? (
+          <div className="mt-2 flex flex-col gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-950">
+            <p className="text-xs font-medium text-amber-900 dark:text-amber-200">
+              Une remise de plus de {DISCOUNT_APPROVAL_THRESHOLD_PERCENT}% nécessite la validation
+              d&apos;un superviseur (propriétaire ou responsable d&apos;agence).
+            </p>
+            <div className="flex gap-4 text-sm text-amber-900 dark:text-amber-200">
+              <label className="flex items-center gap-1.5">
+                <input
+                  type="radio"
+                  name="approvalMode"
+                  value="on_site"
+                  checked={approvalMode === "on_site"}
+                  onChange={() => setApprovalMode("on_site")}
+                />
+                Sur place (le superviseur saisit son mot de passe ici)
+              </label>
+              <label className="flex items-center gap-1.5">
+                <input
+                  type="radio"
+                  name="approvalMode"
+                  value="remote"
+                  checked={approvalMode === "remote"}
+                  onChange={() => setApprovalMode("remote")}
+                />
+                À distance (envoyer une demande et attendre)
+              </label>
+            </div>
+            {approvalMode === "on_site" ? (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="supervisorEmail" className={LABEL_CLASSES}>
+                    E-mail du superviseur
+                  </label>
+                  <input
+                    id="supervisorEmail"
+                    name="supervisorEmail"
+                    type="email"
+                    required
+                    className={FIELD_CLASSES}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="supervisorPassword" className={LABEL_CLASSES}>
+                    Mot de passe du superviseur
+                  </label>
+                  <input
+                    id="supervisorPassword"
+                    name="supervisorPassword"
+                    type="password"
+                    required
+                    className={FIELD_CLASSES}
+                  />
+                </div>
+              </div>
+            ) : null}
+          </div>
         ) : null}
       </div>
 
@@ -397,7 +465,11 @@ export function NewBookingForm({ trips }: { trips: BookableTrip[] }) {
         disabled={pending || !sumMatches}
         className="self-start rounded-lg bg-zinc-950 px-4 py-2.5 font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
       >
-        {pending ? "Création..." : "Créer la réservation"}
+        {pending
+          ? "Création..."
+          : requiresApproval && approvalMode === "remote"
+            ? "Envoyer pour validation"
+            : "Créer la réservation"}
       </button>
     </form>
   );

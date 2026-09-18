@@ -15,6 +15,24 @@ import {
 } from "../_shared";
 import { parseReservationFilters, filterBookings, type BookingOverviewRow } from "./filterBookings";
 import { CancelBookingButton } from "./CancelBookingButton";
+import { sweepExpiredApprovalRequests } from "@/lib/supervisorApproval";
+
+const CANCELLATION_APPROVAL_WINDOW_MS = 2 * 60 * 60 * 1000; // 2h — même seuil que actions.ts
+
+// Réservations de cette compagnie ayant une demande d'annulation
+// ENCORE en attente — le bouton "Annuler" devient un simple lien vers la
+// demande en cours plutôt que de permettre une 2e demande concurrente
+// (l'index partiel supervisor_approval_requests_pending_booking_idx la
+// rejetterait de toute façon, ceci n'est que l'affichage).
+async function getPendingCancellationBookingIds(companyId: string): Promise<Set<string>> {
+  const { data } = await supabaseAdmin
+    .from("supervisor_approval_requests")
+    .select("booking_id")
+    .eq("company_id", companyId)
+    .eq("action_type", "cancellation")
+    .eq("status", "pending");
+  return new Set((data ?? []).map((r) => r.booking_id as string));
+}
 
 // service_role, même convention que toutes les vues company-scoped de ce
 // back-office : get_company_bookings_overview n'est granted qu'à
@@ -45,7 +63,11 @@ export default async function ReservationsPage(props: PageProps<"/reservations">
   const searchParams = await props.searchParams;
   const filters = parseReservationFilters(searchParams);
 
-  const allBookings = await getBookingsOverview(result.company.id);
+  await sweepExpiredApprovalRequests();
+  const [allBookings, pendingCancellationIds] = await Promise.all([
+    getBookingsOverview(result.company.id),
+    getPendingCancellationBookingIds(result.company.id),
+  ]);
   const bookings = filterBookings(allBookings, filters);
 
   // L'export réutilise exactement ces mêmes paramètres — ce que
@@ -181,6 +203,10 @@ export default async function ReservationsPage(props: PageProps<"/reservations">
                 const canCancel =
                   booking.booking_status === "confirmed" &&
                   new Date(booking.departure_at).getTime() > Date.now();
+                const hasPendingCancellation = pendingCancellationIds.has(booking.booking_id);
+                const requiresApproval =
+                  result.role === "agent" &&
+                  new Date(booking.departure_at).getTime() - Date.now() < CANCELLATION_APPROVAL_WINDOW_MS;
 
                 return (
                   <tr
@@ -232,7 +258,21 @@ export default async function ReservationsPage(props: PageProps<"/reservations">
                         >
                           Imprimer
                         </Link>
-                        {canCancel ? <CancelBookingButton bookingId={booking.booking_id} /> : null}
+                        {canCancel ? (
+                          hasPendingCancellation ? (
+                            <Link
+                              href={`/reservations/${booking.booking_id}`}
+                              className="text-xs font-medium text-amber-700 hover:underline dark:text-amber-400"
+                            >
+                              En attente de validation…
+                            </Link>
+                          ) : (
+                            <CancelBookingButton
+                              bookingId={booking.booking_id}
+                              requiresApproval={requiresApproval}
+                            />
+                          )
+                        ) : null}
                       </div>
                     </td>
                   </tr>
