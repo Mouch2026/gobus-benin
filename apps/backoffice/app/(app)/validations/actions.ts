@@ -79,6 +79,10 @@ export async function reviewApprovalRequest(
       const result = await finalizeCounterBookingPayment({
         bookingId: request.booking_id,
         userId: booking.user_id,
+        // La session de caisse est celle de l'agent D'ORIGINE, pas du
+        // superviseur qui approuve (chantier 4) — discountGrantedBy reste
+        // le superviseur (chantier 3c), ce sont deux identités distinctes.
+        agentUserId: request.requested_by,
         discountPercent: request.discount_percent ?? 0,
         discountGrantedBy: access.user.sub, // le superviseur qui approuve, pas l'agent
         voucherIdRaw: request.voucher_id ?? "",

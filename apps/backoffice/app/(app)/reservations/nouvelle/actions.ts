@@ -299,6 +299,7 @@ export async function createBookingForCustomer(
       const result = await finalizeCounterBookingPayment({
         bookingId,
         userId,
+        agentUserId: access.user.sub,
         discountPercent,
         discountGrantedBy: onSiteSupervisorUserId!,
         voucherIdRaw,
@@ -333,6 +334,8 @@ export async function createBookingForCustomer(
       agencyId,
       title: "Validation requise — remise",
       body: `Remise ${discountPercent}% (${discountFcfa} FCFA) sur ${bookingRow?.booking_reference ?? bookingId}.`,
+      type: "supervisor_approval_requested",
+      actionHref: "/validations",
     });
 
     redirect(`/reservations/${bookingId}`);
@@ -341,6 +344,7 @@ export async function createBookingForCustomer(
   const result = await finalizeCounterBookingPayment({
     bookingId,
     userId,
+    agentUserId: access.user.sub,
     discountPercent,
     discountGrantedBy: discountPercent > 0 ? access.user.sub : null,
     voucherIdRaw,

@@ -161,32 +161,39 @@ export async function createPendingApprovalRequest(params: {
 // notifications back-office") tel quel — deux lignes car le ciblage
 // actuel (target_role + target_agency_id, combinés en ET) ne peut pas
 // exprimer "owner OU agency_manager de cette agence" en une seule ligne.
+//
+// type/actionHref paramétrés (chantier 4) — cette fonction est
+// désormais partagée par deux événements distincts (demande de
+// validation, chantier 3c ; plafond de caisse atteint, chantier 4), qui
+// n'ont ni le même type ni la même destination utile au clic.
 export async function notifySupervisors(params: {
   companyId: string;
   agencyId: string;
   title: string;
   body: string;
+  type: string;
+  actionHref: string;
 }): Promise<void> {
   const { error } = await supabaseAdmin.from("company_notifications").insert([
     {
       company_id: params.companyId,
       kind: "event",
-      type: "supervisor_approval_requested",
+      type: params.type,
       level: "warning",
       title: params.title,
       body: params.body,
-      action_href: "/validations",
+      action_href: params.actionHref,
       target_role: "owner",
       target_agency_id: null,
     },
     {
       company_id: params.companyId,
       kind: "event",
-      type: "supervisor_approval_requested",
+      type: params.type,
       level: "warning",
       title: params.title,
       body: params.body,
-      action_href: "/validations",
+      action_href: params.actionHref,
       target_role: "agency_manager",
       target_agency_id: params.agencyId,
     },
@@ -199,6 +206,10 @@ export async function notifySupervisors(params: {
 export type ResolvedApprovalRequest = {
   action_type: ApprovalActionType;
   booking_id: string;
+  // Chantier 4 — l'agent D'ORIGINE : une part cash finalisée ici (remise
+  // approuvée à distance) doit se rattacher à SA session de caisse,
+  // jamais à celle du superviseur qui approuve des minutes plus tard.
+  requested_by: string;
   discount_percent: number | null;
   discount_amount_fcfa: number | null;
   payment_parts: CounterPaymentPart[] | null;
@@ -235,7 +246,9 @@ export async function resolveApprovalRequest(params: {
   }
 
   const { data, error } = await query
-    .select("action_type, booking_id, discount_percent, discount_amount_fcfa, payment_parts, voucher_id, use_points")
+    .select(
+      "action_type, booking_id, requested_by, discount_percent, discount_amount_fcfa, payment_parts, voucher_id, use_points"
+    )
     .maybeSingle<ResolvedApprovalRequest>();
 
   if (error) {

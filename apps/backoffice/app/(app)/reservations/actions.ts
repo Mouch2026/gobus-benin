@@ -112,6 +112,8 @@ export async function cancelBooking(
       agencyId,
       title: "Validation requise — annulation",
       body: `Annulation de ${bookingRow?.booking_reference ?? bookingId}, départ imminent.`,
+      type: "supervisor_approval_requested",
+      actionHref: "/validations",
     });
 
     revalidatePath("/reservations");

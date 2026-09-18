@@ -172,6 +172,12 @@ function SidebarLinks({ role }: { role: CompanyRole }) {
       >
         💰 Remboursements
       </Link>
+      <Link
+        href="/caisse"
+        className="rounded-md px-3 py-2 text-sm font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800"
+      >
+        💵 Caisse
+      </Link>
       {can(role, "supervisorApprovals.manage") ? (
         <Link
           href="/validations"

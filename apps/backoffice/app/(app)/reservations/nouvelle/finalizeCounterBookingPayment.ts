@@ -1,6 +1,8 @@
 import "server-only";
 import { randomBytes } from "crypto";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { getOpenSession } from "@/lib/caisse";
+import { notifySupervisors } from "@/lib/supervisorApproval";
 import { calculateServiceFees } from "shared";
 import { applyVoucherAndPoints } from "shared/src/lib/applyVoucherAndPoints";
 import { sendBookingConfirmation } from "shared/src/lib/notifications/sendBookingConfirmation";
@@ -13,6 +15,12 @@ const LINK_METHODS = new Set(["mtn_money", "moov_money", "card"]);
 export type FinalizeCounterBookingPaymentParams = {
   bookingId: string;
   userId: string;
+  // Chantier 4 — jamais le client : la part cash de CETTE réservation se
+  // rattache à la session de caisse de cet agent. Pour une remise validée
+  // à distance (chantier 3c), c'est l'agent D'ORIGINE
+  // (supervisor_approval_requests.requested_by), pas le superviseur qui
+  // approuve des minutes plus tard.
+  agentUserId: string;
   discountPercent: number;
   discountGrantedBy: string | null;
   voucherIdRaw: string;
@@ -29,7 +37,8 @@ export type FinalizeCounterBookingPaymentParams = {
 export async function finalizeCounterBookingPayment(
   params: FinalizeCounterBookingPaymentParams
 ): Promise<{ error: string | null }> {
-  const { bookingId, userId, discountPercent, discountGrantedBy, voucherIdRaw, usePoints, parts } = params;
+  const { bookingId, userId, agentUserId, discountPercent, discountGrantedBy, voucherIdRaw, usePoints, parts } =
+    params;
 
   // Relu ici plutôt que transmis par l'appelant : le chemin différé
   // (validation à distance) tourne minutes après la création, dans un
@@ -68,12 +77,25 @@ export async function finalizeCounterBookingPayment(
     usePoints,
   });
 
+  // Chantier 4 — résolue une seule fois, pas par part : toutes les parts
+  // cash d'une même réservation se rattachent à la même session. Non
+  // résolue du tout s'il n'y a aucune part cash (évite une requête
+  // inutile pour un paiement 100% carte/mobile money).
+  const openSession = parts.some((p) => p.mode === "cash") ? await getOpenSession(agentUserId) : null;
+
   let bookingConfirmedDuringCreation = false;
 
   for (let i = 0; i < parts.length; i++) {
     const part = parts[i];
     const isFirst = i === 0;
     const isCash = part.mode === "cash";
+
+    if (isCash && !openSession) {
+      // Aucune écriture pour cette part — jamais de paiement orphelin
+      // pour cette cause précise (contrairement à un franchissement de
+      // plafond, qui ne peut être détecté qu'après coup, voir plus bas).
+      return { error: "Ouvrez une session de caisse avant d'accepter un paiement en espèces." };
+    }
 
     const insertPayload: Record<string, unknown> = {
       booking_id: bookingId,
@@ -119,13 +141,32 @@ export async function finalizeCounterBookingPayment(
     }
 
     if (isCash) {
-      // record_payment_part_received est le SEUL endroit qui décide si la
-      // somme des parts reçues atteint désormais total_price_fcfa.
+      // record_cash_payment_received verrouille la session, vérifie le
+      // plafond, enregistre le mouvement, PUIS appelle
+      // record_payment_part_received (inchangée) dans la même
+      // transaction — voir le plan, point 2.
       const { data: result, error: rpcError } = await supabaseAdmin
-        .rpc("record_payment_part_received", { p_payment_id: payment.id })
+        .rpc("record_cash_payment_received", { p_payment_id: payment.id, p_session_id: openSession!.id })
         .single<{ booking_confirmed: boolean }>();
 
       if (rpcError) {
+        // 23514 = check_violation : plafond atteint, ou session
+        // introuvable/déjà close entre-temps — message métier déjà
+        // rédigé, remonté tel quel (même convention que cancelBooking),
+        // jamais le générique "contactez le support" pour ce cas précis.
+        if (rpcError.code === "23514") {
+          if (rpcError.message.startsWith("Plafond de caisse atteint")) {
+            await notifySupervisors({
+              companyId: openSession!.companyId,
+              agencyId: openSession!.agenceId,
+              title: "Plafond de caisse atteint",
+              body: `Un paiement en espèces a été refusé — ${rpcError.message}`,
+              type: "cash_ceiling_reached",
+              actionHref: "/caisse",
+            });
+          }
+          return { error: rpcError.message };
+        }
         console.error("Impossible de valider la part espèces :", rpcError.message);
         return { error: "Réservation créée mais le paiement en espèces n'a pas pu être validé. Contactez le support." };
       }
