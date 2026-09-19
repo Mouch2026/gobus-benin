@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { requireCompany } from "@/lib/supabase/dal";
+import { can } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { formatFcfa } from "shared";
 import { AccessBlockedMessage } from "../_components";
@@ -8,7 +10,15 @@ type SubscriptionDetail = {
   status: string;
   current_period_start: string | null;
   current_period_end: string | null;
+  subscription_plan_id: string;
   subscription_plans: { name: string; price_fcfa: number; billing_period: string } | null;
+};
+
+type AvailablePlan = {
+  id: string;
+  name: string;
+  price_fcfa: number;
+  billing_period: string;
 };
 
 type SubscriptionPaymentRow = {
@@ -44,7 +54,7 @@ async function getSubscriptionDetail(companyId: string): Promise<SubscriptionDet
   const { data, error } = await supabase
     .from("company_subscriptions")
     .select(
-      "status, current_period_start, current_period_end, subscription_plans(name, price_fcfa, billing_period)"
+      "status, current_period_start, current_period_end, subscription_plan_id, subscription_plans(name, price_fcfa, billing_period)"
     )
     .eq("company_id", companyId)
     .maybeSingle();
@@ -55,6 +65,31 @@ async function getSubscriptionDetail(companyId: string): Promise<SubscriptionDet
   }
 
   return data as unknown as SubscriptionDetail | null;
+}
+
+// Le plan courant reste affiché même s'il n'est plus is_active (retiré de
+// la vente) — seul le CATALOGUE des plans VERS LESQUELS on peut basculer
+// est filtré ainsi, même requête que /partenaires/page.tsx::getActivePlans.
+async function getAvailablePlans(currentPlanId: string | null): Promise<AvailablePlan[]> {
+  const supabase = await createClient();
+  let query = supabase
+    .from("subscription_plans")
+    .select("id, name, price_fcfa, billing_period")
+    .eq("is_active", true)
+    .order("price_fcfa", { ascending: true });
+
+  if (currentPlanId) {
+    query = query.neq("id", currentPlanId);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("Impossible de charger les plans disponibles :", error.message);
+    return [];
+  }
+
+  return (data ?? []) as AvailablePlan[];
 }
 
 async function getPaymentHistory(companyId: string): Promise<SubscriptionPaymentRow[]> {
@@ -73,20 +108,41 @@ async function getPaymentHistory(companyId: string): Promise<SubscriptionPayment
   return (data ?? []) as unknown as SubscriptionPaymentRow[];
 }
 
-export default async function AbonnementPage() {
+function firstValue(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function AbonnementPage(props: PageProps<"/abonnement">) {
   const result = await requireCompany();
 
   if (!result.ok) {
     return <AccessBlockedMessage reason={result.reason} />;
   }
 
+  const searchParams = await props.searchParams;
+  const planChanged = firstValue(searchParams.plan_changed) === "1";
+
   const [subscription, history] = await Promise.all([
     getSubscriptionDetail(result.company.id),
     getPaymentHistory(result.company.id),
   ]);
 
+  const canManageSubscription = can(result.role, "subscription.manage");
+  const availablePlans = canManageSubscription
+    ? await getAvailablePlans(subscription?.subscription_plan_id ?? null)
+    : [];
+
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-8 px-6 py-8">
+      {planChanged ? (
+        <p
+          role="status"
+          className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200"
+        >
+          Votre nouveau plan est actif.
+        </p>
+      ) : null}
+
       <section>
         <h1 className="mb-4 text-lg font-semibold text-zinc-950 dark:text-zinc-50">Abonnement</h1>
 
@@ -125,6 +181,43 @@ export default async function AbonnementPage() {
           </p>
         )}
       </section>
+
+      {canManageSubscription ? (
+        <section>
+          <h2 className="mb-4 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+            Changer de plan
+          </h2>
+
+          {availablePlans.length === 0 ? (
+            <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+              Aucun autre plan disponible pour le moment.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {availablePlans.map((plan) => (
+                <div
+                  key={plan.id}
+                  className="flex items-center justify-between rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
+                >
+                  <div>
+                    <span className="font-medium text-zinc-950 dark:text-zinc-50">{plan.name}</span>
+                    <span className="ml-2 text-sm text-zinc-500 dark:text-zinc-400">
+                      {formatFcfa(plan.price_fcfa)}
+                      {BILLING_PERIOD_LABELS[plan.billing_period] ?? ""}
+                    </span>
+                  </div>
+                  <Link
+                    href={`/abonnement/changer-plan?plan=${plan.id}`}
+                    className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  >
+                    Changer pour ce plan
+                  </Link>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      ) : null}
 
       <section>
         <h2 className="mb-4 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
