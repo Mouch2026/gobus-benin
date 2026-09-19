@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { AccessBlockedMessage } from "../_components";
 import { EmployeeForm, type AgencyOption } from "./EmployeeForm";
 import { EmployeeRow, type EmployeeRowData } from "./EmployeeRow";
+import { LockPolicyForm } from "./LockPolicyForm";
 
 async function getCompanyMembers(companyId: string): Promise<EmployeeRowData[]> {
   const { data, error } = await supabaseAdmin.rpc("get_company_members", { p_company_id: companyId });
@@ -75,6 +76,19 @@ export default async function EmployesPage() {
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8 px-6 py-8">
+      {can(result.role, "lockPolicy.manage") ? (
+        <section>
+          <h2 className="mb-2 text-lg font-semibold text-zinc-950 dark:text-zinc-50">Sécurité</h2>
+          <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+            Un poste inactif se verrouille automatiquement — un code PIN (défini par chaque agent
+            depuis son profil) le déverrouille, ou permet à un collègue de reprendre la main.
+          </p>
+          <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+            <LockPolicyForm currentMinutes={result.lockTimeoutMinutes} />
+          </div>
+        </section>
+      ) : null}
+
       <section>
         <h1 className="mb-2 text-lg font-semibold text-zinc-950 dark:text-zinc-50">Nouvel employé</h1>
         <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">

@@ -43,7 +43,15 @@ export type CompanyAccessDenialReason =
   | "no-company"
   | "no-subscription"
   | "subscription-pending"
-  | "subscription-inactive";
+  | "subscription-inactive"
+  // Chantier 6 (verrouillage d'écran) : "no-pin" tant que l'agent n'a
+  // jamais défini de code PIN (impossible de verrouiller un poste qu'on
+  // ne pourra jamais rouvrir) ; "locked" une fois le PIN défini, dès que
+  // l'écran est explicitement verrouillé OU inactif depuis plus de
+  // lock_timeout_minutes — voir plus bas, toujours calculé, jamais mis
+  // en cache.
+  | "no-pin"
+  | "locked";
 
 export type CompanyAccessResult =
   | {
@@ -59,8 +67,12 @@ export type CompanyAccessResult =
       agency: { id: string; name: string; stationId: string } | null;
       memberName: string; // full_name saisi à la création, ou email à défaut
       subscription: { planName: string; currentPeriodEnd: string | null };
+      // Chantier 6 — seuil lu une fois ici, transmis au traqueur
+      // d'activité côté client (_activity-tracker.tsx).
+      lockTimeoutMinutes: number;
     }
-  | { ok: false; reason: CompanyAccessDenialReason };
+  | { ok: false; reason: "no-company" | "no-subscription" | "subscription-pending" | "subscription-inactive" | "no-pin" }
+  | { ok: false; reason: "locked"; company: Company; memberName: string; lockedAt: string };
 
 type GetCompanyAccessRow = {
   company_id: string;
@@ -75,7 +87,21 @@ type GetCompanyAccessRow = {
   subscription_status: string | null;
   current_period_end: string | null;
   plan_name: string | null;
+  has_pin: boolean;
+  locked_at: string | null;
+  last_activity_at: string;
+  lock_timeout_minutes: number;
+  session_started_at: string;
 };
+
+// Chantier 6 (correctif) — expiration dure : jwt_expiry seul ne suffit
+// pas (le SDK rafraîchit silencieusement l'access token via le refresh
+// token tant que l'agent reste actif, vérifié en conditions réelles), et
+// le natif Supabase équivalent ([auth.sessions] timebox) est un réglage
+// de PROJET qui toucherait aussi apps/web — hors de portée de ce
+// chantier back-office uniquement. session_started_at (posé par login())
+// sert donc d'ancre indépendante du cycle de rafraîchissement du JWT.
+const HARD_SESSION_DURATION_MS = 8 * 60 * 60 * 1000;
 
 // requireUser() only proves the session is valid; a connected account can
 // still have no company/membership row, or a company with no active
@@ -124,15 +150,59 @@ export const requireCompany = cache(async (): Promise<CompanyAccessResult> => {
     return { ok: false, reason: "subscription-inactive" };
   }
 
+  const company: Company = {
+    id: data.company_id,
+    name: data.company_name,
+    slug: data.company_slug,
+    logoUrl: data.company_logo_url,
+  };
+
+  // Chantier 6 (correctif) — PRIORITAIRE sur tout le reste (no-pin,
+  // locked) : au-delà de 8h depuis la dernière connexion RÉELLE par mot
+  // de passe, c'est une vraie déconnexion, pas un simple écran de
+  // verrouillage — celui-ci suppose au contraire une session encore
+  // valide qu'on ne fait que réaffirmer. redirect() lève une exception
+  // interne à Next.js : le reste de cette fonction ne s'exécute jamais
+  // dans ce cas, aucun retour normal n'est nécessaire.
+  const sessionStartedMs = new Date(data.session_started_at).getTime();
+  if (Date.now() - sessionStartedMs > HARD_SESSION_DURATION_MS) {
+    const supabase = await createClient();
+    await supabase.auth.signOut();
+    redirect("/connexion");
+  }
+
+  // Chantier 6 — vérifié avant le calcul de verrouillage : un compte sans
+  // PIN ne pourra jamais se déverrouiller, donc ne peut jamais être
+  // considéré "verrouillé" en premier lieu (voir le plan, point 4).
+  if (!data.has_pin) {
+    return { ok: false, reason: "no-pin" };
+  }
+
+  // Toujours dérivé, jamais mis en cache dans une colonne "is_locked" —
+  // même philosophie que session_caisse.solde_theorique_fcfa (chantier
+  // 4). C'est ce qui garantit le refus même si l'écran a été contourné
+  // côté client : un locked_at explicite (posé par lockScreen()) OU une
+  // inactivité de plus de lock_timeout_minutes, recalculée à CHAQUE appel
+  // de requireCompany() — donc à chaque page/Server Action, sans tâche de
+  // fond.
+  const timeoutMs = data.lock_timeout_minutes * 60 * 1000;
+  const lastActivityMs = new Date(data.last_activity_at).getTime();
+  const isLocked = data.locked_at !== null || Date.now() - lastActivityMs > timeoutMs;
+
+  if (isLocked) {
+    return {
+      ok: false,
+      reason: "locked",
+      company,
+      memberName: data.member_name,
+      lockedAt: data.locked_at ?? data.last_activity_at,
+    };
+  }
+
   return {
     ok: true,
     user,
-    company: {
-      id: data.company_id,
-      name: data.company_name,
-      slug: data.company_slug,
-      logoUrl: data.company_logo_url,
-    },
+    company,
     role: data.member_role as CompanyRole,
     agency: data.agency_id
       ? { id: data.agency_id, name: data.agency_name!, stationId: data.agency_station_id! }
@@ -142,5 +212,54 @@ export const requireCompany = cache(async (): Promise<CompanyAccessResult> => {
       planName: data.plan_name ?? "—",
       currentPeriodEnd: data.current_period_end,
     },
+    lockTimeoutMinutes: data.lock_timeout_minutes,
+  };
+});
+
+export type CompanyMembership = {
+  memberId: string;
+  companyId: string;
+  agencyId: string | null;
+  role: CompanyRole;
+  fullName: string | null;
+  pinHash: string | null;
+};
+
+// Chantier 6 — utilisée UNIQUEMENT par lockActions.ts (lockScreen,
+// unlockAsSelf, switchAgent, recordActivity) et la définition initiale du
+// PIN : ces actions doivent rester joignables PENDANT que
+// requireCompany() refuserait (verrouillé, ou pas encore de PIN) —
+// contourne donc délibérément le calcul de verrouillage, exactement comme
+// verifySupervisorOnSite contourne délibérément le client de session pour
+// une raison de fond similaire (certains flux sont l'exception qui doit
+// rester joignable). Ne vérifie PAS l'abonnement — un verrouillage/
+// déverrouillage n'a pas besoin d'un abonnement actif pour rester
+// cohérent avec lui-même.
+export const requireCompanyMembership = cache(async (): Promise<CompanyMembership | null> => {
+  const user = await requireUser();
+
+  const { data } = await supabaseAdmin
+    .from("company_members")
+    .select("id, company_id, agency_id, role, full_name, pin_hash, is_active")
+    .eq("user_id", user.sub)
+    .maybeSingle<{
+      id: string;
+      company_id: string;
+      agency_id: string | null;
+      role: CompanyRole;
+      full_name: string | null;
+      pin_hash: string | null;
+      is_active: boolean;
+    }>();
+
+  if (!data || !data.is_active) return null;
+
+  return {
+    memberId: data.id,
+    companyId: data.company_id,
+    agencyId: data.agency_id,
+    role: data.role,
+    fullName: data.full_name,
+    pinHash: data.pin_hash,
   };
 });

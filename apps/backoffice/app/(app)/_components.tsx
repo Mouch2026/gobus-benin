@@ -17,6 +17,18 @@ const MESSAGES: Record<CompanyAccessDenialReason, { title: string; body: string 
     title: "Abonnement inactif",
     body: "Contactez GoBus Bénin pour réactiver votre abonnement.",
   },
+  // Ces deux raisons sont normalement interceptées par layout.tsx AVANT
+  // d'atteindre ce composant statique (rendu interactif : SetupPinForm /
+  // LockScreen) — ce message ne sert que de filet si ce composant est
+  // atteint par un autre chemin.
+  "no-pin": {
+    title: "Configuration requise",
+    body: "Définissez votre code PIN pour continuer.",
+  },
+  locked: {
+    title: "Session verrouillée",
+    body: "Déverrouillez depuis l'écran d'accueil du back-office.",
+  },
 };
 
 export function AccessBlockedMessage({ reason }: { reason: CompanyAccessDenialReason }) {

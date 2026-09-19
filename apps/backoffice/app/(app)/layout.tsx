@@ -3,6 +3,8 @@ import { getBeninTimeString } from "@/lib/benin-time";
 import { getActiveStations, getSelectedStation } from "@/lib/station-selection";
 import { getCompanyNotifications, getUnreadNotificationCount } from "@/lib/notifications";
 import { AccessBlockedMessage } from "./_components";
+import { LockScreen } from "./_lock-screen";
+import { SetupPinForm } from "./_setup-pin";
 import { AppShell } from "./_app-shell";
 
 // Layout partagé par toutes les pages authentifiées (groupe de routes
@@ -19,6 +21,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const result = await requireCompany();
 
   if (!result.ok) {
+    // Chantier 6 — ces deux raisons ont un rendu interactif dédié, à la
+    // place du message statique : jamais de redirection, l'URL ne change
+    // pas (voir dal.ts et le plan pour le raisonnement complet).
+    if (result.reason === "locked") {
+      return <LockScreen memberName={result.memberName} companyName={result.company.name} />;
+    }
+    if (result.reason === "no-pin") {
+      return <SetupPinForm />;
+    }
     return <AccessBlockedMessage reason={result.reason} />;
   }
 
@@ -43,6 +54,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       selectedStationId={selectedStation?.id ?? null}
       notifications={notifications}
       unreadCount={unreadCount}
+      lockTimeoutMinutes={result.lockTimeoutMinutes}
     >
       {children}
     </AppShell>

@@ -6,6 +6,7 @@ import type { CompanyNotification } from "@/lib/notifications";
 import { LiveBeninClock } from "./_live-clock";
 import { StationSelect } from "./_station-select";
 import { NotificationBell } from "./_notification-bell";
+import { ActivityTracker } from "./_activity-tracker";
 
 // Remplace _navigation.tsx : header + sidebar consolidés en un seul
 // composant partagé par app/(app)/layout.tsx, plutôt que chaque page
@@ -261,6 +262,7 @@ export function AppShell({
   selectedStationId,
   notifications,
   unreadCount,
+  lockTimeoutMinutes,
   children,
 }: {
   company: { name: string; logoUrl: string | null };
@@ -272,10 +274,18 @@ export function AppShell({
   selectedStationId: string | null;
   notifications: CompanyNotification[];
   unreadCount: number;
+  lockTimeoutMinutes: number;
   children: React.ReactNode;
 }) {
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-600 dark:bg-black dark:text-zinc-400 md:grid md:grid-cols-[220px_1fr] print:grid-cols-1">
+      {/* Ne rend rien à l'écran — écoute l'activité et déclenche le
+          verrouillage/battement de cœur en arrière-plan (chantier 6).
+          Monté une seule fois ici : persiste entre navigations côté
+          client comme tout layout Next.js, donc l'inactivité se mesure
+          en continu sur toute la session, pas par page. */}
+      <ActivityTracker lockTimeoutMinutes={lockTimeoutMinutes} />
+
       <div className="md:col-span-2 print:hidden">
         <AppHeader
           company={company}

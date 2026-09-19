@@ -112,6 +112,39 @@ export async function createEmployee(
   return { error: null };
 }
 
+// Chantier 6 — seuil d'inactivité avant verrouillage d'écran, même
+// précédent que cash_ceiling_fcfa (chantier 4) : un seul réglage
+// structurel stocké directement sur companies, contrainte CHECK déjà
+// posée en base (2 à 5 minutes) comme filet, revérifiée ici pour un
+// message d'erreur clair plutôt qu'un échec SQL brut.
+export async function updateLockTimeout(
+  _prevState: EmployeeFormState,
+  formData: FormData
+): Promise<EmployeeFormState> {
+  const access = await requireCompany();
+  const guardError = requirePermission(access, "lockPolicy.manage");
+  if (guardError) return guardError;
+  if (!access.ok) return { error: "Votre session ou votre abonnement ne permet plus cette action." };
+
+  const minutes = Number(formData.get("lockTimeoutMinutes"));
+  if (!Number.isInteger(minutes) || minutes < 2 || minutes > 5) {
+    return { error: "Le seuil doit être un nombre entier entre 2 et 5 minutes." };
+  }
+
+  const { error } = await supabaseAdmin
+    .from("companies")
+    .update({ lock_timeout_minutes: minutes })
+    .eq("id", access.company.id);
+
+  if (error) {
+    console.error("Impossible de mettre à jour le seuil de verrouillage :", error.message);
+    return { error: "Impossible de mettre à jour ce réglage. Réessayez." };
+  }
+
+  revalidatePath("/employes");
+  return { error: null };
+}
+
 export async function setEmployeeActive(
   _prevState: EmployeeFormState,
   formData: FormData

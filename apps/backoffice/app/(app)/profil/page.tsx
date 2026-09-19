@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AccessBlockedMessage } from "../_components";
 import { ProfilForm } from "./ProfilForm";
 import { PasswordForm } from "./PasswordForm";
+import { PinForm } from "./PinForm";
 
 type CompanyProfile = {
   id: string;
@@ -58,6 +59,17 @@ export default async function ProfilPage() {
       </h2>
       <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
         <PasswordForm />
+      </div>
+
+      <h2 className="mb-6 mt-8 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+        Changer le code PIN
+      </h2>
+      <p className="mb-4 -mt-4 text-sm text-zinc-500 dark:text-zinc-400">
+        Utilisé pour déverrouiller votre poste après une inactivité, ou pour laisser un collègue
+        reprendre la main dessus.
+      </p>
+      <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+        <PinForm />
       </div>
     </div>
   );

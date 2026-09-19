@@ -233,6 +233,14 @@ export default async function DashboardPage(props: PageProps<"/">) {
   const period = parsePeriod(firstValue(searchParams.period));
   const { from, to } = getPeriodRange(period);
 
+  // Chantier 6 — lu une seule fois au rendu, jamais persisté nulle part :
+  // un simple paramètre d'URL affiché puis oublié au prochain rendu sans
+  // ce paramètre (pas de state à nettoyer).
+  const swapped = firstValue(searchParams.swapped) === "1";
+  const swapFrom = firstValue(searchParams.from);
+  const swapTo = firstValue(searchParams.to);
+  const pinForgotten = firstValue(searchParams.pin_forgotten) === "1";
+
   const [confirmedBookings, cancelledCount, revenueFcfa, occupancyRate, refundPendingCount, recentBookings] =
     await Promise.all([
       getConfirmedBookingsInPeriod(company.id, from, to),
@@ -247,6 +255,29 @@ export default async function DashboardPage(props: PageProps<"/">) {
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-8">
+      {swapped && swapFrom && swapTo ? (
+        <p
+          role="status"
+          className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200"
+        >
+          Session de {swapFrom} fermée. Bienvenue {swapTo} — pensez à ouvrir votre propre session
+          de caisse si nécessaire.
+        </p>
+      ) : null}
+
+      {pinForgotten ? (
+        <p
+          role="status"
+          className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200"
+        >
+          Reconnecté avec succès.{" "}
+          <Link href="/profil" className="font-medium underline underline-offset-2">
+            Définissez un nouveau code PIN depuis votre profil
+          </Link>{" "}
+          pour déverrouiller rapidement votre poste la prochaine fois.
+        </p>
+      ) : null}
+
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">Dashboard</h1>
 
