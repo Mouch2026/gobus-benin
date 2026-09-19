@@ -8,6 +8,8 @@ import { PrintButton } from "./PrintButton";
 type BookingForPrint = {
   booking_reference: string;
   total_price_fcfa: number;
+  issued_by_agent_id: string | null;
+  issued_by_agency_id: string | null;
   trips: {
     departure_at: string;
     bus_number: string;
@@ -24,7 +26,7 @@ async function getOwnedBookingForPrint(
   const { data, error } = await supabase
     .from("bookings")
     .select(
-      "booking_reference, total_price_fcfa, trips(departure_at, bus_number, routes(origin_city, destination_city)), passengers(id, full_name, seat_number)"
+      "booking_reference, total_price_fcfa, issued_by_agent_id, issued_by_agency_id, trips(departure_at, bus_number, routes(origin_city, destination_city)), passengers(id, full_name, seat_number)"
     )
     .eq("id", bookingId)
     .eq("company_id", companyId)
@@ -36,6 +38,30 @@ async function getOwnedBookingForPrint(
   }
 
   return data as unknown as BookingForPrint | null;
+}
+
+// Absent pour une réservation web (issued_by_agent_id nul) — jamais
+// dérivé à la lecture, chantier 5 : reflète l'agent/agence réels au
+// moment de l'émission, pas leur situation actuelle.
+async function getIssuerNames(
+  agentId: string | null,
+  agencyId: string | null
+): Promise<{ agentName: string | null; agencyName: string | null }> {
+  if (!agentId) return { agentName: null, agencyName: null };
+
+  const supabase = await createClient();
+  const [{ data: member }, { data: agency }] = await Promise.all([
+    supabase
+      .from("company_members")
+      .select("full_name")
+      .eq("user_id", agentId)
+      .maybeSingle<{ full_name: string }>(),
+    agencyId
+      ? supabase.from("agencies").select("name").eq("id", agencyId).maybeSingle<{ name: string }>()
+      : Promise.resolve({ data: null }),
+  ]);
+
+  return { agentName: member?.full_name ?? null, agencyName: agency?.name ?? null };
 }
 
 // La remise est attachée à la PREMIÈRE part de paiement enregistrée (voir
@@ -73,6 +99,9 @@ export default async function PrintBookingPage(props: PageProps<"/reservations/[
 
   const booking = await getOwnedBookingForPrint(bookingId, result.company.id);
   const discount = booking ? await getBookingDiscount(bookingId) : null;
+  const issuer = booking
+    ? await getIssuerNames(booking.issued_by_agent_id, booking.issued_by_agency_id)
+    : { agentName: null, agencyName: null };
 
   if (!booking) {
     return (
@@ -87,7 +116,7 @@ export default async function PrintBookingPage(props: PageProps<"/reservations/[
   return (
     <div className="mx-auto max-w-xl px-6 py-8 print:max-w-none print:p-0">
       <div className="mb-6 flex justify-end print:hidden">
-        <PrintButton />
+        <PrintButton bookingId={bookingId} />
       </div>
 
       <div className="rounded-xl border border-zinc-200 bg-white p-8 dark:border-zinc-800 dark:bg-zinc-900 print:rounded-none print:border-0 print:p-0">
@@ -141,6 +170,15 @@ export default async function PrintBookingPage(props: PageProps<"/reservations/[
               </p>
               <p className="font-medium text-zinc-950 dark:text-zinc-50 print:text-black">
                 − {formatFcfa(discount.discountAmountFcfa)}
+              </p>
+            </div>
+          ) : null}
+          {issuer.agentName ? (
+            <div>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 print:text-black">Émis par</p>
+              <p className="font-medium text-zinc-950 dark:text-zinc-50 print:text-black">
+                {issuer.agentName}
+                {issuer.agencyName ? ` — ${issuer.agencyName}` : ""}
               </p>
             </div>
           ) : null}

@@ -186,6 +186,14 @@ function SidebarLinks({ role }: { role: CompanyRole }) {
           ✅ Validations
         </Link>
       ) : null}
+      {can(role, "auditLog.view") ? (
+        <Link
+          href="/audit"
+          className="rounded-md px-3 py-2 text-sm font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800"
+        >
+          🧾 Journal d&apos;audit
+        </Link>
+      ) : null}
       <Link
         href="/rapports"
         className="rounded-md px-3 py-2 text-sm font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800"

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireCompany } from "@/lib/supabase/dal";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { logAuditEvent } from "shared/src/lib/auditLog";
 
 export type EditBookingState = { error: string | null };
 
@@ -83,6 +84,17 @@ export async function updateBookingDetails(
     }
     return { error: "Impossible de mettre à jour cette réservation. Réessayez." };
   }
+
+  // Chantier 5 — payload = ce qui a changé, utile pour un futur écran
+  // d'audit sans avoir à rejouer la comparaison avant/après.
+  await logAuditEvent({
+    action: "booking_modified",
+    bookingId,
+    companyId: access.company.id,
+    acteurId: access.user.sub,
+    agencyId: access.agency?.id ?? null,
+    payload: { phone, passenger_updates: passengerUpdates },
+  });
 
   revalidatePath(`/reservations/${bookingId}`);
   revalidatePath(`/reservations/${bookingId}/modifier`);

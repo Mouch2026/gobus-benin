@@ -13,6 +13,7 @@ import {
   notifySupervisors,
 } from "@/lib/supervisorApproval";
 import { finalizeCounterBookingPayment } from "./finalizeCounterBookingPayment";
+import { logAuditEvent } from "shared/src/lib/auditLog";
 
 export type NewBookingState = { error: string | null };
 
@@ -256,6 +257,7 @@ export async function createBookingForCustomer(
       p_passenger_names: passengerNames,
       p_user_id: userId,
       p_company_id: access.company.id,
+      p_agent_id: access.user.sub,
       p_requested_seats: requestedSeats,
     }
   );
@@ -267,6 +269,17 @@ export async function createBookingForCustomer(
     }
     return { error: "Impossible de créer cette réservation. Réessayez." };
   }
+
+  // "Réservation créée" est vrai à cet instant quoi qu'il arrive ensuite
+  // au paiement (remise à valider ou non) — logué ici, avant tout
+  // branchement (chantier 5).
+  await logAuditEvent({
+    action: "booking_created",
+    bookingId,
+    companyId: access.company.id,
+    acteurId: access.user.sub,
+    agencyId: access.agency?.id ?? null,
+  });
 
   // Le siège est déjà retenu au nom de ce client (RPC ci-dessus) — tout
   // ce qui suit décide seulement QUAND (et par qui) le paiement est

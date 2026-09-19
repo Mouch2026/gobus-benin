@@ -6,6 +6,7 @@ import { requirePermission } from "@/lib/permissions";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { resolveApprovalRequest } from "@/lib/supervisorApproval";
 import { finalizeCounterBookingPayment } from "../reservations/nouvelle/finalizeCounterBookingPayment";
+import { logAuditEvent } from "shared/src/lib/auditLog";
 
 export type ReviewRequestState = { error: string | null };
 
@@ -60,6 +61,18 @@ export async function reviewApprovalRequest(
         console.error("Impossible d'annuler la réservation approuvée :", error.message);
         return { error: "Demande approuvée mais l'annulation a échoué. Contactez le support." };
       }
+
+      // Couvre "le chemin compagnie" de l'annulation quand elle passe par
+      // une validation à distance (chantier 3c) — acteur = le
+      // superviseur qui approuve, c'est bien lui qui vient de déclencher
+      // l'annulation réelle (chantier 5).
+      await logAuditEvent({
+        action: "booking_cancelled",
+        bookingId: request.booking_id,
+        companyId: access.company.id,
+        acteurId: access.user.sub,
+        agencyId: access.agency?.id ?? null,
+      });
     }
     // Refusée : rien à faire, la réservation n'a jamais été touchée.
   } else {

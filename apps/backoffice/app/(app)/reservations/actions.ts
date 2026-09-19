@@ -10,6 +10,7 @@ import {
   notifySupervisors,
   sweepExpiredApprovalRequests,
 } from "@/lib/supervisorApproval";
+import { logAuditEvent } from "shared/src/lib/auditLog";
 
 export type CancelBookingState = { error: string | null };
 
@@ -85,7 +86,7 @@ export async function cancelBooking(
         reviewedBy: verification.supervisorUserId,
       });
 
-      return finishCancellation(bookingId, access.company.id);
+      return finishCancellation(bookingId, access.company.id, access.user.sub, agencyId);
     }
 
     // À distance : rien n'est touché sur la réservation — c'est ce qui
@@ -121,10 +122,19 @@ export async function cancelBooking(
     return { error: null };
   }
 
-  return finishCancellation(bookingId, access.company.id);
+  return finishCancellation(bookingId, access.company.id, access.user.sub, access.agency?.id ?? null);
 }
 
-async function finishCancellation(bookingId: string, companyId: string): Promise<CancelBookingState> {
+// acteurId/agencyId : couvre à la fois l'annulation directe (agent, sans
+// validation requise) ET l'annulation validée sur place — un seul point
+// d'écriture pour le journal d'audit (chantier 5), quel que soit lequel
+// des deux appels ci-dessus a mené ici.
+async function finishCancellation(
+  bookingId: string,
+  companyId: string,
+  acteurId: string,
+  agencyId: string | null
+): Promise<CancelBookingState> {
   const { error } = await supabaseAdmin.rpc("cancel_booking_by_company", {
     p_booking_id: bookingId,
     p_company_id: companyId,
@@ -142,6 +152,14 @@ async function finishCancellation(bookingId: string, companyId: string): Promise
     }
     return { error: "Impossible d'annuler cette réservation. Réessayez." };
   }
+
+  await logAuditEvent({
+    action: "booking_cancelled",
+    bookingId,
+    companyId,
+    acteurId,
+    agencyId,
+  });
 
   revalidatePath("/reservations");
   revalidatePath(`/reservations/${bookingId}`);
