@@ -5,7 +5,6 @@ import { requireUser } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { calculateServiceFees } from "shared";
-import { applyVoucherAndPoints } from "shared/src/lib/applyVoucherAndPoints";
 import { redeemPromoCode } from "shared/src/lib/redeemPromoCode";
 import { sendBookingConfirmation } from "shared/src/lib/notifications/sendBookingConfirmation";
 import { sendVoucherRefundPendingNotification } from "shared/src/lib/notifications/sendVoucherRefundPendingNotification";
@@ -22,10 +21,17 @@ type BookingForPayment = {
 
 // SIMULÉ — à remplacer par une vraie intégration FedaPay (create-payment /
 // payment-webhook, voir CLAUDE.md) une fois branchée, pour l'abonnement
-// compagnie et les billets voyageurs en même temps. Même mécanisme que
-// apps/web/app/partenaires/paiement/actions.ts (insert 'pending' PUIS
-// update 'approved', pour déclencher le trigger existant qui ne réagit
-// qu'à un update de `status`).
+// compagnie et les billets voyageurs en même temps.
+//
+// Chantier atomicité (2026-09-19) : avoir, points, insertion du paiement,
+// approbation et passage à 'confirmed' vivent désormais dans une seule
+// fonction Postgres verrouillée, simulate_single_booking_payment
+// (supabase/migrations/20260919140000_add_simulate_single_booking_payment.sql)
+// — verrou posé sur la réservation AVANT tout calcul, comme
+// record_payment_part_received (qu'elle appelle en interne pour la
+// fermeture, jamais réimplémentée ici). Un second appel concurrent sur
+// la même réservation reçoit une erreur claire (errcode 23514, message
+// "déjà payée"), jamais un double paiement silencieux.
 //
 // Signature compatible useActionState (prevState, formData) — nécessaire
 // depuis le chantier des codes promo : un code invalide doit afficher un
@@ -97,78 +103,52 @@ export async function simulatePayment(
     discountAmountFcfa = promoResult.discountAmountFcfa;
   }
 
-  const discountedBaseFcfa = baseAmountFcfa - discountAmountFcfa;
   const { platformFeeFcfa, transactionFeeFcfa } = calculateServiceFees(baseAmountFcfa);
-  const totalFcfa = discountedBaseFcfa + platformFeeFcfa + transactionFeeFcfa;
 
-  // Avoir éventuellement sélectionné sur la page — jamais confiance dans
-  // un montant envoyé par le client, seul l'id est utilisé pour relire
-  // l'état réel de l'avoir au moment du paiement. Logique d'application
-  // (réclamation atomique de l'avoir + rachat de points plafonné)
-  // extraite dans applyVoucherAndPoints — réutilisée telle quelle par le
-  // back-office pour un client déjà existant, jamais dupliquée une
-  // seconde fois.
+  // Avoir/points éventuellement sélectionnés sur la page — jamais
+  // confiance dans un montant envoyé par le client, seul l'id de l'avoir
+  // est transmis, relu et réclamé à l'intérieur de la fonction verrouillée
+  // ci-dessous, jamais côté client. Tout (verrou de la réservation, avoir,
+  // points, insertion, approbation, passage confirmed) se fait dans une
+  // seule transaction — voir simulate_single_booking_payment.
   const voucherIdRaw = formData.get("voucherId");
   const usePoints = formData.get("usePoints") === "1";
 
-  const { claimedVoucherId, appliedVoucherFcfa, pointsRedeemedFcfa, leftoverVoucherFcfa } = await applyVoucherAndPoints({
-    userId: user.sub,
-    bookingId,
-    baseAmountFcfa: discountedBaseFcfa,
-    totalFcfa,
-    voucherId: voucherIdRaw ? String(voucherIdRaw) : null,
-    usePoints,
-  });
-
-  // payments reste volontairement "lecture seule pour le client" (RLS ne
-  // définit qu'une policy select) — ces deux écritures passent par
-  // service_role, comme pour l'abonnement compagnie, pas par un nouveau
-  // GRANT insert pour authenticated.
-  //
-  // Note : le paiement restant entièrement simulé (pas de FedaPay branché),
-  // "payer la différence positive" ne déclenche aujourd'hui aucune charge
-  // réelle distincte — amount_charged_fcfa (colonne générée) est calculé
-  // et stocké correctement dès maintenant pour que la bascule vers FedaPay
-  // n'ait qu'à lire cette colonne, pas à la recalculer.
-  const { data: payment, error: insertError } = await supabaseAdmin
-    .from("payments")
-    .insert({
-      booking_id: bookingId,
-      base_amount_fcfa: baseAmountFcfa,
-      platform_fee_fcfa: platformFeeFcfa,
-      transaction_fee_fcfa: transactionFeeFcfa,
-      discount_percent: discountPercent,
-      discount_amount_fcfa: discountAmountFcfa,
-      promo_code_id: promoCodeId,
-      voucher_id: claimedVoucherId,
-      voucher_amount_fcfa: appliedVoucherFcfa,
-      points_redeemed_fcfa: pointsRedeemedFcfa,
-      provider: "simulated",
-      status: "pending",
+  const { data: result, error: paymentError } = await supabaseAdmin
+    .rpc("simulate_single_booking_payment", {
+      p_booking_id: bookingId,
+      p_user_id: user.sub,
+      p_platform_fee_fcfa: platformFeeFcfa,
+      p_transaction_fee_fcfa: transactionFeeFcfa,
+      p_discount_percent: discountPercent,
+      p_discount_amount_fcfa: discountAmountFcfa,
+      p_promo_code_id: promoCodeId,
+      p_voucher_id: voucherIdRaw ? String(voucherIdRaw) : null,
+      p_use_points: usePoints,
     })
-    .select("id")
-    .single();
+    .single<{
+      payment_id: string;
+      claimed_voucher_id: string | null;
+      applied_voucher_fcfa: number;
+      points_redeemed_fcfa: number;
+      leftover_voucher_fcfa: number;
+    }>();
 
-  if (insertError || !payment) {
-    console.error("Impossible de créer le paiement :", insertError?.message);
+  if (paymentError) {
+    // 23514 = check_violation : la fonction lève ses propres erreurs
+    // métier avec un message déjà rédigé pour l'utilisateur ("déjà payée
+    // ou n'est plus disponible" — le perdant d'une course entre deux
+    // clics rapprochés tombe précisément ici), remonté tel quel plutôt
+    // que masqué par un message générique.
+    if (paymentError.code === "23514") {
+      return { error: paymentError.message };
+    }
+    console.error("Impossible de créer le paiement :", paymentError.message);
     redirect(`/reservation/${bookingId}/paiement`);
   }
 
-  // Ce update déclenche award_points_on_payment_approved (before update of
-  // status on payments) — pas l'insert ci-dessus, qui passe status en
-  // 'pending' d'abord pour la même raison que côté abonnement compagnie :
-  // le trigger compare old.status <> 'approved', qui n'existe pas à
-  // l'insert. Toujours calculé sur bookings.total_price_fcfa (prix
-  // nominal), inchangé par l'avoir éventuellement appliqué.
-  await supabaseAdmin
-    .from("payments")
-    .update({ status: "approved", paid_at: new Date().toISOString() })
-    .eq("id", payment.id);
-
-  // Complète le cycle de vie de la réservation — rien d'autre ne la ferait
-  // avancer sinon, elle resterait 'pending' indéfiniment malgré le
-  // paiement approuvé.
-  await supabaseAdmin.from("bookings").update({ status: "confirmed" }).eq("id", bookingId);
+  const claimedVoucherId = result!.claimed_voucher_id;
+  const leftoverVoucherFcfa = result!.leftover_voucher_fcfa;
 
   // Un échec d'envoi ne doit jamais bloquer une réservation déjà payée —
   // sendBookingConfirmation() avale ses propres erreurs (voir son

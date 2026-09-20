@@ -1,13 +1,6 @@
 import "server-only";
 import { supabaseAdmin } from "./notifications/supabaseAdmin";
 
-type ActiveVoucher = {
-  id: string;
-  amount_fcfa: number;
-  status: string;
-  expires_at: string;
-};
-
 export type ApplyVoucherAndPointsParams = {
   userId: string;
   bookingId: string;
@@ -34,76 +27,42 @@ export type ApplyVoucherAndPointsResult = {
 // Extrait tel quel de simulatePayment
 // (apps/web/app/reservation/[bookingId]/paiement/actions.ts) — même
 // séquence, mêmes garanties anti-course, jamais dupliqué une seconde fois
-// ailleurs (règle CLAUDE.md). Deux appelants : simulatePayment lui-même
-// (refactoré pour appeler cette fonction) et createBookingForCustomer
-// (back-office, nouveau — applique l'avoir/les points d'un client déjà
-// existant sur une réservation créée pour lui).
+// ailleurs (règle CLAUDE.md). Deux appelants : createBookingForCustomer
+// (back-office — applique l'avoir/les points d'un client déjà existant
+// sur une réservation créée pour lui) et, indirectement, la réclamation
+// d'avoir de simulate_single_booking_payment (SQL) via la fonction
+// partagée claim_voucher_for_booking ci-dessous — simulatePayment
+// lui-même n'appelle plus applyVoucherAndPoints depuis le chantier
+// d'atomicité (2026-09-19), il appelle directement la fonction SQL.
 //
-// Non couvert par cette extraction : simulate_round_trip_payment (SQL),
-// qui duplique une forme différente de cette même logique (répartition
-// entre 2 legs aller-retour) — hors-sujet ici, signalé mais pas unifié.
+// La réclamation d'avoir elle-même vit désormais dans
+// claim_voucher_for_booking (supabase/migrations/
+// 20260919140000_add_simulate_single_booking_payment.sql) — appelée ici
+// via rpc() plutôt que dupliquée en TypeScript, exactement pour éviter
+// la duplication entre couches signalée sur ce chantier (avant cette
+// extraction, simulate_round_trip_payment dupliquait déjà une forme
+// différente de cette même logique en SQL sans jamais être unifiée).
 export async function applyVoucherAndPoints(
   params: ApplyVoucherAndPointsParams
 ): Promise<ApplyVoucherAndPointsResult> {
   const { userId, bookingId, baseAmountFcfa, totalFcfa, voucherId, usePoints } = params;
 
-  let voucherIdToApply: string | null = null;
-  let voucherAmountFcfa = 0;
+  const { data: voucherResult, error: voucherError } = await supabaseAdmin
+    .rpc("claim_voucher_for_booking", {
+      p_voucher_id: voucherId,
+      p_user_id: userId,
+      p_booking_id: bookingId,
+      p_max_fcfa: totalFcfa,
+    })
+    .single<{ claimed_voucher_id: string | null; applied_fcfa: number; leftover_fcfa: number }>();
 
-  if (voucherId) {
-    const { data: voucher } = await supabaseAdmin
-      .from("vouchers")
-      .select("id, amount_fcfa, status, expires_at")
-      .eq("id", voucherId)
-      .eq("user_id", userId)
-      .maybeSingle<ActiveVoucher>();
-
-    if (voucher && voucher.status === "active" && new Date(voucher.expires_at) > new Date()) {
-      voucherIdToApply = voucher.id;
-      voucherAmountFcfa = voucher.amount_fcfa;
-    }
+  if (voucherError) {
+    console.error("Impossible de réclamer l'avoir :", voucherError.message);
   }
 
-  let appliedVoucherFcfa = 0;
-  let claimedVoucherId: string | null = null;
-  let leftoverVoucherFcfa = 0;
-
-  if (voucherIdToApply) {
-    appliedVoucherFcfa = Math.min(voucherAmountFcfa, totalFcfa);
-    const leftover = voucherAmountFcfa - appliedVoucherFcfa;
-    leftoverVoucherFcfa = leftover;
-    const now = new Date().toISOString();
-
-    // Réclame l'avoir AVANT d'écrire le paiement — la clause "status =
-    // 'active'" ferme la course avec une autre utilisation concurrente du
-    // même avoir. Si la réclamation échoue (avoir déjà consommé/expiré
-    // entre-temps), on retombe simplement sur 0 avoir, jamais une erreur
-    // bloquante.
-    const { data: claimed } = await supabaseAdmin
-      .from("vouchers")
-      .update(
-        leftover > 0
-          ? {
-              status: "refund_pending",
-              consumed_booking_id: bookingId,
-              consumed_at: now,
-              refund_pending_amount_fcfa: leftover,
-              refund_pending_at: now,
-            }
-          : { status: "used", consumed_booking_id: bookingId, consumed_at: now }
-      )
-      .eq("id", voucherIdToApply)
-      .eq("status", "active")
-      .select("id")
-      .maybeSingle();
-
-    if (claimed) {
-      claimedVoucherId = claimed.id;
-    } else {
-      appliedVoucherFcfa = 0;
-      leftoverVoucherFcfa = 0;
-    }
-  }
+  const claimedVoucherId = voucherResult?.claimed_voucher_id ?? null;
+  const appliedVoucherFcfa = voucherResult?.applied_fcfa ?? 0;
+  const leftoverVoucherFcfa = voucherResult?.leftover_fcfa ?? 0;
 
   // GoBus Points — priorité 2, seulement sur le reliquat du prix du
   // billet après l'avoir (jamais les frais de service), plafonné au

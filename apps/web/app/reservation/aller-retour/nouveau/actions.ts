@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
+import { logAuditEvent } from "shared/src/lib/auditLog";
 
 export type RoundTripBookingState = { error: string | null };
 
@@ -25,10 +26,11 @@ export async function createRoundTripBooking(
     return { error: "Ce trajet n'existe pas." };
   }
 
-  // requireUser() is called for its authentication side effect only — the
-  // RPC derives the acting user from auth.uid() internally (security
-  // invoker), never from a client-supplied id.
-  await requireUser(
+  // requireUser() est appelée pour son effet de bord d'authentification —
+  // le RPC dérive l'utilisateur agissant via auth.uid() en interne
+  // (security invoker), jamais d'un id transmis par le client. La valeur
+  // de retour n'est reprise ici que pour le journal d'audit (chantier 5).
+  const user = await requireUser(
     `/reservation/aller-retour/nouveau?outbound=${outboundTripId}&return=${returnTripId}`
   );
 
@@ -77,6 +79,24 @@ export async function createRoundTripBooking(
     }
     console.error("Impossible de créer l'aller-retour :", error?.message);
     return { error: "Impossible de créer votre réservation. Réessayez." };
+  }
+
+  // Chantier 5 — une ligne PAR jambe : outbound_booking_id et
+  // return_booking_id sont deux réservations distinctes (bookings), pas
+  // une seule. company_id relu séparément, comme pour la réservation
+  // simple.
+  const { data: legs } = await supabase
+    .from("bookings")
+    .select("id, company_id")
+    .in("id", [data.outbound_booking_id, data.return_booking_id]);
+  for (const leg of legs ?? []) {
+    await logAuditEvent({
+      action: "booking_created",
+      bookingId: leg.id,
+      companyId: leg.company_id,
+      acteurId: user.sub,
+      payload: { booking_group_id: data.booking_group_id },
+    });
   }
 
   redirect(`/reservation/aller-retour/${data.booking_group_id}/paiement`);

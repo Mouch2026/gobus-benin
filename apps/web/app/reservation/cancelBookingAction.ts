@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
+import { logAuditEvent } from "shared/src/lib/auditLog";
 
 export type CancelBookingState = {
   error: string | null;
@@ -19,8 +20,10 @@ export async function cancelBooking(
 ): Promise<CancelBookingState> {
   // Juste pour rediriger un visiteur déconnecté — la vraie vérification
   // de propriété se fait via auth.uid() à l'intérieur de cancel_booking()
-  // (security definer), jamais confiée à un paramètre côté client.
-  await requireUser();
+  // (security definer), jamais confiée à un paramètre côté client. La
+  // valeur de retour n'est reprise ici que pour le journal d'audit
+  // (chantier 5).
+  const user = await requireUser();
 
   const bookingId = String(formData.get("bookingId") ?? "");
 
@@ -48,6 +51,19 @@ export async function cancelBooking(
       .eq("origin_booking_id", bookingId)
       .maybeSingle<{ expires_at: string }>();
     voucherExpiresAt = voucher?.expires_at ?? null;
+  }
+
+  // Chantier 5 — company_id relu séparément (RLS garantit déjà que cette
+  // réservation, maintenant annulée, est bien la sienne).
+  const { data: booking } = await supabase.from("bookings").select("company_id").eq("id", bookingId).maybeSingle<{ company_id: string }>();
+  if (booking) {
+    await logAuditEvent({
+      action: "booking_cancelled",
+      bookingId,
+      companyId: booking.company_id,
+      acteurId: user.sub,
+      payload: { voucher_amount_fcfa: data!.voucher_amount_fcfa },
+    });
   }
 
   revalidatePath(`/reservation/${bookingId}/succes`);

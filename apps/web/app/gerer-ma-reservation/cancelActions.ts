@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
+import { logAuditEvent } from "shared/src/lib/auditLog";
 
 export type CancelFromLookupState = {
   error: string | null;
@@ -23,8 +24,9 @@ export async function cancelBookingFromLookup(
 ): Promise<CancelFromLookupState> {
   // /gerer-ma-reservation ne réinjecte pas référence/téléphone dans l'URL
   // de retour — décision explicite : le voyageur refait sa recherche une
-  // fois connecté.
-  await requireUser("/gerer-ma-reservation");
+  // fois connecté. La valeur de retour n'est reprise ici que pour le
+  // journal d'audit (chantier 5).
+  const user = await requireUser("/gerer-ma-reservation");
 
   const bookingId = String(formData.get("bookingId") ?? "");
   const mode = String(formData.get("mode") ?? "");
@@ -56,6 +58,19 @@ export async function cancelBookingFromLookup(
       .eq("origin_booking_id", bookingId)
       .maybeSingle<{ expires_at: string }>();
     voucherExpiresAt = voucher?.expires_at ?? null;
+  }
+
+  // Chantier 5 — placé AVANT le redirect() de la branche "modify" (qui
+  // jette, tout code après lui dans cette branche ne s'exécuterait pas).
+  const { data: booking } = await supabase.from("bookings").select("company_id").eq("id", bookingId).maybeSingle<{ company_id: string }>();
+  if (booking) {
+    await logAuditEvent({
+      action: "booking_cancelled",
+      bookingId,
+      companyId: booking.company_id,
+      acteurId: user.sub,
+      payload: { voucher_amount_fcfa: data!.voucher_amount_fcfa, mode },
+    });
   }
 
   if (mode === "modify") {

@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
+import { logAuditEvent } from "shared/src/lib/auditLog";
 
 export type BookingState = { error: string | null };
 
@@ -18,10 +19,11 @@ export async function createBooking(
     return { error: "Ce trajet n'existe pas." };
   }
 
-  // requireUser() is called for its authentication side effect only — the
-  // RPC derives the acting user from auth.uid() internally, never from a
-  // client-supplied id.
-  await requireUser(`/recherche/${tripId}`);
+  // requireUser() est appelée pour son effet de bord d'authentification —
+  // le RPC dérive l'utilisateur agissant via auth.uid() en interne, jamais
+  // d'un id transmis par le client. La valeur de retour n'est reprise ici
+  // que pour le journal d'audit (chantier 5), pas pour l'appel RPC.
+  const user = await requireUser(`/recherche/${tripId}`);
 
   const seatCount = Number(formData.get("seatCount"));
   const passengerNames = formData.getAll("passengerName").map((name) => String(name).trim());
@@ -69,6 +71,20 @@ export async function createBooking(
     }
     console.error("Impossible de créer la réservation :", error?.message);
     return { error: "Impossible de créer votre réservation. Réessayez." };
+  }
+
+  // Chantier 5 — company_id n'est pas renvoyé par create_booking, relu
+  // séparément (RLS garantit déjà que cette réservation est bien la
+  // sienne). Jamais bloquant : le journal est secondaire par rapport à
+  // la réservation déjà créée.
+  const { data: booking } = await supabase.from("bookings").select("company_id").eq("id", bookingId).maybeSingle<{ company_id: string }>();
+  if (booking) {
+    await logAuditEvent({
+      action: "booking_created",
+      bookingId,
+      companyId: booking.company_id,
+      acteurId: user.sub,
+    });
   }
 
   redirect(`/reservation/${bookingId}/paiement`);
