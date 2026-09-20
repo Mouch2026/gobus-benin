@@ -1,7 +1,11 @@
 import { requireCompany } from "@/lib/supabase/dal";
 import { getBeninTimeString } from "@/lib/benin-time";
 import { getActiveStations, getSelectedStation } from "@/lib/station-selection";
-import { getCompanyNotifications, getUnreadNotificationCount } from "@/lib/notifications";
+import {
+  getCompanyNotifications,
+  getUnreadNotificationCount,
+  getUnreadNotificationCountsByType,
+} from "@/lib/notifications";
 import { AccessBlockedMessage } from "./_components";
 import { LockScreen } from "./_lock-screen";
 import { SetupPinForm } from "./_setup-pin";
@@ -36,11 +40,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // Mémoïsés par requête (React cache()) : les pages filtrées rappellent
   // getSelectedStation() sans second aller-retour, même chose pour la
   // page d'historique et getCompanyNotifications().
-  const [stations, selectedStation, notifications, unreadCount] = await Promise.all([
+  const [stations, selectedStation, notifications, unreadCount, initialBadgeCounts] = await Promise.all([
     getActiveStations(),
     getSelectedStation(),
     getCompanyNotifications(),
     getUnreadNotificationCount(),
+    getUnreadNotificationCountsByType(),
   ]);
 
   return (
@@ -55,6 +60,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       notifications={notifications}
       unreadCount={unreadCount}
       lockTimeoutMinutes={result.lockTimeoutMinutes}
+      initialBadgeCounts={initialBadgeCounts}
     >
       {children}
     </AppShell>

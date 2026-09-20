@@ -73,3 +73,29 @@ export const getUnreadNotificationCount = cache(async (): Promise<number> => {
   }
   return (data as number | null) ?? 0;
 });
+
+// Répartition du même compte par type — count_unread_company_notifications_by_type
+// (supabase/migrations/20260920090000_add_notifications_by_type.sql)
+// reprend la clause where de count_unread_company_notifications à
+// l'identique, seul le regroupement change. Sert les badges par
+// rubrique de la barre latérale (_app-shell.tsx) — jamais une nouvelle
+// définition de ce qui compte comme "non lu".
+export const getUnreadNotificationCountsByType = cache(
+  async (): Promise<Record<string, number>> => {
+    const user = await requireUser();
+    const { data, error } = await supabaseAdmin.rpc("count_unread_company_notifications_by_type", {
+      p_user_id: user.sub,
+    });
+
+    if (error) {
+      console.error("Impossible de répartir les notifications non lues :", error.message);
+      return {};
+    }
+
+    const counts: Record<string, number> = {};
+    for (const row of (data ?? []) as { type: string; unread_count: number }[]) {
+      counts[row.type] = row.unread_count;
+    }
+    return counts;
+  }
+);

@@ -4,27 +4,7 @@ import { formatRelativeTime } from "@/lib/relative-time";
 import type { CompanyNotification } from "@/lib/notifications";
 import { markAllNotificationsRead, openNotification } from "./_notification-actions";
 import { NotificationBadge } from "./_notification-badge";
-
-// Aucune librairie d'icônes n'est installée dans ce dépôt (le seul
-// "icône" existant dans la topbar est le caractère ▾) — SVG à la main,
-// minimal, plutôt que d'ajouter une dépendance pour une seule icône.
-function BellIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="h-5 w-5"
-      aria-hidden
-    >
-      <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-      <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-    </svg>
-  );
-}
+import { BellIcon } from "@/lib/icons";
 
 function NotificationRow({ notification }: { notification: CompanyNotification }) {
   const content = (
@@ -91,7 +71,7 @@ export function NotificationBell({
     // un Server Component, seul le badge de compte est un îlot client.
     <details className="group relative">
       <summary className="relative flex cursor-pointer list-none items-center text-zinc-700 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-zinc-50">
-        <BellIcon />
+        <BellIcon className="h-5 w-5" aria-hidden />
         <NotificationBadge initialCount={unreadCount} />
       </summary>
       <div className="absolute right-0 top-full z-10 mt-2 flex w-80 max-w-[90vw] flex-col rounded-lg border border-zinc-200 bg-white shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
