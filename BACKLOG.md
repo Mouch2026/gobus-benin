@@ -82,6 +82,14 @@ Liste vivante, à mettre à jour au fil du développement (pas figée à un inst
   scan, via l'API de géolocalisation du navigateur). Notion de chauffeur
   également absente du schéma — aucune colonne/filtre chauffeur possible
   tant qu'elle n'existe pas.
+- Compagnies de test bloquées en base par l'immuabilité du journal
+  d'audit (audit_logs empêche la suppression en cascade dès qu'une
+  compagnie de test a généré au moins une entrée d'audit) — s'accumulent
+  depuis le chantier Chauffeurs. Toutes nommées avec un préfixe
+  reconnaissable (QA-*), isolées par company_id, sans impact
+  fonctionnel. Prévoir soit une purge manuelle ponctuelle via une
+  opération privilégiée hors RLS, soit un mécanisme de nettoyage dédié
+  aux données de test si ça devient gênant.
 
 ### Bugs latents
 - Bug latent découvert (chantier codes promo) : notification_log.booking_id

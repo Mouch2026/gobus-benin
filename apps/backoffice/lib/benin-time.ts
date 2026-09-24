@@ -15,10 +15,18 @@ import "server-only";
 // pas encore en UTC (ex. 23:30 UTC = 00:30 le lendemain au Bénin) — lire
 // la date UTC de l'instant décalé donne la bonne date calendaire
 // béninoise ("AAAA-MM-JJ").
+// Généralisation à un instant quelconque (pas seulement "maintenant") —
+// chantier B (disponibilités) : convertir departure_at/arrival_at d'un
+// trajet en date calendaire béninoise pour la comparer à une période
+// d'indisponibilité déclarée (driver_unavailability.start_date/end_date).
+// Même décalage +1h explicite, jamais dupliqué.
+export function getBeninDateStringFor(date: Date): string {
+  const beninDate = new Date(date.getTime() + 60 * 60 * 1000);
+  return beninDate.toISOString().slice(0, 10);
+}
+
 export function getBeninDateString(): string {
-  const now = new Date();
-  const beninNow = new Date(now.getTime() + 60 * 60 * 1000);
-  return beninNow.toISOString().slice(0, 10);
+  return getBeninDateStringFor(new Date());
 }
 
 export function getBeninMidnightToday(): Date {

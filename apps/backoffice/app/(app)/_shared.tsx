@@ -144,6 +144,44 @@ export const DRIVER_DISPLAY_STATUS_STYLES: Record<DriverDisplayStatus, string> =
   archive: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
 };
 
+// Chantier B (disponibilités) : statut d'UN JOUR sur le calendrier —
+// distinct de DriverDisplayStatus ci-dessus (qui décrit l'instant présent
+// pour la liste/fiche, jamais "indisponible"). Un jour peut cumuler
+// trajet ET indisponibilité déclarée : "conflit" n'est PAS une couleur
+// fondue — le calendrier affiche alors deux bandes (occupé + indisponible)
+// côte à côte plutôt qu'une troisième couleur ambiguë, ce type ne sert
+// qu'à piloter ce choix de rendu.
+export type DriverDayStatus = "disponible" | "occupe" | "indisponible" | "conflit";
+
+export function deriveDriverDayStatus(hasTrip: boolean, hasUnavailability: boolean): DriverDayStatus {
+  if (hasTrip && hasUnavailability) return "conflit";
+  if (hasTrip) return "occupe";
+  if (hasUnavailability) return "indisponible";
+  return "disponible";
+}
+
+export const DRIVER_DAY_STATUS_LABELS: Record<DriverDayStatus, string> = {
+  disponible: "Disponible",
+  occupe: "Occupé (trajet)",
+  indisponible: "Indisponibilité déclarée",
+  conflit: "Trajet + indisponibilité",
+};
+
+// "conflit" n'a pas de classe de fond unique : rendu en deux bandes
+// (voir DayCell dans disponibilites/), ces couleurs pilotent les bandes
+// individuelles et la légende, jamais un fond mélangé.
+export const DRIVER_DAY_STATUS_STYLES: Record<Exclude<DriverDayStatus, "conflit">, string> = {
+  disponible: "bg-emerald-100 dark:bg-emerald-900",
+  occupe: "bg-red-200 dark:bg-red-900",
+  indisponible: "bg-amber-200 dark:bg-amber-900",
+};
+
+export const UNAVAILABILITY_REASON_LABELS: Record<string, string> = {
+  conge: "Congé",
+  maladie: "Maladie",
+  indisponible: "Indisponible",
+};
+
 export function formatDepartureDateTime(departureAt: string): string {
   return new Intl.DateTimeFormat("fr-BJ", {
     dateStyle: "medium",

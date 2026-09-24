@@ -49,6 +49,21 @@ export function computeArrivalAt(
   return { ok: true, arrivalAt };
 }
 
+// Chantier B (disponibilités) : réplique côté TypeScript
+// estimate_trip_duration_hours() (supabase/migrations/
+// 20260924090000_add_driver_unavailability.sql) — nécessaire ici pour
+// l'expansion jour-par-jour d'un mois (get_driver_month_coverage renvoie
+// des bornes brutes, l'ensemble des jours touchés se calcule en TS, voir
+// le plan du chantier B). Compromis assumé : la formule existe en double
+// (SQL pour le statut temps réel sur toute une liste de chauffeurs, TS
+// ici) — mêmes deux constantes, même justification (vitesse moyenne d'un
+// bus interurbain au Bénin ≈ 60 km/h, repli 4h si distance inconnue),
+// jamais une troisième valeur inventée séparément. Si l'une change,
+// l'autre doit changer avec elle.
+export function estimateTripDurationHours(distanceKm: number | null): number {
+  return distanceKm !== null ? distanceKm / 60 : 4;
+}
+
 // Pour préremplir les deux champs en édition à partir d'un arrival_at déjà
 // enregistré.
 export function splitDuration(

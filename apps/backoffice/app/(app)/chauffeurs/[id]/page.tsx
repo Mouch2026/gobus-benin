@@ -2,10 +2,14 @@ import Link from "next/link";
 import { requireCompany } from "@/lib/supabase/dal";
 import { can } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase-admin";
+import { estimateTripDurationHours } from "@/lib/duration";
 import { AccessBlockedMessage } from "../../_components";
 import {
   DRIVER_DISPLAY_STATUS_LABELS,
   DRIVER_DISPLAY_STATUS_STYLES,
+  STATUS_LABELS,
+  STATUS_STYLES,
   deriveDriverStatus,
   formatDepartureDateTime,
 } from "../../_shared";
@@ -23,14 +27,19 @@ type CurrentTrip = {
   id: string;
   bus_number: string;
   departure_at: string;
-  routes: { origin_city: string; destination_city: string };
+  arrival_at: string | null;
+  routes: { origin_city: string; destination_city: string; distance_km: number | null };
 };
 
 type PastAssignment = {
-  id: string;
-  bus_number: string;
+  trip_id: string;
   departure_at: string;
-  routes: { origin_city: string; destination_city: string };
+  origin_city: string;
+  destination_city: string;
+  bus_number: string;
+  status: string;
+  duration_hours: number;
+  duration_is_estimated: boolean;
 };
 
 async function getOwnedDriver(
@@ -53,9 +62,13 @@ async function getOwnedDriver(
 }
 
 // Trajet dont l'intervalle [departure_at, coalesce(arrival_at,
-// departure_at)] couvre l'instant présent — même règle exacte que
-// get_company_drivers_overview, ici pour UN seul chauffeur plutôt que
-// toute la liste.
+// departure_at + estimateTripDurationHours(distance_km)h)] couvre
+// l'instant présent — même règle exacte que get_company_drivers_overview
+// (chantier A, corrigée par 20260923090000), ici pour UN seul chauffeur
+// plutôt que toute la liste. Correctif appliqué ici aussi : cette requête
+// locale traitait auparavant "pas d'arrival_at" comme "en mission pour
+// toujours" (jamais de fenêtre), une divergence avec la RPC de liste déjà
+// corrigée — désormais la même estimation s'applique aux deux.
 async function getCurrentTrip(
   supabase: Awaited<ReturnType<typeof createClient>>,
   driverId: string,
@@ -64,7 +77,7 @@ async function getCurrentTrip(
   const nowIso = new Date().toISOString();
   const { data, error } = await supabase
     .from("trips")
-    .select("id, bus_number, departure_at, arrival_at, routes!inner(origin_city, destination_city)")
+    .select("id, bus_number, departure_at, arrival_at, routes!inner(origin_city, destination_city, distance_km)")
     .eq("driver_id", driverId)
     .eq("company_id", companyId)
     .lte("departure_at", nowIso)
@@ -78,31 +91,29 @@ async function getCurrentTrip(
   }
   if (!data) return null;
 
-  const coversNow = data.arrival_at ? new Date(data.arrival_at).getTime() >= Date.now() : true;
-  return coversNow ? (data as unknown as CurrentTrip) : null;
+  const trip = data as unknown as CurrentTrip;
+  const endMs = trip.arrival_at
+    ? new Date(trip.arrival_at).getTime()
+    : new Date(trip.departure_at).getTime() + estimateTripDurationHours(trip.routes.distance_km) * 3600_000;
+  return endMs >= Date.now() ? trip : null;
 }
 
-// Historique simple des affectations passées — pas de statistiques km/
-// ponctualité (hors de ce chantier), juste la liste triée.
-async function getDriverTripHistory(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  driverId: string,
-  companyId: string
-): Promise<PastAssignment[]> {
-  const { data, error } = await supabase
-    .from("trips")
-    .select("id, bus_number, departure_at, routes!inner(origin_city, destination_city)")
-    .eq("driver_id", driverId)
-    .eq("company_id", companyId)
-    .lt("departure_at", new Date().toISOString())
-    .order("departure_at", { ascending: false })
-    .limit(50);
+// Historique enrichi des affectations passées (chantier B) : date,
+// itinéraire, bus, statut, durée (réelle si arrival_at connue, sinon
+// estimée — voir get_driver_trip_history). AUCUNE métrique de
+// ponctualité : aucune heure réelle de départ n'est tracée dans ce
+// schéma, ce chiffre serait inventé.
+async function getDriverTripHistory(driverId: string, companyId: string): Promise<PastAssignment[]> {
+  const { data, error } = await supabaseAdmin.rpc("get_driver_trip_history", {
+    p_driver_id: driverId,
+    p_company_id: companyId,
+  });
 
   if (error) {
     console.error("Impossible de charger l'historique des affectations :", error.message);
     return [];
   }
-  return (data ?? []) as unknown as PastAssignment[];
+  return (data ?? []) as PastAssignment[];
 }
 
 export default async function DriverDetailPage(props: PageProps<"/chauffeurs/[id]">) {
@@ -133,7 +144,7 @@ export default async function DriverDetailPage(props: PageProps<"/chauffeurs/[id
 
   const [currentTrip, history] = await Promise.all([
     getCurrentTrip(supabase, id, result.company.id),
-    getDriverTripHistory(supabase, id, result.company.id),
+    getDriverTripHistory(id, result.company.id),
   ]);
   const displayStatus = deriveDriverStatus(driver.is_active, currentTrip !== null);
   const canManage = can(result.role, "drivers.manage");
@@ -148,6 +159,13 @@ export default async function DriverDetailPage(props: PageProps<"/chauffeurs/[id
           {DRIVER_DISPLAY_STATUS_LABELS[displayStatus]}
         </span>
       </div>
+
+      <Link
+        href={`/chauffeurs/${id}/disponibilites`}
+        className="self-start rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+      >
+        Voir le calendrier de disponibilités →
+      </Link>
 
       {currentTrip ? (
         <div className="rounded-xl border border-zinc-200 bg-white p-4 text-sm text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
@@ -170,19 +188,35 @@ export default async function DriverDetailPage(props: PageProps<"/chauffeurs/[id
           </p>
         ) : (
           <ul className="flex flex-col gap-2">
-            {history.map((trip) => (
-              <li
-                key={trip.id}
-                className="flex items-center justify-between gap-4 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-800 dark:bg-zinc-900"
-              >
-                <span className="text-zinc-950 dark:text-zinc-50">
-                  {trip.routes.origin_city} → {trip.routes.destination_city}
-                </span>
-                <span className="text-zinc-500 dark:text-zinc-400">
-                  {formatDepartureDateTime(trip.departure_at)} · Bus {trip.bus_number}
-                </span>
-              </li>
-            ))}
+            {history.map((trip) => {
+              const hours = Math.floor(trip.duration_hours);
+              const minutes = Math.round((trip.duration_hours - hours) * 60);
+              const durationLabel = `${trip.duration_is_estimated ? "≈ " : ""}${hours}h${minutes > 0 ? String(minutes).padStart(2, "0") : ""}${
+                trip.duration_is_estimated ? " (estimée)" : ""
+              }`;
+              return (
+                <li
+                  key={trip.trip_id}
+                  className="flex flex-col gap-1 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-800 dark:bg-zinc-900"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="font-medium text-zinc-950 dark:text-zinc-50">
+                      {trip.origin_city} → {trip.destination_city}
+                    </span>
+                    <span
+                      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
+                        STATUS_STYLES[trip.status] ?? "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                      }`}
+                    >
+                      {STATUS_LABELS[trip.status] ?? trip.status}
+                    </span>
+                  </div>
+                  <span className="text-zinc-500 dark:text-zinc-400">
+                    {formatDepartureDateTime(trip.departure_at)} · Bus {trip.bus_number} · Durée {durationLabel}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>

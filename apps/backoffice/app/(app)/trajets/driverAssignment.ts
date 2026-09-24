@@ -1,4 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getBeninDateStringFor } from "@/lib/benin-time";
+import { UNAVAILABILITY_REASON_LABELS } from "../_shared";
 
 export type DriverAssignmentResult =
   | { ok: true; driverId: string | null }
@@ -72,6 +74,33 @@ export async function resolveAndValidateDriver(
     if (overlaps) {
       return { ok: false, error: "Ce chauffeur est déjà affecté à un autre trajet sur ce créneau horaire." };
     }
+  }
+
+  // Chantier B (disponibilités) : comparaison au niveau JOUR (Bénin), pas
+  // à l'heure près — la date de départ du trajet jusqu'à sa date
+  // d'arrivée si connue, sinon la date de départ seule. Volontairement
+  // PAS d'estimation par distance ici (contrairement au statut affiché,
+  // deriveDriverStatus/get_company_drivers_overview) : une approximation
+  // n'a pas sa place dans un contrôle qui BLOQUE une affectation, sauf
+  // dans un affichage informatif.
+  const tripStartDate = getBeninDateStringFor(new Date(departureAt));
+  const tripEndDate = arrivalAt ? getBeninDateStringFor(new Date(arrivalAt)) : tripStartDate;
+
+  const { data: unavailabilities } = await supabase
+    .from("driver_unavailability")
+    .select("start_date, end_date, reason")
+    .eq("driver_id", driverId)
+    .eq("company_id", companyId)
+    .lte("start_date", tripEndDate)
+    .gte("end_date", tripStartDate);
+
+  if (unavailabilities && unavailabilities.length > 0) {
+    const u = unavailabilities[0] as { start_date: string; end_date: string; reason: string };
+    const reasonLabel = UNAVAILABILITY_REASON_LABELS[u.reason] ?? u.reason;
+    return {
+      ok: false,
+      error: `Ce chauffeur est déclaré indisponible (${reasonLabel}) du ${u.start_date} au ${u.end_date}.`,
+    };
   }
 
   return { ok: true, driverId };

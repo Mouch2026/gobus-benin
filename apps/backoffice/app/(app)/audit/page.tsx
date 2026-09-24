@@ -32,6 +32,9 @@ const ACTION_LABELS: Record<string, string> = {
   driver_modified: "Chauffeur modifié",
   driver_deactivated: "Chauffeur désactivé",
   driver_assigned_to_trip: "Chauffeur affecté à un trajet",
+  driver_unavailability_declared: "Indisponibilité déclarée",
+  driver_unavailability_modified: "Indisponibilité modifiée",
+  driver_unavailability_deleted: "Indisponibilité supprimée",
 };
 
 // Owner : toute la compagnie. Agency_manager : uniquement son agence —

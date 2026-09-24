@@ -34,7 +34,13 @@ export type AuditAction =
   | "driver_created"
   | "driver_modified"
   | "driver_deactivated"
-  | "driver_assigned_to_trip";
+  | "driver_assigned_to_trip"
+  // Chantier B (disponibilités) : déclaration/modification/suppression
+  // d'une période d'indisponibilité (congé/maladie/indisponible),
+  // bookingId: null comme les autres événements liés aux chauffeurs.
+  | "driver_unavailability_declared"
+  | "driver_unavailability_modified"
+  | "driver_unavailability_deleted";
 
 // Le journal est secondaire par rapport à l'action réelle qu'il
 // enregistre — ne doit jamais faire échouer l'appelant.
