@@ -87,6 +87,7 @@ const NAV_SECTIONS: NavSection[] = [
         label: "Chauffeurs",
         Icon: Icons.SteeringWheelIcon,
         items: [
+          { kind: "link", label: "Effectif", href: "/chauffeurs", Icon: Icons.SteeringWheelIcon },
           { kind: "soon", label: "Disponibilités", Icon: Icons.CalendarCheckIcon },
           { kind: "soon", label: "Évaluations", Icon: Icons.StarIcon },
         ],

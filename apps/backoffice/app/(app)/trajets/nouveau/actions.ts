@@ -6,6 +6,8 @@ import { requirePermission } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { computeArrivalAt } from "@/lib/duration";
+import { resolveAndValidateDriver } from "../driverAssignment";
+import { logAuditEvent } from "shared/src/lib/auditLog";
 
 export type NewTripState = { error: string | null };
 
@@ -127,6 +129,7 @@ export async function createTrip(
   const distanceKmRaw = String(formData.get("distanceKm") ?? "").trim();
   const lineNumberRaw = String(formData.get("lineNumber") ?? "").trim();
   const busLayoutId = String(formData.get("busLayoutId") ?? "").trim();
+  const driverIdRaw = String(formData.get("driverId") ?? "").trim();
   const busNumber = String(formData.get("busNumber") ?? "").trim();
   const seatClass = String(formData.get("seatClass") ?? "");
   const departureDate = String(formData.get("departureDate") ?? "");
@@ -193,6 +196,18 @@ export async function createTrip(
 
   const supabase = await createClient();
 
+  const driverAssignment = await resolveAndValidateDriver(
+    supabase,
+    access.company.id,
+    driverIdRaw,
+    departureAt,
+    arrival.arrivalAt,
+    null
+  );
+  if (!driverAssignment.ok) {
+    return { error: driverAssignment.error };
+  }
+
   let routeId: string;
   try {
     routeId = await getOrCreateRouteId(
@@ -217,6 +232,7 @@ export async function createTrip(
       company_id: access.company.id,
       route_id: routeId,
       bus_layout_id: busLayoutId,
+      driver_id: driverAssignment.driverId,
       bus_number: busNumber,
       seat_class: seatClass,
       departure_at: departureAt,
@@ -234,6 +250,17 @@ export async function createTrip(
   if (insertError || !trip) {
     console.error("Impossible de créer le trajet :", insertError?.message);
     return { error: "Impossible de créer ce trajet. Réessayez." };
+  }
+
+  if (driverAssignment.driverId) {
+    await logAuditEvent({
+      action: "driver_assigned_to_trip",
+      bookingId: null,
+      companyId: access.company.id,
+      acteurId: access.user.sub,
+      agencyId: access.agency?.id ?? null,
+      payload: { driverId: driverAssignment.driverId, tripId: trip.id },
+    });
   }
 
   redirect(`/trajets/${trip.id}`);

@@ -6,6 +6,8 @@ import { requirePermission } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { computeArrivalAt } from "@/lib/duration";
 import { sendTripCancellationNotification } from "shared/src/lib/notifications/sendTripCancellationNotification";
+import { resolveAndValidateDriver } from "../driverAssignment";
+import { logAuditEvent } from "shared/src/lib/auditLog";
 
 export type EditTripState = { error: string | null; warning?: string | null };
 
@@ -19,6 +21,7 @@ type TripForEdit = {
   status: string;
   route_id: string;
   price_fcfa: number;
+  driver_id: string | null;
 };
 
 async function getOwnedTrip(
@@ -29,7 +32,7 @@ async function getOwnedTrip(
   const { data, error } = await supabase
     .from("trips")
     .select(
-      "id, company_id, departure_at, arrival_at, total_seats, available_seats, status, route_id, price_fcfa"
+      "id, company_id, departure_at, arrival_at, total_seats, available_seats, status, route_id, price_fcfa, driver_id"
     )
     .eq("id", tripId)
     .eq("company_id", companyId)
@@ -58,6 +61,7 @@ export async function updateTripDetails(
   const priceRaw = String(formData.get("priceFcfa") ?? "");
   const totalSeatsRaw = String(formData.get("totalSeats") ?? "");
   const busNumber = String(formData.get("busNumber") ?? "").trim();
+  const driverIdRaw = String(formData.get("driverId") ?? "").trim();
   const durationHoursRaw = String(formData.get("durationHours") ?? "");
   const durationMinutesRaw = String(formData.get("durationMinutes") ?? "");
 
@@ -129,6 +133,18 @@ export async function updateTripDetails(
   }
   const newAvailableSeats = newTotalSeats - booked;
 
+  const driverAssignment = await resolveAndValidateDriver(
+    supabase,
+    access.company.id,
+    driverIdRaw,
+    trip.departure_at,
+    arrival.arrivalAt,
+    tripId
+  );
+  if (!driverAssignment.ok) {
+    return { error: driverAssignment.error };
+  }
+
   const { error: updateError } = await supabase
     .from("trips")
     .update({
@@ -137,6 +153,7 @@ export async function updateTripDetails(
       available_seats: newAvailableSeats,
       bus_number: busNumber,
       arrival_at: arrival.arrivalAt,
+      driver_id: driverAssignment.driverId,
     })
     .eq("id", tripId);
 
@@ -149,6 +166,19 @@ export async function updateTripDetails(
     }
     console.error("Impossible de mettre à jour le trajet :", updateError.message);
     return { error: "Impossible de mettre à jour ce trajet. Réessayez." };
+  }
+
+  // Auditée uniquement si driver_id change réellement — pas à chaque
+  // sauvegarde du formulaire (voir packages/shared/src/lib/auditLog.ts).
+  if (driverAssignment.driverId !== trip.driver_id) {
+    await logAuditEvent({
+      action: "driver_assigned_to_trip",
+      bookingId: null,
+      companyId: access.company.id,
+      acteurId: access.user.sub,
+      agencyId: access.agency?.id ?? null,
+      payload: { driverId: driverAssignment.driverId, tripId },
+    });
   }
 
   revalidatePath(`/trajets/${tripId}`);

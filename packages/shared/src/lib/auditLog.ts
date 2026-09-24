@@ -26,7 +26,15 @@ export type AuditAction =
   // mauvais trajet...) ne sont pas audités ici — le rejet "déjà validé"
   // a sa propre trace via company_notifications (alerte de fraude), les
   // autres rejets n'ont jamais modifié d'état à journaliser.
-  | "boarding_validated";
+  | "boarding_validated"
+  // Chantier A (chauffeurs) : création/édition/désactivation d'un
+  // chauffeur (bookingId: null, comme session_swap) et affectation d'un
+  // chauffeur à un trajet (déclenché uniquement quand driver_id change
+  // réellement, pas à chaque sauvegarde du formulaire trajet).
+  | "driver_created"
+  | "driver_modified"
+  | "driver_deactivated"
+  | "driver_assigned_to_trip";
 
 // Le journal est secondaire par rapport à l'action réelle qu'il
 // enregistre — ne doit jamais faire échouer l'appelant.

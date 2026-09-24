@@ -28,6 +28,10 @@ const ACTION_LABELS: Record<string, string> = {
   ticket_print_requested: "Billet imprimé",
   discount_requested: "Remise demandée",
   cancellation_requested: "Annulation demandée",
+  driver_created: "Chauffeur créé",
+  driver_modified: "Chauffeur modifié",
+  driver_deactivated: "Chauffeur désactivé",
+  driver_assigned_to_trip: "Chauffeur affecté à un trajet",
 };
 
 // Owner : toute la compagnie. Agency_manager : uniquement son agence —

@@ -26,8 +26,11 @@ type TripDetail = {
   bus_layout_id: string;
   bus_number: string;
   route_id: string;
+  driver_id: string | null;
   routes: { origin_city: string; destination_city: string; distance_km: number | null; line_number: string | null };
 };
+
+type DriverOption = { id: string; full_name: string };
 
 type TripBooking = {
   id: string;
@@ -43,7 +46,7 @@ async function getOwnedTrip(tripId: string, companyId: string): Promise<TripDeta
   const { data, error } = await supabase
     .from("trips")
     .select(
-      "id, departure_at, arrival_at, seat_class, price_fcfa, total_seats, available_seats, status, bus_layout_id, bus_number, route_id, routes!inner(origin_city, destination_city, distance_km, line_number)"
+      "id, departure_at, arrival_at, seat_class, price_fcfa, total_seats, available_seats, status, bus_layout_id, bus_number, route_id, driver_id, routes!inner(origin_city, destination_city, distance_km, line_number)"
     )
     .eq("id", tripId)
     .eq("company_id", companyId)
@@ -55,6 +58,30 @@ async function getOwnedTrip(tripId: string, companyId: string): Promise<TripDeta
   }
 
   return data as unknown as TripDetail | null;
+}
+
+// Chauffeurs actifs + le chauffeur actuellement assigné même s'il a été
+// désactivé depuis (même idiome que getActiveStations dans
+// agences/[id]/page.tsx) : le <select> doit toujours avoir une option
+// valide pour la valeur déjà en base.
+async function getSelectableDrivers(
+  companyId: string,
+  currentDriverId: string | null
+): Promise<DriverOption[]> {
+  const supabase = await createClient();
+  const filter = currentDriverId ? `is_active.eq.true,id.eq.${currentDriverId}` : "is_active.eq.true";
+  const { data, error } = await supabase
+    .from("drivers")
+    .select("id, full_name")
+    .eq("company_id", companyId)
+    .or(filter)
+    .order("full_name", { ascending: true });
+
+  if (error) {
+    console.error("Impossible de charger les chauffeurs :", error.message);
+    return [];
+  }
+  return (data ?? []) as DriverOption[];
 }
 
 // company_id is denormalized onto bookings specifically so this filter
@@ -103,6 +130,8 @@ export default async function TripDetailPage(props: PageProps<"/trajets/[id]">) 
     );
   }
 
+  const drivers = await getSelectableDrivers(result.company.id, trip.driver_id);
+
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-6 px-6 py-8">
       <h1 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">
@@ -130,7 +159,7 @@ export default async function TripDetailPage(props: PageProps<"/trajets/[id]">) 
       </div>
 
       <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-        <EditTripForm trip={trip} canManage={can(result.role, "trips.manage")} />
+        <EditTripForm trip={trip} drivers={drivers} canManage={can(result.role, "trips.manage")} />
       </div>
 
       <section>

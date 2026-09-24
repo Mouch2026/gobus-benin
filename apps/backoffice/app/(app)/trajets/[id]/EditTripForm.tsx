@@ -17,6 +17,7 @@ type Trip = {
   status: string;
   bus_layout_id: string;
   bus_number: string;
+  driver_id: string | null;
   routes: {
     origin_city: string;
     destination_city: string;
@@ -25,7 +26,17 @@ type Trip = {
   };
 };
 
-export function EditTripForm({ trip, canManage }: { trip: Trip; canManage: boolean }) {
+type DriverOption = { id: string; full_name: string };
+
+export function EditTripForm({
+  trip,
+  drivers,
+  canManage,
+}: {
+  trip: Trip;
+  drivers: DriverOption[];
+  canManage: boolean;
+}) {
   const [detailsState, detailsAction, detailsPending] = useActionState(
     updateTripDetails,
     initialState
@@ -80,6 +91,26 @@ export function EditTripForm({ trip, canManage }: { trip: Trip; canManage: boole
           <span className="text-xs text-zinc-500 dark:text-zinc-400">
             Modifiable tant que le trajet n&apos;est pas parti (panne, réaffectation de flotte).
           </span>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="driverId" className={LABEL_CLASSES}>
+            Chauffeur (optionnel)
+          </label>
+          <select
+            id="driverId"
+            name="driverId"
+            disabled={!canManage}
+            defaultValue={trip.driver_id ?? ""}
+            className={FIELD_CLASSES}
+          >
+            <option value="">Aucun chauffeur assigné</option>
+            {drivers.map((driver) => (
+              <option key={driver.id} value={driver.id}>
+                {driver.full_name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

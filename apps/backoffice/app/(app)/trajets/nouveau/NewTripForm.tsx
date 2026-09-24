@@ -12,12 +12,16 @@ type BusLayoutOption = {
   seat_labels: string[];
 };
 
+type DriverOption = { id: string; full_name: string };
+
 export function NewTripForm({
   cities,
   busLayouts,
+  drivers,
 }: {
   cities: string[];
   busLayouts: BusLayoutOption[];
+  drivers: DriverOption[];
 }) {
   const [state, formAction, pending] = useActionState(createTrip, initialState);
   const [busLayoutId, setBusLayoutId] = useState("");
@@ -112,6 +116,20 @@ export function NewTripForm({
           placeholder="12 ou AB-1234-BJ"
           className={FIELD_CLASSES}
         />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="driverId" className={LABEL_CLASSES}>
+          Chauffeur (optionnel)
+        </label>
+        <select id="driverId" name="driverId" defaultValue="" className={FIELD_CLASSES}>
+          <option value="">Aucun chauffeur assigné</option>
+          {drivers.map((driver) => (
+            <option key={driver.id} value={driver.id}>
+              {driver.full_name}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="flex flex-col gap-1.5">

@@ -19,7 +19,8 @@ export type CompanyAction =
   | "auditLog.view" // consulter le journal d'audit et la vue consolidée
   | "lockPolicy.manage" // régler le seuil d'inactivité avant verrouillage d'écran
   | "subscription.manage" // aucune action de mutation n'existe encore — prêt pour plus tard
-  | "boarding.validate"; // valider un billet à l'embarquement — tâche opérationnelle quotidienne, seule action ouverte à "agent"
+  | "boarding.validate" // valider un billet à l'embarquement — tâche opérationnelle quotidienne, seule action ouverte à "agent"
+  | "drivers.manage"; // créer/éditer/désactiver un chauffeur — propriétaire uniquement, comme agencies/busLayouts (l'affectation à un trajet reste sous trips.manage)
 
 const PERMISSIONS: Record<CompanyAction, readonly CompanyRole[]> = {
   "trips.manage": ["owner", "agency_manager"],
@@ -33,6 +34,7 @@ const PERMISSIONS: Record<CompanyAction, readonly CompanyRole[]> = {
   "lockPolicy.manage": ["owner"],
   "subscription.manage": ["owner"],
   "boarding.validate": ["owner", "agency_manager", "agent"],
+  "drivers.manage": ["owner"],
 };
 
 export function can(role: CompanyRole, action: CompanyAction): boolean {

@@ -116,6 +116,34 @@ export const NOTIFICATION_LEVEL_STYLES: Record<string, string> = {
   info: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
 };
 
+// Chantier A (chauffeurs) : premier statut DÉRIVÉ d'un intervalle de temps
+// plutôt que de colonnes stockées (aucun autre exemple de ce genre dans le
+// repo à ce jour) — jamais persisté, recalculé à chaque rendu. "en_mission"
+// vient de get_company_drivers_overview (current_trip_id non nul signifie
+// qu'un trajet de ce chauffeur a son intervalle [departure_at,
+// coalesce(arrival_at, departure_at)] qui couvre now() au moment de la
+// requête SQL) — même forme que deriveBookingDisplayStatus (type + fonction
+// pure + labels/styles), pas de statut "congé" (chantier B, calendrier de
+// disponibilités).
+export type DriverDisplayStatus = "en_mission" | "disponible" | "archive";
+
+export function deriveDriverStatus(isActive: boolean, hasCurrentTrip: boolean): DriverDisplayStatus {
+  if (!isActive) return "archive";
+  return hasCurrentTrip ? "en_mission" : "disponible";
+}
+
+export const DRIVER_DISPLAY_STATUS_LABELS: Record<DriverDisplayStatus, string> = {
+  en_mission: "En mission",
+  disponible: "Disponible",
+  archive: "Archivé",
+};
+
+export const DRIVER_DISPLAY_STATUS_STYLES: Record<DriverDisplayStatus, string> = {
+  en_mission: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+  disponible: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
+  archive: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+};
+
 export function formatDepartureDateTime(departureAt: string): string {
   return new Intl.DateTimeFormat("fr-BJ", {
     dateStyle: "medium",

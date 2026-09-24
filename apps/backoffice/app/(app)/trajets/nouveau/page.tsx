@@ -44,6 +44,26 @@ async function getCompanyBusLayouts(companyId: string) {
   return (data ?? []) as { id: string; name: string; seat_labels: string[] }[];
 }
 
+// Seuls les chauffeurs ACTIFS sont proposés à l'affectation — contrairement
+// au plan de bus, l'absence de chauffeur ne bloque jamais la création
+// (option "Aucun chauffeur assigné" toujours disponible côté formulaire).
+async function getActiveDrivers(companyId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("drivers")
+    .select("id, full_name")
+    .eq("company_id", companyId)
+    .eq("is_active", true)
+    .order("full_name", { ascending: true });
+
+  if (error) {
+    console.error("Impossible de charger les chauffeurs :", error.message);
+    return [];
+  }
+
+  return (data ?? []) as { id: string; full_name: string }[];
+}
+
 export default async function NewTripPage() {
   const result = await requireCompany();
 
@@ -61,9 +81,10 @@ export default async function NewTripPage() {
     );
   }
 
-  const [cities, busLayouts] = await Promise.all([
+  const [cities, busLayouts, drivers] = await Promise.all([
     getCompanyCities(result.company.id),
     getCompanyBusLayouts(result.company.id),
+    getActiveDrivers(result.company.id),
   ]);
 
   return (
@@ -86,7 +107,7 @@ export default async function NewTripPage() {
         </div>
       ) : (
         <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-          <NewTripForm cities={cities} busLayouts={busLayouts} />
+          <NewTripForm cities={cities} busLayouts={busLayouts} drivers={drivers} />
         </div>
       )}
     </div>
