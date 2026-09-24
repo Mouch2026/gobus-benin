@@ -20,7 +20,13 @@ export type AuditAction =
   | "session_swap"
   // Chantier abonnement : même forme que session_swap (companyId +
   // acteurId, ni booking ni agence) — aucun changement de schéma requis.
-  | "subscription_plan_changed";
+  | "subscription_plan_changed"
+  // Chantier "Embarquement" : validation d'un passager à l'embarquement
+  // (scan ou saisie manuelle). Les rejets (déjà validé, hors fenêtre,
+  // mauvais trajet...) ne sont pas audités ici — le rejet "déjà validé"
+  // a sa propre trace via company_notifications (alerte de fraude), les
+  // autres rejets n'ont jamais modifié d'état à journaliser.
+  | "boarding_validated";
 
 // Le journal est secondaire par rapport à l'action réelle qu'il
 // enregistre — ne doit jamais faire échouer l'appelant.

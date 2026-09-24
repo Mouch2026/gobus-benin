@@ -428,3 +428,18 @@ export function SearchIcon(props: SVGProps<SVGSVGElement>) {
     </Icon>
   );
 }
+
+// Chantier "Embarquement" : icône QR maison, aucune icône de scan
+// n'existait — même patron que les autres (tracé pur, pas de bibliothèque
+// externe). Trois coins de repère + un point central, lisible en petite
+// taille dans la nav.
+export function QrCodeIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <rect x="3.5" y="3.5" width="6" height="6" rx="1" />
+      <rect x="14.5" y="3.5" width="6" height="6" rx="1" />
+      <rect x="3.5" y="14.5" width="6" height="6" rx="1" />
+      <path d="M14.5 14.5h3v3h-3zM20.5 14.5v3M17.5 20.5h3" />
+    </Icon>
+  );
+}

@@ -18,7 +18,8 @@ export type CompanyAction =
   | "cashCeiling.manage" // régler le plafond d'espèces par session de caisse
   | "auditLog.view" // consulter le journal d'audit et la vue consolidée
   | "lockPolicy.manage" // régler le seuil d'inactivité avant verrouillage d'écran
-  | "subscription.manage"; // aucune action de mutation n'existe encore — prêt pour plus tard
+  | "subscription.manage" // aucune action de mutation n'existe encore — prêt pour plus tard
+  | "boarding.validate"; // valider un billet à l'embarquement — tâche opérationnelle quotidienne, seule action ouverte à "agent"
 
 const PERMISSIONS: Record<CompanyAction, readonly CompanyRole[]> = {
   "trips.manage": ["owner", "agency_manager"],
@@ -31,6 +32,7 @@ const PERMISSIONS: Record<CompanyAction, readonly CompanyRole[]> = {
   "auditLog.view": ["owner", "agency_manager"],
   "lockPolicy.manage": ["owner"],
   "subscription.manage": ["owner"],
+  "boarding.validate": ["owner", "agency_manager", "agent"],
 };
 
 export function can(role: CompanyRole, action: CompanyAction): boolean {

@@ -68,6 +68,14 @@ const NAV_SECTIONS: NavSection[] = [
       { kind: "link", label: "Voyages", href: "/voyages", Icon: Icons.RouteIcon, notificationType: "trip_full" },
       {
         kind: "link",
+        label: "Embarquement",
+        href: "/embarquement",
+        Icon: Icons.QrCodeIcon,
+        gate: "boarding.validate",
+        notificationType: "boarding_double_validation",
+      },
+      {
+        kind: "link",
         label: "Validations",
         href: "/validations",
         Icon: Icons.CheckIcon,

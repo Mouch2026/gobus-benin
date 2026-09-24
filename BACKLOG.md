@@ -7,15 +7,19 @@ Liste vivante, à mettre à jour au fil du développement (pas figée à un inst
 ### Paiement
 - Paiement FedaPay réel — remplace les deux flux actuellement simulés
   (billets voyageurs ET abonnement compagnie), en une seule intégration.
-- Changement de plan d'abonnement (upgrade/downgrade) depuis le
-  back-office — actuellement /abonnement est en lecture seule, aucune
-  proration ni changement de plan en cours d'abonnement n'est géré.
 - Réclamation atomique du paiement (simulatePayment ET payViaToken) —
   actuellement une simple lecture puis écriture, pas un update ... where
   status = 'pending' returning ... comme pour les avoirs. Deux clics
   rapprochés sur le même paiement pourraient créer deux paiements pour la
   même réservation. À corriger sur les deux flux ensemble pour rester
   cohérent.
+
+### Abonnement
+- Application réelle des limites de plan d'abonnement (ex. nombre max de
+  trajets actifs) — les "features" des plans restent aujourd'hui
+  purement descriptives, jamais vérifiées dans le code. À construire si
+  on veut un jour restreindre un downgrade ou limiter l'usage selon le
+  plan souscrit.
 
 ### Communication voyageur
 - Envoi par e-mail de la confirmation de réservation : facture + billet
@@ -72,6 +76,12 @@ Liste vivante, à mettre à jour au fil du développement (pas figée à un inst
   trim() est appliqué, "Cotonou" et "cotonou" seraient encore reconnus
   comme deux villes distinctes. À surveiller si ça pose problème en usage
   réel avec plusieurs compagnies.
+- Embarquement — extensions repoussées : validation groupée (plusieurs
+  billets d'un coup, ex. groupe scolaire), export Excel des validations,
+  intégration GPS légère (position du téléphone de l'agent au moment du
+  scan, via l'API de géolocalisation du navigateur). Notion de chauffeur
+  également absente du schéma — aucune colonne/filtre chauffeur possible
+  tant qu'elle n'existe pas.
 
 ### Bugs latents
 - Bug latent découvert (chantier codes promo) : notification_log.booking_id
