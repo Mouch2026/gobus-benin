@@ -4,16 +4,61 @@ import { can } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { estimateTripDurationHours } from "@/lib/duration";
+import { getBeninDateString } from "@/lib/benin-time";
+import { DOCUMENT_TYPE_LABELS, isDocumentType } from "@/lib/driverDocuments";
 import { AccessBlockedMessage } from "../../_components";
 import {
+  DOCUMENT_EXPIRY_STATUS_STYLES,
   DRIVER_DISPLAY_STATUS_LABELS,
   DRIVER_DISPLAY_STATUS_STYLES,
   STATUS_LABELS,
   STATUS_STYLES,
+  deriveDocumentExpiryStatus,
   deriveDriverStatus,
+  documentExpiryLabel,
   formatDepartureDateTime,
 } from "../../_shared";
 import { EditDriverForm } from "./EditDriverForm";
+import { UploadDocumentForm } from "./documents/UploadDocumentForm";
+import { DeleteDocumentButton } from "./documents/DeleteDocumentButton";
+
+type DriverDocumentRow = {
+  id: string;
+  type: string;
+  file_name: string;
+  expiration_date: string | null;
+};
+
+// Sous RLS (driver_documents_select_manager) : un agent obtiendrait 0 ligne
+// même s'il appelait cette requête — mais elle n'est de toute façon
+// exécutée que pour driverDocuments.manage (voir la page).
+async function getDriverDocuments(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  driverId: string,
+  companyId: string
+): Promise<DriverDocumentRow[]> {
+  const { data, error } = await supabase
+    .from("driver_documents")
+    .select("id, type, file_name, expiration_date")
+    .eq("driver_id", driverId)
+    .eq("company_id", companyId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Impossible de charger les documents :", error.message);
+    return [];
+  }
+  return (data ?? []) as DriverDocumentRow[];
+}
+
+async function getDocumentAlertDays(companyId: string): Promise<number> {
+  const { data } = await supabaseAdmin
+    .from("companies")
+    .select("document_alert_days")
+    .eq("id", companyId)
+    .maybeSingle<{ document_alert_days: number }>();
+  return data?.document_alert_days ?? 30;
+}
 
 type DriverDetail = {
   id: string;
@@ -142,12 +187,17 @@ export default async function DriverDetailPage(props: PageProps<"/chauffeurs/[id
     );
   }
 
-  const [currentTrip, history] = await Promise.all([
+  const canViewDocuments = can(result.role, "driverDocuments.manage");
+
+  const [currentTrip, history, documents, alertDays] = await Promise.all([
     getCurrentTrip(supabase, id, result.company.id),
     getDriverTripHistory(id, result.company.id),
+    canViewDocuments ? getDriverDocuments(supabase, id, result.company.id) : Promise.resolve([]),
+    canViewDocuments ? getDocumentAlertDays(result.company.id) : Promise.resolve(30),
   ]);
   const displayStatus = deriveDriverStatus(driver.is_active, currentTrip !== null);
   const canManage = can(result.role, "drivers.manage");
+  const today = getBeninDateString();
 
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-6 px-6 py-8">
@@ -177,6 +227,62 @@ export default async function DriverDetailPage(props: PageProps<"/chauffeurs/[id
       <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
         <EditDriverForm driver={driver} canManage={canManage} />
       </div>
+
+      {canViewDocuments ? (
+        <section>
+          <h2 className="mb-2 text-lg font-semibold text-zinc-950 dark:text-zinc-50">Documents</h2>
+          <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+            Réservé au propriétaire et aux chefs d&apos;agence. Une alerte est envoyée quand un
+            document atteint {alertDays} jour{alertDays > 1 ? "s" : ""} avant son expiration.
+          </p>
+
+          <div className="mb-4 rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+            <UploadDocumentForm driverId={id} />
+          </div>
+
+          {documents.length === 0 ? (
+            <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+              Aucun document pour ce chauffeur.
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {documents.map((doc) => {
+                const expiry = deriveDocumentExpiryStatus(doc.expiration_date, alertDays, today);
+                return (
+                  <li
+                    key={doc.id}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-800 dark:bg-zinc-900"
+                  >
+                    <div className="flex min-w-0 flex-col gap-0.5">
+                      <span className="font-medium text-zinc-950 dark:text-zinc-50">
+                        {isDocumentType(doc.type) ? DOCUMENT_TYPE_LABELS[doc.type] : doc.type}
+                      </span>
+                      <span className="truncate text-zinc-500 dark:text-zinc-400">
+                        {doc.file_name}
+                        {doc.expiration_date ? ` · expire le ${doc.expiration_date.split("-").reverse().join("/")}` : ""}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${DOCUMENT_EXPIRY_STATUS_STYLES[expiry.status]}`}
+                      >
+                        {documentExpiryLabel(expiry.status, expiry.daysLeft)}
+                      </span>
+                      <a
+                        href={`/chauffeurs/${id}/documents/${doc.id}/telecharger`}
+                        className="text-xs font-medium text-zinc-700 hover:underline dark:text-zinc-300"
+                      >
+                        Télécharger
+                      </a>
+                      <DeleteDocumentButton driverId={id} documentId={doc.id} />
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+      ) : null}
 
       <section>
         <h2 className="mb-4 text-lg font-semibold text-zinc-950 dark:text-zinc-50">

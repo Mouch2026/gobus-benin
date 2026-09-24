@@ -14,6 +14,18 @@ import {
 } from "../_shared";
 import { parseDriverFilters, filterDrivers, type DriverOverviewRow } from "./filterDrivers";
 import { toggleDriverActive } from "./actions";
+import { DocumentAlertForm } from "./DocumentAlertForm";
+
+// Lu directement (comme getCashCeiling sur /caisse) : document_alert_days
+// n'est pas porté par CompanyAccessResult.
+async function getDocumentAlertDays(companyId: string): Promise<number> {
+  const { data } = await supabaseAdmin
+    .from("companies")
+    .select("document_alert_days")
+    .eq("id", companyId)
+    .maybeSingle<{ document_alert_days: number }>();
+  return data?.document_alert_days ?? 30;
+}
 
 // service_role, même convention que toutes les vues company-scoped du
 // back-office (get_company_bookings_overview, get_company_boarding_validations_overview,
@@ -43,12 +55,30 @@ export default async function ChauffeursPage(props: PageProps<"/chauffeurs">) {
   const searchParams = await props.searchParams;
   const filters = parseDriverFilters(searchParams);
   const canManage = can(result.role, "drivers.manage");
+  const canConfigureAlerts = can(result.role, "documentAlerts.manage");
 
-  const allDrivers = await getDriversOverview(result.company.id);
+  const [allDrivers, alertDays] = await Promise.all([
+    getDriversOverview(result.company.id),
+    canConfigureAlerts ? getDocumentAlertDays(result.company.id) : Promise.resolve(30),
+  ]);
   const drivers = filterDrivers(allDrivers, filters);
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
+      {canConfigureAlerts ? (
+        <section className="mb-8">
+          <h2 className="mb-2 text-lg font-semibold text-zinc-950 dark:text-zinc-50">Alertes de documents</h2>
+          <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+            Le propriétaire et les chefs d&apos;agence sont prévenus (cloche + e-mail), une seule fois,
+            quand un document de chauffeur (permis, carte d&apos;identité…) atteint ce nombre de jours
+            avant son expiration.
+          </p>
+          <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+            <DocumentAlertForm currentDays={alertDays} />
+          </div>
+        </section>
+      ) : null}
+
       <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
         <h2 className="text-xl font-semibold text-zinc-950 dark:text-zinc-50">Chauffeurs</h2>
         {canManage ? (

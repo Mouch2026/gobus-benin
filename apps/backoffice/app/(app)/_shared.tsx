@@ -182,6 +182,53 @@ export const UNAVAILABILITY_REASON_LABELS: Record<string, string> = {
   indisponible: "Indisponible",
 };
 
+// Chantier C (documents de chauffeurs) : statut d'expiration DÉRIVÉ, jamais
+// stocké — même forme que deriveDriverStatus. Doit rester aligné avec
+// sweep_driver_document_expiry() (20260925090000) : un document franchit le
+// seuil quand expiration_date <= aujourd'hui + document_alert_days, c'est-à-
+// dire daysLeft <= alertDays ; il est expiré dès que daysLeft < 0.
+// Dates en "AAAA-MM-JJ" (calendrier béninois pour "today"), comparées en
+// jours entiers via UTC — aucun fuseau n'intervient dans la différence.
+export type DocumentExpiryStatus = "sans_expiration" | "valide" | "bientot_expire" | "expire";
+
+function daysBetween(fromDate: string, toDate: string): number {
+  const [fy, fm, fd] = fromDate.split("-").map(Number);
+  const [ty, tm, td] = toDate.split("-").map(Number);
+  return Math.round((Date.UTC(ty, tm - 1, td) - Date.UTC(fy, fm - 1, fd)) / 86_400_000);
+}
+
+export function deriveDocumentExpiryStatus(
+  expirationDate: string | null,
+  alertDays: number,
+  today: string
+): { status: DocumentExpiryStatus; daysLeft: number | null } {
+  if (!expirationDate) return { status: "sans_expiration", daysLeft: null };
+  const daysLeft = daysBetween(today, expirationDate);
+  if (daysLeft < 0) return { status: "expire", daysLeft };
+  if (daysLeft <= alertDays) return { status: "bientot_expire", daysLeft };
+  return { status: "valide", daysLeft };
+}
+
+export const DOCUMENT_EXPIRY_STATUS_STYLES: Record<DocumentExpiryStatus, string> = {
+  expire: "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300",
+  bientot_expire: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+  valide: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
+  sans_expiration: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+};
+
+export function documentExpiryLabel(status: DocumentExpiryStatus, daysLeft: number | null): string {
+  switch (status) {
+    case "expire":
+      return `Expiré depuis ${Math.abs(daysLeft ?? 0)} j`;
+    case "bientot_expire":
+      return daysLeft === 0 ? "Expire aujourd'hui" : `Expire dans ${daysLeft} j`;
+    case "valide":
+      return "Valide";
+    case "sans_expiration":
+      return "Sans expiration";
+  }
+}
+
 export function formatDepartureDateTime(departureAt: string): string {
   return new Intl.DateTimeFormat("fr-BJ", {
     dateStyle: "medium",

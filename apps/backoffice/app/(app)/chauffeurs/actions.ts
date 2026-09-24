@@ -5,10 +5,12 @@ import { revalidatePath } from "next/cache";
 import { requireCompany } from "@/lib/supabase/dal";
 import { requirePermission } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { logAuditEvent } from "shared/src/lib/auditLog";
 
 export type DriverFormState = { error: string | null };
 export type EditDriverState = { error: string | null; success: boolean };
+export type DocumentAlertState = { error: string | null; success: boolean };
 
 // Vérifie que le chauffeur appartient bien à la compagnie appelante — même
 // patron que assertOwnedAgency (agences/actions.ts). RLS le garantit déjà
@@ -182,4 +184,38 @@ export async function setDriverActive(
 // l'ancien (pas pire qu'un lien mort, jamais une exception non gérée).
 export async function toggleDriverActive(formData: FormData): Promise<void> {
   await setDriverActive({ error: null, success: false }, formData);
+}
+
+// Seuil d'alerte d'expiration des documents de chauffeurs — même patron que
+// updateLockTimeout (employes/actions.ts) et updateCashCeiling : écriture via
+// supabaseAdmin, donc la RLS (companies_update_owner, au niveau membre) ne
+// protège pas ici — la garde propriétaire est requirePermission, seule.
+export async function updateDocumentAlertDays(
+  _prevState: DocumentAlertState,
+  formData: FormData
+): Promise<DocumentAlertState> {
+  const access = await requireCompany();
+  const guardError = requirePermission(access, "documentAlerts.manage");
+  if (guardError) return { ...guardError, success: false };
+  if (!access.ok) {
+    return { error: "Votre session ou votre abonnement ne permet plus cette action.", success: false };
+  }
+
+  const days = Number(formData.get("documentAlertDays"));
+  if (!Number.isInteger(days) || days < 1 || days > 365) {
+    return { error: "Le seuil doit être un nombre entier de jours entre 1 et 365.", success: false };
+  }
+
+  const { error } = await supabaseAdmin
+    .from("companies")
+    .update({ document_alert_days: days })
+    .eq("id", access.company.id);
+
+  if (error) {
+    console.error("Impossible de mettre à jour le seuil d'alerte des documents :", error.message);
+    return { error: "Impossible de mettre à jour ce réglage. Réessayez.", success: false };
+  }
+
+  revalidatePath("/chauffeurs");
+  return { error: null, success: true };
 }

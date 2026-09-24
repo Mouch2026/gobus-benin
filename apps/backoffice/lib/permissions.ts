@@ -21,7 +21,9 @@ export type CompanyAction =
   | "subscription.manage" // aucune action de mutation n'existe encore — prêt pour plus tard
   | "boarding.validate" // valider un billet à l'embarquement — tâche opérationnelle quotidienne, seule action ouverte à "agent"
   | "drivers.manage" // créer/éditer/désactiver un chauffeur — propriétaire uniquement, comme agencies/busLayouts (l'affectation à un trajet reste sous trips.manage)
-  | "driverUnavailability.manage"; // déclarer/modifier/supprimer une indisponibilité — même niveau que trips.manage (owner + agency_manager), pas le niveau CRUD roster (drivers.manage, owner seul)
+  | "driverUnavailability.manage" // déclarer/modifier/supprimer une indisponibilité — même niveau que trips.manage (owner + agency_manager), pas le niveau CRUD roster (drivers.manage, owner seul)
+  | "driverDocuments.manage" // voir/téléverser/télécharger/supprimer les documents d'un chauffeur — owner + agency_manager, lecture COMPRISE (données personnelles : un agent ne voit même pas la liste)
+  | "documentAlerts.manage"; // régler le seuil d'alerte d'expiration des documents — propriétaire uniquement, comme cashCeiling/lockPolicy
 
 const PERMISSIONS: Record<CompanyAction, readonly CompanyRole[]> = {
   "trips.manage": ["owner", "agency_manager"],
@@ -37,6 +39,8 @@ const PERMISSIONS: Record<CompanyAction, readonly CompanyRole[]> = {
   "boarding.validate": ["owner", "agency_manager", "agent"],
   "drivers.manage": ["owner"],
   "driverUnavailability.manage": ["owner", "agency_manager"],
+  "driverDocuments.manage": ["owner", "agency_manager"],
+  "documentAlerts.manage": ["owner"],
 };
 
 export function can(role: CompanyRole, action: CompanyAction): boolean {

@@ -395,6 +395,13 @@ deno_version = 2
 [functions.expire-vouchers]
 verify_jwt = false
 
+# Même raisonnement que expire-vouchers ci-dessus : appelée uniquement par
+# pg_cron/pg_net, la clé anon (JWT valide, publique) n'aurait rien protégé.
+# La vraie protection est le secret partagé x-cron-secret vérifié en tête de
+# supabase/functions/driver-document-expiry-alerts/index.ts.
+[functions.driver-document-expiry-alerts]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

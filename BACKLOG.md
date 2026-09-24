@@ -90,6 +90,15 @@ Liste vivante, à mettre à jour au fil du développement (pas figée à un inst
   fonctionnel. Prévoir soit une purge manuelle ponctuelle via une
   opération privilégiée hors RLS, soit un mécanisme de nettoyage dédié
   aux données de test si ça devient gênant.
+- Vérifier/confirmer le comportement réel de onboarding@resend.dev
+  (expéditeur de test Resend, utilisé pour TOUS les e-mails du projet —
+  confirmations, avoirs, ET maintenant les alertes de document chauffeur) :
+  livre-t-il uniquement à l'adresse du titulaire du compte Resend ? Si
+  oui, aucun e-mail transactionnel ne part réellement vers un vrai
+  destinataire tant qu'un domaine n'est pas vérifié sur Resend —
+  silencieux pour les alertes de document (l'alerte in-app masque le
+  problème), mais concerne tous les e-mails du projet, pas seulement
+  celles-ci.
 
 ### Bugs latents
 - Bug latent découvert (chantier codes promo) : notification_log.booking_id

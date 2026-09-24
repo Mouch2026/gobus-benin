@@ -40,7 +40,13 @@ export type AuditAction =
   // bookingId: null comme les autres événements liés aux chauffeurs.
   | "driver_unavailability_declared"
   | "driver_unavailability_modified"
-  | "driver_unavailability_deleted";
+  | "driver_unavailability_deleted"
+  // Chantier C (documents) : ajout/suppression d'un document de chauffeur
+  // (bookingId: null). L'alerte d'expiration automatique n'est PAS auditée
+  // ici : audit_logs.acteur_id est obligatoire et un cron n'a aucun acteur
+  // humain — sa trace est expiry_alert_sent_at + la notification in-app.
+  | "driver_document_added"
+  | "driver_document_deleted";
 
 // Le journal est secondaire par rapport à l'action réelle qu'il
 // enregistre — ne doit jamais faire échouer l'appelant.
