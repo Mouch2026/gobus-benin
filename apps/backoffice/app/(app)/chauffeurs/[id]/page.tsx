@@ -76,6 +76,27 @@ type CurrentTrip = {
   routes: { origin_city: string; destination_city: string; distance_km: number | null };
 };
 
+type DriverRatingRow = {
+  id: string;
+  stars: number;
+  comment: string | null;
+  created_at: string;
+  reviewer_name: string;
+};
+
+async function getDriverRatings(driverId: string, companyId: string): Promise<DriverRatingRow[]> {
+  const { data, error } = await supabaseAdmin.rpc("get_driver_ratings", {
+    p_driver_id: driverId,
+    p_company_id: companyId,
+  });
+
+  if (error) {
+    console.error("Impossible de charger les évaluations :", error.message);
+    return [];
+  }
+  return (data ?? []) as DriverRatingRow[];
+}
+
 type PastAssignment = {
   trip_id: string;
   departure_at: string;
@@ -188,13 +209,17 @@ export default async function DriverDetailPage(props: PageProps<"/chauffeurs/[id
   }
 
   const canViewDocuments = can(result.role, "driverDocuments.manage");
+  const canViewRatings = can(result.role, "driverRatings.view");
 
-  const [currentTrip, history, documents, alertDays] = await Promise.all([
+  const [currentTrip, history, documents, alertDays, ratings] = await Promise.all([
     getCurrentTrip(supabase, id, result.company.id),
     getDriverTripHistory(id, result.company.id),
     canViewDocuments ? getDriverDocuments(supabase, id, result.company.id) : Promise.resolve([]),
     canViewDocuments ? getDocumentAlertDays(result.company.id) : Promise.resolve(30),
+    canViewRatings ? getDriverRatings(id, result.company.id) : Promise.resolve([]),
   ]);
+  const averageRating =
+    ratings.length > 0 ? Math.round((ratings.reduce((sum, r) => sum + r.stars, 0) / ratings.length) * 10) / 10 : null;
   const displayStatus = deriveDriverStatus(driver.is_active, currentTrip !== null);
   const canManage = can(result.role, "drivers.manage");
   const today = getBeninDateString();
@@ -279,6 +304,42 @@ export default async function DriverDetailPage(props: PageProps<"/chauffeurs/[id
                   </li>
                 );
               })}
+            </ul>
+          )}
+        </section>
+      ) : null}
+
+      {canViewRatings ? (
+        <section>
+          <h2 className="mb-2 text-lg font-semibold text-zinc-950 dark:text-zinc-50">Évaluations</h2>
+          <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+            Notées par les voyageurs après leur trajet — définitives, jamais modifiables.
+          </p>
+          <p className="mb-4 text-sm font-medium text-zinc-950 dark:text-zinc-50">
+            {averageRating !== null ? `★ ${averageRating} (${ratings.length} avis)` : "Aucun avis pour le moment."}
+          </p>
+
+          {ratings.length === 0 ? null : (
+            <ul className="flex flex-col gap-2">
+              {ratings.map((rating) => (
+                <li
+                  key={rating.id}
+                  className="flex flex-col gap-1 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-800 dark:bg-zinc-900"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="font-medium text-zinc-950 dark:text-zinc-50">
+                      {"★".repeat(rating.stars)}
+                      {"☆".repeat(5 - rating.stars)}
+                    </span>
+                    <span className="text-zinc-500 dark:text-zinc-400">
+                      {rating.reviewer_name} · {formatDepartureDateTime(rating.created_at)}
+                    </span>
+                  </div>
+                  {rating.comment ? (
+                    <p className="text-zinc-700 dark:text-zinc-300">{rating.comment}</p>
+                  ) : null}
+                </li>
+              ))}
             </ul>
           )}
         </section>

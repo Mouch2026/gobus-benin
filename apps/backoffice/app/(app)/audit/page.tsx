@@ -37,6 +37,7 @@ const ACTION_LABELS: Record<string, string> = {
   driver_unavailability_deleted: "Indisponibilité supprimée",
   driver_document_added: "Document de chauffeur ajouté",
   driver_document_deleted: "Document de chauffeur supprimé",
+  driver_rating_submitted: "Chauffeur noté par un voyageur",
 };
 
 // Owner : toute la compagnie. Agency_manager : uniquement son agence —

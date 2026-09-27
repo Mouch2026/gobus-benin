@@ -147,13 +147,14 @@ export default async function ChauffeursPage(props: PageProps<"/chauffeurs">) {
         </p>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-          <table className="w-full min-w-[900px] border-collapse text-left text-sm">
+          <table className="w-full min-w-[1000px] border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
                 <th className="px-4 py-3 font-medium">ID</th>
                 <th className="px-4 py-3 font-medium">Nom</th>
                 <th className="px-4 py-3 font-medium">Contact</th>
                 <th className="px-4 py-3 font-medium">Statut</th>
+                <th className="px-4 py-3 font-medium">Note</th>
                 <th className="px-4 py-3 font-medium">Bus</th>
                 <th className="px-4 py-3 font-medium">Voyage</th>
                 <th className="px-4 py-3 font-medium">Actions</th>
@@ -180,6 +181,11 @@ export default async function ChauffeursPage(props: PageProps<"/chauffeurs">) {
                       >
                         {DRIVER_DISPLAY_STATUS_LABELS[displayStatus]}
                       </span>
+                    </td>
+                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                      {driver.ratings_count > 0
+                        ? `★ ${driver.average_rating} (${driver.ratings_count} avis)`
+                        : "—"}
                     </td>
                     <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
                       {driver.current_bus_number ?? "—"}

@@ -11,6 +11,8 @@ export type DriverOverviewRow = {
   current_origin_city: string | null;
   current_destination_city: string | null;
   current_departure_at: string | null;
+  average_rating: number | null;
+  ratings_count: number;
 };
 
 export type DriverFilters = {

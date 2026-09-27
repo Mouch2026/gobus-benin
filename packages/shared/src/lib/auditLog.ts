@@ -46,7 +46,12 @@ export type AuditAction =
   // ici : audit_logs.acteur_id est obligatoire et un cron n'a aucun acteur
   // humain — sa trace est expiry_alert_sent_at + la notification in-app.
   | "driver_document_added"
-  | "driver_document_deleted";
+  | "driver_document_deleted"
+  // Chantier "évaluation des chauffeurs" : un voyageur note son chauffeur
+  // depuis apps/web (bookingId renseigné cette fois, contrairement aux
+  // événements chauffeur du back-office — ici l'événement EST une
+  // réservation).
+  | "driver_rating_submitted";
 
 // Le journal est secondaire par rapport à l'action réelle qu'il
 // enregistre — ne doit jamais faire échouer l'appelant.

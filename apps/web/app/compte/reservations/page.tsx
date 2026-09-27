@@ -2,9 +2,10 @@ import Link from "next/link";
 import { requireUser } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
 import { sweepExpiredVouchers } from "@/lib/vouchers";
-import { formatFcfa } from "shared";
+import { formatFcfa, estimateTripDurationHours } from "shared";
 import { AccountShell } from "../_shared";
 import { EmptyState, formatDepartureDateTime, formatDepartureTime } from "../../recherche/_shared";
+import { NoterChauffeurButton } from "./NoterChauffeurButton";
 
 type BookingRow = {
   id: string;
@@ -17,9 +18,34 @@ type BookingRow = {
     departure_at: string;
     arrival_at: string | null;
     bus_number: string;
-    routes: { origin_city: string; destination_city: string };
+    driver_id: string | null;
+    routes: { origin_city: string; destination_city: string; distance_km: number | null };
   } | null;
+  // La relation embarquée peut revenir en objet ou en tableau selon la
+  // façon dont PostgREST résout l'unicité — même prudence déjà documentée
+  // dans expire-vouchers/index.ts, jamais supposer une seule forme.
+  driver_ratings: { id: string } | { id: string }[] | null;
 };
+
+// Éligibilité affichée = confort d'UI seulement ("le masquage n'est
+// jamais la protection", voir permissions.ts côté back-office) — la
+// vraie garantie est entièrement dans submit_driver_rating() (RPC), qui
+// revérifie tout elle-même. Un trajet est "terminé" comme partout
+// ailleurs dans ce projet : réel (arrival_at) si connu, sinon estimé via
+// estimateTripDurationHours — jamais une troisième règle inventée.
+function isEligibleForRating(booking: BookingRow): boolean {
+  if (booking.status !== "confirmed" || !booking.trips || !booking.trips.driver_id) return false;
+  const alreadyRated = Array.isArray(booking.driver_ratings)
+    ? booking.driver_ratings.length > 0
+    : booking.driver_ratings !== null;
+  if (alreadyRated) return false;
+
+  const { departure_at, arrival_at, routes } = booking.trips;
+  const tripEndMs = arrival_at
+    ? new Date(arrival_at).getTime()
+    : new Date(departure_at).getTime() + estimateTripDurationHours(routes.distance_km) * 3600_000;
+  return Date.now() >= tripEndMs;
+}
 
 const STATUS_LABELS: Record<string, string> = {
   pending: "En attente de paiement",
@@ -38,7 +64,7 @@ async function getUserBookings(userId: string): Promise<BookingRow[]> {
   const { data, error } = await supabase
     .from("bookings")
     .select(
-      "id, booking_reference, status, total_price_fcfa, booking_group_id, leg, trips!inner(departure_at, arrival_at, bus_number, routes(origin_city, destination_city))"
+      "id, booking_reference, status, total_price_fcfa, booking_group_id, leg, trips!inner(departure_at, arrival_at, bus_number, driver_id, routes(origin_city, destination_city, distance_km)), driver_ratings(id)"
     )
     .eq("user_id", userId)
     // Verified live against this project's PostgREST: ordering by a
@@ -82,8 +108,12 @@ export default async function MesReservationsPage() {
               ? `/reservation/aller-retour/${booking.booking_group_id}/succes`
               : `/reservation/${booking.id}/succes`;
 
+            // Le bouton "Noter mon chauffeur" reste HORS du <Link> : un
+            // <form>/<button> imbriqué dans un lien est invalide en HTML
+            // (éléments interactifs imbriqués), donc rendu en frère dans
+            // le même <li> plutôt qu'à l'intérieur.
             return (
-              <li key={booking.id}>
+              <li key={booking.id} className="flex flex-col gap-2">
                 <Link
                   href={href}
                   className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5 transition-colors hover:border-primary sm:flex-row sm:items-center sm:justify-between"
@@ -118,6 +148,9 @@ export default async function MesReservationsPage() {
                     </span>
                   </div>
                 </Link>
+                {isEligibleForRating(booking) ? (
+                  <NoterChauffeurButton bookingId={booking.id} />
+                ) : null}
               </li>
             );
           })}
