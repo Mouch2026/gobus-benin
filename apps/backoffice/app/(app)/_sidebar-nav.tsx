@@ -22,6 +22,12 @@ type NavLeaf = {
   note?: string;
   subtitle?: string;
   notificationType?: string;
+  // Masquage par rôle indépendant de can()/gate : gate reflète une
+  // permission serveur réelle (peut agir sur cette page), hiddenForRoles
+  // n'est qu'un choix d'affichage (cette destination n'a pas de sens pour
+  // ce rôle, même s'il y aurait techniquement accès) — jamais utilisé
+  // seul comme protection, voir les pages elles-mêmes.
+  hiddenForRoles?: readonly CompanyRole[];
 };
 
 type NavGroup = {
@@ -48,10 +54,10 @@ const NAV_SECTIONS: NavSection[] = [
     Icon: Icons.GridIcon,
     colorClass: "text-indigo-600 dark:text-indigo-400",
     items: [
-      { kind: "link", label: "Vue globale", href: "/", Icon: Icons.GaugeIcon },
+      { kind: "link", label: "Vue globale", href: "/", Icon: Icons.GaugeIcon, hiddenForRoles: ["agent"] },
       { kind: "link", label: "Mon tableau de bord", href: "/mon-tableau-de-bord", Icon: Icons.LayoutGridIcon },
       { kind: "link", label: "Pilotage", href: "/pilotage", Icon: Icons.ChartBarIcon, gate: "ownerDashboard.view" },
-      { kind: "soon", label: "Widgets personnalisables", Icon: Icons.PuzzleIcon },
+      { kind: "soon", label: "Widgets personnalisables", Icon: Icons.PuzzleIcon, hiddenForRoles: ["agent"] },
     ],
   },
   {
@@ -333,7 +339,35 @@ function SectionDetails({
   if (!sectionHasMatch(section, query)) return null;
   const sectionLabelMatches = matchesQuery(section.label, query);
 
+  // Filtrage par RÔLE seul (ni recherche, ni gate déjà couvert plus bas) —
+  // sert uniquement à décider si la section s'effondre en un lien direct
+  // (voir plus bas), indépendamment de ce que l'utilisateur est en train
+  // de chercher.
+  const roleVisibleItems = section.items.filter((item) => {
+    if (item.kind !== "group" && item.hiddenForRoles?.includes(role)) return false;
+    if (item.kind === "link" && item.gate && !can(role, item.gate)) return false;
+    return true;
+  });
+
+  // Une section qui ne garde plus qu'UNE seule destination pour ce rôle
+  // (ex. "Tableau de bord" pour un agent, une fois "Vue globale"/"Widgets
+  // personnalisables" masqués) devient un lien direct plutôt qu'un groupe
+  // dépliable à un seul élément — inutile de replier/déplier pour révéler
+  // une unique destination. Vérifié : aucune autre combinaison
+  // section/rôle ne tombe dans ce cas aujourd'hui.
+  if (roleVisibleItems.length === 1 && roleVisibleItems[0].kind === "link") {
+    const onlyLink = roleVisibleItems[0];
+    if (!(sectionLabelMatches || matchesQuery(onlyLink.label, query))) return null;
+    return (
+      <Link href={onlyLink.href!} title={onlyLink.label} className={SECTION_SUMMARY_CLASSES}>
+        <section.Icon className={`h-5 w-5 shrink-0 ${section.colorClass}`} aria-hidden />
+        <span className={LABEL_CLASSES}>{onlyLink.label}</span>
+      </Link>
+    );
+  }
+
   const visibleItems = section.items.filter((item) => {
+    if (item.kind !== "group" && item.hiddenForRoles?.includes(role)) return false;
     if (item.kind === "link" && item.gate && !can(role, item.gate)) return false;
     if (item.kind === "group") return groupHasMatch(item, query) || sectionLabelMatches;
     return sectionLabelMatches || matchesQuery(item.label, query);
