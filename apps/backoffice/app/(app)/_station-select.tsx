@@ -26,7 +26,7 @@ export function StationSelect({
     <form action={setSelectedStation} className="flex items-center gap-2">
       <label
         htmlFor="stationId"
-        className="text-sm text-zinc-500 dark:text-zinc-400"
+        className="text-sm text-zinc-500"
         title="Filtre les écrans de trajets (Voyages, nouvelle réservation) sur les départs ou arrivées de cette gare. Les autres écrans ne sont pas filtrés."
       >
         Gare :
@@ -42,7 +42,7 @@ export function StationSelect({
         name="stationId"
         defaultValue={selectedStationId ?? ALL_STATIONS}
         onChange={(e) => e.currentTarget.form?.requestSubmit()}
-        className="rounded-lg border border-zinc-300 bg-white px-2 py-1 text-sm text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+        className="rounded-lg border border-zinc-300 bg-white px-2 py-1 text-sm text-zinc-700"
       >
         <option value={ALL_STATIONS}>Toutes les gares</option>
         {stations.map((station) => (

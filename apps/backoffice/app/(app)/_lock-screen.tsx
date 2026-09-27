@@ -34,14 +34,14 @@ export function LockScreen({
   }, [unlockPending, unlockState, router]);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 px-4 dark:bg-black">
-      <div className="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-8 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 px-4">
+      <div className="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-8">
         <div className="flex flex-col items-center gap-2 text-center">
           <span className="text-3xl">🔒</span>
-          <h1 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+          <h1 className="text-lg font-semibold text-zinc-950">
             {companyName} — Verrouillé
           </h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="text-sm text-zinc-500">
             {mode === "self" ? (
               <>
                 Verrouillé par <strong>{memberName}</strong>
@@ -75,7 +75,7 @@ export function LockScreen({
               </div>
 
               {unlockState.error ? (
-                <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+                <p className="text-sm text-red-600" role="alert">
                   {unlockState.error}
                 </p>
               ) : null}
@@ -83,7 +83,7 @@ export function LockScreen({
               <button
                 type="submit"
                 disabled={unlockPending}
-                className="rounded-lg bg-zinc-950 px-4 py-2.5 font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+                className="rounded-lg bg-zinc-950 px-4 py-2.5 font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {unlockPending ? "Vérification..." : "Déverrouiller"}
               </button>
@@ -91,7 +91,7 @@ export function LockScreen({
               <button
                 type="button"
                 onClick={() => setMode("switch")}
-                className="text-sm text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
+                className="text-sm text-zinc-500 underline-offset-2 hover:underline"
               >
                 Ce n&apos;est pas vous ? Changer d&apos;agent
               </button>
@@ -108,7 +108,7 @@ export function LockScreen({
             <form action={signOutForgotPin}>
               <button
                 type="submit"
-                className="text-sm text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
+                className="text-sm text-zinc-500 underline-offset-2 hover:underline"
               >
                 PIN oublié ? Se déconnecter
               </button>
@@ -149,13 +149,13 @@ export function LockScreen({
               />
             </div>
 
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-xs text-zinc-500">
               La session de {memberName} sera fermée sur ce poste. Sa caisse, si elle est ouverte,
               n&apos;est pas affectée.
             </p>
 
             {switchState.error ? (
-              <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+              <p className="text-sm text-red-600" role="alert">
                 {switchState.error}
               </p>
             ) : null}
@@ -163,7 +163,7 @@ export function LockScreen({
             <button
               type="submit"
               disabled={switchPending}
-              className="rounded-lg bg-zinc-950 px-4 py-2.5 font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+              className="rounded-lg bg-zinc-950 px-4 py-2.5 font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {switchPending ? "Bascule..." : "Prendre le relais"}
             </button>
@@ -171,7 +171,7 @@ export function LockScreen({
             <button
               type="button"
               onClick={() => setMode("self")}
-              className="text-sm text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
+              className="text-sm text-zinc-500 underline-offset-2 hover:underline"
             >
               Retour
             </button>

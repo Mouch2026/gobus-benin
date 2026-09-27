@@ -101,9 +101,9 @@ export function BoardingValidationPanel({ tripId }: { tripId: string | null }) {
   }
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="rounded-xl border border-zinc-200 bg-white p-4">
       {!tripId ? (
-        <p className="mb-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-200">
+        <p className="mb-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
           Sélectionnez d&apos;abord un trajet ci-dessus pour pouvoir valider un billet.
         </p>
       ) : null}
@@ -136,7 +136,7 @@ export function BoardingValidationPanel({ tripId }: { tripId: string | null }) {
               <button
                 type="submit"
                 disabled={!tripId || pending}
-                className="rounded-lg bg-zinc-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-50 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+                className="rounded-lg bg-zinc-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-50"
               >
                 Chercher
               </button>
@@ -161,7 +161,7 @@ export function BoardingValidationPanel({ tripId }: { tripId: string | null }) {
               <button
                 type="submit"
                 disabled={!tripId || pending}
-                className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:opacity-50"
               >
                 Chercher
               </button>
@@ -174,10 +174,10 @@ export function BoardingValidationPanel({ tripId }: { tripId: string | null }) {
         <p
           className={`mt-4 rounded-lg px-3 py-2 text-sm ${
             feedback.kind === "success"
-              ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200"
+              ? "bg-emerald-50 text-emerald-800"
               : feedback.kind === "error"
-                ? "bg-red-50 text-red-800 dark:bg-red-950 dark:text-red-200"
-                : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                ? "bg-red-50 text-red-800"
+                : "bg-zinc-100 text-zinc-700"
           }`}
         >
           {feedback.text}
@@ -189,11 +189,11 @@ export function BoardingValidationPanel({ tripId }: { tripId: string | null }) {
           {candidates.map((candidate) => (
             <li
               key={candidate.passengerId}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-800"
+              className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-zinc-200 px-3 py-2"
             >
               <div className="text-sm">
-                <p className="font-medium text-zinc-950 dark:text-zinc-50">{candidate.fullName}</p>
-                <p className="text-zinc-500 dark:text-zinc-400">
+                <p className="font-medium text-zinc-950">{candidate.fullName}</p>
+                <p className="text-zinc-500">
                   {candidate.bookingReference} · Siège {candidate.seatNumber ?? "—"}
                   {candidate.tripId !== tripId ? " · Autre trajet" : ""}
                 </p>
@@ -289,7 +289,7 @@ function QrScanner({ disabled, onDetected }: { disabled: boolean; onDetected: (v
 
   if (disabled) {
     return (
-      <div className="flex aspect-video items-center justify-center rounded-lg border border-dashed border-zinc-200 text-sm text-zinc-400 dark:border-zinc-700 dark:text-zinc-600">
+      <div className="flex aspect-video items-center justify-center rounded-lg border border-dashed border-zinc-200 text-sm text-zinc-400">
         Scanner caméra
       </div>
     );
@@ -303,7 +303,7 @@ function QrScanner({ disabled, onDetected }: { disabled: boolean; onDetected: (v
           setError(null);
           setActive(true);
         }}
-        className="flex aspect-video flex-col items-center justify-center gap-2 rounded-lg border border-zinc-200 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+        className="flex aspect-video flex-col items-center justify-center gap-2 rounded-lg border border-zinc-200 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
       >
         Activer la caméra
       </button>
@@ -319,11 +319,11 @@ function QrScanner({ disabled, onDetected }: { disabled: boolean; onDetected: (v
       <button
         type="button"
         onClick={() => setActive(false)}
-        className="self-start text-xs font-medium text-zinc-500 hover:underline dark:text-zinc-400"
+        className="self-start text-xs font-medium text-zinc-500 hover:underline"
       >
         Désactiver la caméra
       </button>
-      {error ? <p className="text-xs text-red-600 dark:text-red-400">{error}</p> : null}
+      {error ? <p className="text-xs text-red-600">{error}</p> : null}
     </div>
   );
 }

@@ -66,7 +66,7 @@ export default async function ImprimerVideCaissePage(
   if (!mouvement) {
     return (
       <div className="mx-auto max-w-xl px-6 py-8">
-        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
           Ce mouvement de caisse n&apos;existe pas ou ne vous appartient pas.
         </p>
       </div>
@@ -81,36 +81,36 @@ export default async function ImprimerVideCaissePage(
         <PrintButton />
       </div>
 
-      <div className="rounded-xl border border-zinc-200 bg-white p-8 dark:border-zinc-800 dark:bg-zinc-900 print:rounded-none print:border-0 print:p-0">
-        <div className="mb-6 flex items-center justify-between border-b border-zinc-200 pb-4 dark:border-zinc-800 print:border-black">
-          <span className="text-lg font-semibold text-zinc-950 dark:text-zinc-50 print:text-black">
+      <div className="rounded-xl border border-zinc-200 bg-white p-8 print:rounded-none print:border-0 print:p-0">
+        <div className="mb-6 flex items-center justify-between border-b border-zinc-200 pb-4 print:border-black">
+          <span className="text-lg font-semibold text-zinc-950 print:text-black">
             {result.company.name}
           </span>
-          <span className="text-sm font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400 print:text-black">
+          <span className="text-sm font-medium uppercase tracking-wide text-zinc-500 print:text-black">
             Reçu de vide-caisse
           </span>
         </div>
 
         <div className="mb-6 grid grid-cols-2 gap-4">
           <div>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 print:text-black">Agence</p>
-            <p className="font-medium text-zinc-950 dark:text-zinc-50 print:text-black">
+            <p className="text-xs text-zinc-500 print:text-black">Agence</p>
+            <p className="font-medium text-zinc-950 print:text-black">
               {mouvement.session_caisse.agencies?.name ?? "—"}
             </p>
           </div>
           <div>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 print:text-black">Agent</p>
-            <p className="font-medium text-zinc-950 dark:text-zinc-50 print:text-black">{agentName}</p>
+            <p className="text-xs text-zinc-500 print:text-black">Agent</p>
+            <p className="font-medium text-zinc-950 print:text-black">{agentName}</p>
           </div>
           <div>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 print:text-black">Date</p>
-            <p className="font-medium text-zinc-950 dark:text-zinc-50 print:text-black">
+            <p className="text-xs text-zinc-500 print:text-black">Date</p>
+            <p className="font-medium text-zinc-950 print:text-black">
               {formatDepartureDateTime(mouvement.created_at)}
             </p>
           </div>
           <div>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 print:text-black">Montant déposé</p>
-            <p className="text-xl font-bold text-zinc-950 dark:text-zinc-50 print:text-black">
+            <p className="text-xs text-zinc-500 print:text-black">Montant déposé</p>
+            <p className="text-xl font-bold text-zinc-950 print:text-black">
               {formatFcfa(mouvement.montant_fcfa)}
             </p>
           </div>

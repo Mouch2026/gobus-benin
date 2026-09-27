@@ -107,7 +107,7 @@ export function BusLayoutForm() {
         </div>
       </div>
 
-      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+      <p className="text-xs text-zinc-500">
         Utilisez si possible les mêmes numéros déjà peints ou collés sur les sièges de votre bus —
         pas une nouvelle numérotation que vos passagers ne reconnaîtront pas à bord.
       </p>
@@ -115,7 +115,7 @@ export function BusLayoutForm() {
       <button
         type="button"
         onClick={handleGenerate}
-        className="self-start rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+        className="self-start rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100"
       >
         Générer
       </button>
@@ -125,7 +125,7 @@ export function BusLayoutForm() {
           <span className={LABEL_CLASSES}>
             Sièges générés ({seats.length}) — renommez ou retirez un siège avant de créer le plan
           </span>
-          <div className="grid max-h-64 grid-cols-2 gap-2 overflow-y-auto rounded-lg border border-zinc-200 p-3 sm:grid-cols-3 dark:border-zinc-800">
+          <div className="grid max-h-64 grid-cols-2 gap-2 overflow-y-auto rounded-lg border border-zinc-200 p-3 sm:grid-cols-3">
             {seats.map((seat) => (
               <div key={seat.id} className="flex items-center gap-1">
                 <input
@@ -144,7 +144,7 @@ export function BusLayoutForm() {
                   type="button"
                   onClick={() => removeSeat(seat.id)}
                   aria-label={`Retirer le siège ${seat.value}`}
-                  className="shrink-0 rounded-md px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
+                  className="shrink-0 rounded-md px-2 py-1 text-xs text-red-600 hover:bg-red-50"
                 >
                   ✕
                 </button>
@@ -155,7 +155,7 @@ export function BusLayoutForm() {
       ) : null}
 
       {state.error ? (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+        <p className="text-sm text-red-600" role="alert">
           {state.error}
         </p>
       ) : null}
@@ -163,7 +163,7 @@ export function BusLayoutForm() {
       <button
         type="submit"
         disabled={pending || seats.length === 0}
-        className="self-start rounded-lg bg-zinc-950 px-4 py-2.5 font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+        className="self-start rounded-lg bg-zinc-950 px-4 py-2.5 font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {pending ? "Création..." : "Créer le plan"}
       </button>

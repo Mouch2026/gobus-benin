@@ -30,18 +30,18 @@ export function DocumentAlertForm({ currentDays }: { currentDays: number }) {
       <button
         type="submit"
         disabled={pending}
-        className="rounded-lg bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+        className="rounded-lg bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {pending ? "Enregistrement..." : "Enregistrer"}
       </button>
 
       {state.error ? (
-        <p className="w-full text-sm text-red-600 dark:text-red-400" role="alert">
+        <p className="w-full text-sm text-red-600" role="alert">
           {state.error}
         </p>
       ) : null}
       {state.success ? (
-        <p className="w-full text-sm text-emerald-600 dark:text-emerald-400">Enregistré.</p>
+        <p className="w-full text-sm text-emerald-600">Enregistré.</p>
       ) : null}
     </form>
   );

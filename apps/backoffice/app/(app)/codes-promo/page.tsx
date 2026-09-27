@@ -60,27 +60,27 @@ export default async function CodesPromoPage() {
     <div className="mx-auto flex max-w-3xl flex-col gap-8 px-6 py-8">
       {canManage ? (
         <section>
-          <h1 className="mb-2 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+          <h1 className="mb-2 text-lg font-semibold text-zinc-950">
             Nouveau code promo
           </h1>
-          <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="mb-4 text-sm text-zinc-500">
             Réduit uniquement le prix du billet (jamais les frais de service), sur vos trajets
             uniquement. Les règles d&apos;un code ne sont plus modifiables après sa création — seule
             la désactivation reste possible.
           </p>
-          <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="rounded-xl border border-zinc-200 bg-white p-6">
             <PromoCodeForm />
           </div>
         </section>
       ) : null}
 
       <section>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+        <h2 className="mb-4 text-lg font-semibold text-zinc-950">
           Vos codes promo
         </h2>
 
         {promoCodes.length === 0 ? (
-          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
             Aucun code promo pour le moment{canManage ? " — créez-en un ci-dessus." : "."}
           </p>
         ) : (
@@ -88,24 +88,24 @@ export default async function CodesPromoPage() {
             {promoCodes.map((promoCode) => (
               <div
                 key={promoCode.id}
-                className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
+                className="rounded-xl border border-zinc-200 bg-white p-4"
               >
                 <div className="flex items-center justify-between gap-4">
-                  <span className="font-mono font-semibold text-zinc-950 dark:text-zinc-50">
+                  <span className="font-mono font-semibold text-zinc-950">
                     {promoCode.code}
                   </span>
                   <span
                     className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
                       promoCode.is_active
-                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
-                        : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                        ? "bg-emerald-50 text-emerald-700"
+                        : "bg-zinc-100 text-zinc-600"
                     }`}
                   >
                     {promoCode.is_active ? "Actif" : "Inactif"}
                   </span>
                 </div>
 
-                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-zinc-500 dark:text-zinc-400">
+                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-zinc-500">
                   <span>{discountLabel(promoCode)}</span>
                   <span>
                     {promoCode.uses_count} utilisation{promoCode.uses_count > 1 ? "s" : ""}

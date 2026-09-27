@@ -43,7 +43,6 @@ type NavSection = {
   key: string;
   label: string;
   Icon: IconComponent;
-  colorClass: string;
   items: NavEntry[];
 };
 
@@ -52,7 +51,6 @@ const NAV_SECTIONS: NavSection[] = [
     key: "dashboard",
     label: "Tableau de bord",
     Icon: Icons.GridIcon,
-    colorClass: "text-indigo-600 dark:text-indigo-400",
     items: [
       { kind: "link", label: "Vue globale", href: "/", Icon: Icons.GaugeIcon, hiddenForRoles: ["agent"] },
       { kind: "link", label: "Mon tableau de bord", href: "/mon-tableau-de-bord", Icon: Icons.LayoutGridIcon },
@@ -64,7 +62,6 @@ const NAV_SECTIONS: NavSection[] = [
     key: "operations",
     label: "Opérations",
     Icon: Icons.ClipboardListIcon,
-    colorClass: "text-blue-600 dark:text-blue-400",
     items: [
       {
         kind: "link",
@@ -140,7 +137,6 @@ const NAV_SECTIONS: NavSection[] = [
     key: "finances",
     label: "Finances",
     Icon: Icons.WalletIcon,
-    colorClass: "text-emerald-600 dark:text-emerald-400",
     items: [
       { kind: "link", label: "Paiements", href: "/paiements", Icon: Icons.CardIcon },
       { kind: "link", label: "Remboursements", href: "/remboursements", Icon: Icons.UndoIcon },
@@ -157,7 +153,6 @@ const NAV_SECTIONS: NavSection[] = [
     key: "clients",
     label: "Clients & agences",
     Icon: Icons.UsersIcon,
-    colorClass: "text-violet-600 dark:text-violet-400",
     items: [
       { kind: "link", label: "Clients", href: "/clients", Icon: Icons.UserIcon },
       { kind: "link", label: "Agences", href: "/agences", Icon: Icons.BuildingIcon },
@@ -169,7 +164,6 @@ const NAV_SECTIONS: NavSection[] = [
     key: "reports",
     label: "Rapports & audit",
     Icon: Icons.ReportIcon,
-    colorClass: "text-amber-600 dark:text-amber-400",
     items: [
       { kind: "link", label: "Rapports", href: "/rapports", Icon: Icons.ChartBarIcon },
       { kind: "link", label: "Journal d'audit", href: "/audit", Icon: Icons.ShieldCheckIcon, gate: "auditLog.view" },
@@ -189,7 +183,6 @@ const NAV_SECTIONS: NavSection[] = [
     key: "communication",
     label: "Communication",
     Icon: Icons.MegaphoneIcon,
-    colorClass: "text-sky-600 dark:text-sky-400",
     items: [
       // Même mécanisme que la cloche du header — un seul lien, jamais
       // deux entrées vers la même page.
@@ -201,7 +194,6 @@ const NAV_SECTIONS: NavSection[] = [
     key: "admin",
     label: "Administration",
     Icon: Icons.SettingsIcon,
-    colorClass: "text-zinc-500 dark:text-zinc-400",
     items: [
       { kind: "link", label: "Profil", href: "/profil", Icon: Icons.UserIcon },
       { kind: "link", label: "Abonnement", href: "/abonnement", Icon: Icons.ReceiptIcon },
@@ -221,11 +213,11 @@ const NAV_SECTIONS: NavSection[] = [
 // ancêtre, la variante ne s'active jamais et le libellé reste visible.
 const LABEL_CLASSES = "truncate group-data-[collapsed=true]/sidebar:hidden";
 const SECTION_SUMMARY_CLASSES =
-  "flex w-full items-center gap-2.5 cursor-pointer list-none rounded-md px-3 py-2 text-sm font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800";
+  "flex w-full items-center gap-2.5 cursor-pointer list-none rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-hover";
 const SUB_LINK_CLASSES =
-  "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800";
+  "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-hover";
 const SUB_GROUP_CLASSES =
-  "ml-3 mt-1 flex flex-col gap-1 border-l border-zinc-200 pl-3 dark:border-zinc-800 group-data-[collapsed=true]/sidebar:ml-0 group-data-[collapsed=true]/sidebar:border-l-0 group-data-[collapsed=true]/sidebar:pl-0";
+  "ml-3 mt-1 flex flex-col gap-1 border-l border-sidebar-border pl-3 group-data-[collapsed=true]/sidebar:ml-0 group-data-[collapsed=true]/sidebar:border-l-0 group-data-[collapsed=true]/sidebar:pl-0";
 
 function matchesQuery(label: string, query: string): boolean {
   return query === "" || label.toLowerCase().includes(query);
@@ -252,18 +244,18 @@ function ComingSoonItem({ leaf }: { leaf: NavLeaf }) {
   return (
     <div className="flex flex-col gap-0.5 px-3 py-2" title={leaf.label}>
       <div className="flex items-center justify-between gap-2">
-        <span className="flex min-w-0 items-center gap-2.5 text-sm text-zinc-400 dark:text-zinc-500">
+        <span className="flex min-w-0 items-center gap-2.5 text-sm text-sidebar-muted">
           <leaf.Icon className="h-4 w-4 shrink-0" aria-hidden />
           <span className={LABEL_CLASSES}>{leaf.label}</span>
         </span>
         <span
-          className={`inline-flex shrink-0 items-center rounded-full border border-zinc-200 px-2 py-0.5 text-[10px] font-semibold text-zinc-400 dark:border-zinc-700 dark:text-zinc-500 ${LABEL_CLASSES}`}
+          className={`inline-flex shrink-0 items-center rounded-full border border-sidebar-border px-2 py-0.5 text-[10px] font-semibold text-sidebar-muted ${LABEL_CLASSES}`}
         >
           Bientôt disponible
         </span>
       </div>
       {leaf.subtitle ? (
-        <span className={`pl-6 text-xs text-zinc-400 dark:text-zinc-500 ${LABEL_CLASSES}`}>{leaf.subtitle}</span>
+        <span className={`pl-6 text-xs text-sidebar-muted ${LABEL_CLASSES}`}>{leaf.subtitle}</span>
       ) : null}
     </div>
   );
@@ -283,7 +275,7 @@ function LinkItem({ leaf, badgeCount }: { leaf: NavLeaf; badgeCount: number }) {
           </span>
         ) : null}
       </Link>
-      {leaf.note ? <span className={`px-3 text-xs text-zinc-400 dark:text-zinc-500 ${LABEL_CLASSES}`}>{leaf.note}</span> : null}
+      {leaf.note ? <span className={`px-3 text-xs text-sidebar-muted ${LABEL_CLASSES}`}>{leaf.note}</span> : null}
     </div>
   );
 }
@@ -360,7 +352,7 @@ function SectionDetails({
     if (!(sectionLabelMatches || matchesQuery(onlyLink.label, query))) return null;
     return (
       <Link href={onlyLink.href!} title={onlyLink.label} className={SECTION_SUMMARY_CLASSES}>
-        <section.Icon className={`h-5 w-5 shrink-0 ${section.colorClass}`} aria-hidden />
+        <section.Icon className="h-5 w-5 shrink-0 text-sidebar-foreground" aria-hidden />
         <span className={LABEL_CLASSES}>{onlyLink.label}</span>
       </Link>
     );
@@ -376,7 +368,7 @@ function SectionDetails({
   return (
     <details className="group" open={query !== "" ? true : undefined}>
       <summary className={SECTION_SUMMARY_CLASSES} title={section.label}>
-        <section.Icon className={`h-5 w-5 shrink-0 ${section.colorClass}`} aria-hidden />
+        <section.Icon className="h-5 w-5 shrink-0 text-sidebar-foreground" aria-hidden />
         <span className={LABEL_CLASSES}>{section.label}</span>
       </summary>
       <div className={SUB_GROUP_CLASSES}>
@@ -431,7 +423,7 @@ export function SidebarLinks({
     <div className="flex flex-col gap-1">
       <div className="relative mb-1 group-data-[collapsed=true]/sidebar:hidden">
         <Icons.SearchIcon
-          className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400"
+          className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-sidebar-muted"
           aria-hidden
         />
         <input
@@ -439,7 +431,7 @@ export function SidebarLinks({
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Rechercher dans le menu…"
-          className="w-full rounded-md border border-zinc-200 bg-white py-1.5 pl-8 pr-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+          className="w-full rounded-md border border-sidebar-border bg-sidebar-hover py-1.5 pl-8 pr-2 text-sm text-sidebar-foreground placeholder:text-sidebar-muted focus:border-sidebar-muted focus:outline-none"
         />
       </div>
       {NAV_SECTIONS.map((section) => (

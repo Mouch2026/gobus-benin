@@ -5,15 +5,15 @@ import Link from "next/link";
 export function StatCard({ label, value, href }: { label: string; value: React.ReactNode; href?: string }) {
   const content = (
     <>
-      <span className="text-sm text-zinc-500 dark:text-zinc-400">{label}</span>
-      <span className="font-display text-2xl font-semibold text-zinc-950 dark:text-zinc-50">
+      <span className="text-sm text-zinc-500">{label}</span>
+      <span className="font-display text-2xl font-semibold text-zinc-950">
         {value}
       </span>
     </>
   );
 
   const className =
-    "flex flex-col gap-1 rounded-xl border border-zinc-200 bg-white p-6 transition-colors hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700";
+    "flex flex-col gap-1 rounded-xl border border-zinc-200 bg-white p-6 transition-colors hover:border-zinc-300";
 
   return href ? (
     <Link href={href} className={className}>

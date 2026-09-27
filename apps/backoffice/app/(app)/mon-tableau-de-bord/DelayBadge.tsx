@@ -5,7 +5,7 @@ export function DelayBadge({ delayMinutes }: { delayMinutes: number | null }) {
   if (!delayMinutes) return null;
 
   return (
-    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
       Retard signalé : {delayMinutes} min
     </span>
   );

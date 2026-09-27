@@ -79,17 +79,17 @@ export default async function ClientsPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
-      <h2 className="mb-4 text-xl font-semibold text-zinc-950 dark:text-zinc-50">Clients</h2>
+      <h2 className="mb-4 text-xl font-semibold text-zinc-950">Clients</h2>
 
       {clients.length === 0 ? (
-        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
           Aucun client pour le moment.
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white">
           <table className="w-full min-w-[720px] border-collapse text-left text-sm">
             <thead>
-              <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+              <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500">
                 <th className="px-4 py-3 font-medium">Nom</th>
                 <th className="px-4 py-3 font-medium">Téléphone</th>
                 <th className="px-4 py-3 font-medium">Email</th>
@@ -101,19 +101,19 @@ export default async function ClientsPage() {
               {clients.map((client) => (
                 <tr
                   key={client.email}
-                  className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
+                  className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50"
                 >
-                  <td className="px-4 py-3 font-medium text-zinc-950 dark:text-zinc-50">
+                  <td className="px-4 py-3 font-medium text-zinc-950">
                     {client.fullName}
                   </td>
-                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                  <td className="px-4 py-3 text-zinc-700">
                     {client.phone ?? "—"}
                   </td>
-                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{client.email}</td>
-                  <td className="px-4 py-3 tabular-nums text-zinc-700 dark:text-zinc-300">
+                  <td className="px-4 py-3 text-zinc-700">{client.email}</td>
+                  <td className="px-4 py-3 tabular-nums text-zinc-700">
                     {client.bookingCount}
                   </td>
-                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                  <td className="px-4 py-3 text-zinc-700">
                     {formatDepartureDateTime(client.lastTripAt)}
                   </td>
                 </tr>

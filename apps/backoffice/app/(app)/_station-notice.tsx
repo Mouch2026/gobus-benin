@@ -10,7 +10,7 @@ export function ShowAllStationsButton({ label = "Voir toutes les gares" }: { lab
       <input type="hidden" name="stationId" value={ALL_STATIONS} />
       <button
         type="submit"
-        className="font-medium text-zinc-950 underline hover:no-underline dark:text-zinc-50"
+        className="font-medium text-zinc-950 underline hover:no-underline"
       >
         {label}
       </button>
@@ -28,7 +28,7 @@ export function OrphanTripsNotice({ count }: { count: number }) {
   const plural = count > 1 ? "s" : "";
 
   return (
-    <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">
+    <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
       {count} trajet{plural} non affiché{plural} : gare non renseignée sur la route.{" "}
       <ShowAllStationsButton />
     </div>
@@ -39,7 +39,7 @@ export function OrphanRouteBadge() {
   return (
     <span
       title="Aucune gare ne correspond aux villes de cette route — ce trajet n'apparaît sous aucune gare précise."
-      className="ml-2 inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-950 dark:text-amber-200"
+      className="ml-2 inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900"
     >
       gare non renseignée
     </span>

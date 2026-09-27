@@ -25,10 +25,10 @@ export default async function NotificationsPage() {
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4 px-6 py-8">
-      <h1 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">Notifications</h1>
+      <h1 className="text-lg font-semibold text-zinc-950">Notifications</h1>
 
       {notifications.length === 0 ? (
-        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
           Aucune notification pour le moment.
         </p>
       ) : (
@@ -36,15 +36,15 @@ export default async function NotificationsPage() {
           {notifications.map((notification) => (
             <li
               key={notification.id}
-              className="flex flex-col gap-1 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
+              className="flex flex-col gap-1 rounded-xl border border-zinc-200 bg-white p-4"
             >
               <div className="flex items-center justify-between gap-4">
-                <span className="font-medium text-zinc-950 dark:text-zinc-50">
+                <span className="font-medium text-zinc-950">
                   {notification.title}
                 </span>
                 <span className="flex shrink-0 items-center gap-2">
                   {notification.kind === "state_alert" ? (
-                    <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+                    <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600">
                       En cours
                     </span>
                   ) : null}
@@ -56,15 +56,15 @@ export default async function NotificationsPage() {
                 </span>
               </div>
               {notification.body ? (
-                <span className="text-sm text-zinc-500 dark:text-zinc-400">{notification.body}</span>
+                <span className="text-sm text-zinc-500">{notification.body}</span>
               ) : null}
-              <span className="text-xs text-zinc-400 dark:text-zinc-500">
+              <span className="text-xs text-zinc-400">
                 {formatDate(notification.createdAt)}
               </span>
               {notification.actionHref ? (
                 <Link
                   href={notification.actionHref}
-                  className="mt-1 text-sm font-medium text-zinc-950 hover:underline dark:text-zinc-50"
+                  className="mt-1 text-sm font-medium text-zinc-950 hover:underline"
                 >
                   Voir →
                 </Link>

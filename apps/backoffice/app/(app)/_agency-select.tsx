@@ -22,7 +22,7 @@ export function AgencySelect({
 
   return (
     <form action={setSelectedAgency} className="flex items-center gap-2">
-      <label htmlFor="agencyId" className="text-sm text-zinc-500 dark:text-zinc-400">
+      <label htmlFor="agencyId" className="text-sm text-zinc-500">
         Agence :
       </label>
       {/* key : voir le commentaire équivalent dans _station-select.tsx —
@@ -34,7 +34,7 @@ export function AgencySelect({
         name="agencyId"
         defaultValue={selectedAgencyId}
         onChange={(e) => e.currentTarget.form?.requestSubmit()}
-        className="rounded-lg border border-zinc-300 bg-white px-2 py-1 text-sm text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+        className="rounded-lg border border-zinc-300 bg-white px-2 py-1 text-sm text-zinc-700"
       >
         {agencies.map((agency) => (
           <option key={agency.id} value={agency.id}>

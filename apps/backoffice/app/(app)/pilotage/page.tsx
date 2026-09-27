@@ -54,7 +54,7 @@ export default async function PilotagePage(props: PageProps<"/pilotage">) {
   if (!can(access.role, "ownerDashboard.view")) {
     return (
       <div className="mx-auto max-w-xl px-6 py-8">
-        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
           Ce tableau de bord est réservé au propriétaire de la compagnie.
         </p>
       </div>
@@ -120,13 +120,13 @@ export default async function PilotagePage(props: PageProps<"/pilotage">) {
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">Pilotage</h1>
+        <h1 className="text-lg font-semibold text-zinc-950">Pilotage</h1>
         {agencies.length >= 1 && selectedAgency ? (
           <div className="flex flex-wrap items-center gap-3">
             <AgencySelect agencies={agencies} selectedAgencyId={selectedAgency.id} />
             <Link
               href="/mon-tableau-de-bord"
-              className="text-sm font-medium text-zinc-950 hover:underline dark:text-zinc-50"
+              className="text-sm font-medium text-zinc-950 hover:underline"
             >
               Voir le tableau de bord de cette agence →
             </Link>
@@ -141,7 +141,7 @@ export default async function PilotagePage(props: PageProps<"/pilotage">) {
             <span className="flex items-baseline gap-2">
               {bookingsToday.length}
               <span
-                className={`text-sm font-medium ${bookingsDelta >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}
+                className={`text-sm font-medium ${bookingsDelta >= 0 ? "text-emerald-600" : "text-red-600"}`}
               >
                 {bookingsDelta >= 0 ? "+" : ""}
                 {bookingsDelta} vs hier
@@ -155,7 +155,7 @@ export default async function PilotagePage(props: PageProps<"/pilotage">) {
             <span className="flex flex-col">
               {formatFcfa(revenueToday)}
               <span
-                className={`text-sm font-medium ${revenueDelta >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}
+                className={`text-sm font-medium ${revenueDelta >= 0 ? "text-emerald-600" : "text-red-600"}`}
               >
                 {revenueDelta >= 0 ? "+" : ""}
                 {formatFcfa(revenueDelta)} vs hier
@@ -171,9 +171,9 @@ export default async function PilotagePage(props: PageProps<"/pilotage">) {
       </div>
 
       <section>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-950 dark:text-zinc-50">Alertes en temps réel</h2>
+        <h2 className="mb-4 text-lg font-semibold text-zinc-950">Alertes en temps réel</h2>
         {alerts.length === 0 ? (
-          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
             Aucune alerte pour le moment.
           </p>
         ) : (
@@ -181,10 +181,10 @@ export default async function PilotagePage(props: PageProps<"/pilotage">) {
             {alerts.map((notification) => (
               <li
                 key={notification.id}
-                className="flex flex-col gap-1 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
+                className="flex flex-col gap-1 rounded-xl border border-zinc-200 bg-white p-4"
               >
                 <div className="flex items-center justify-between gap-4">
-                  <span className="font-medium text-zinc-950 dark:text-zinc-50">{notification.title}</span>
+                  <span className="font-medium text-zinc-950">{notification.title}</span>
                   <span
                     className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${NOTIFICATION_LEVEL_STYLES[notification.level]}`}
                   >
@@ -192,15 +192,15 @@ export default async function PilotagePage(props: PageProps<"/pilotage">) {
                   </span>
                 </div>
                 {notification.body ? (
-                  <span className="text-sm text-zinc-500 dark:text-zinc-400">{notification.body}</span>
+                  <span className="text-sm text-zinc-500">{notification.body}</span>
                 ) : null}
-                <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                <span className="text-xs text-zinc-400">
                   {formatNotificationDate(notification.createdAt)}
                 </span>
                 {notification.actionHref ? (
                   <Link
                     href={notification.actionHref}
-                    className="mt-1 text-sm font-medium text-zinc-950 hover:underline dark:text-zinc-50"
+                    className="mt-1 text-sm font-medium text-zinc-950 hover:underline"
                   >
                     Voir →
                   </Link>
@@ -212,12 +212,12 @@ export default async function PilotagePage(props: PageProps<"/pilotage">) {
       </section>
 
       <section>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+        <h2 className="mb-4 text-lg font-semibold text-zinc-950">
           Réservations — 7 derniers jours
         </h2>
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="rounded-xl border border-zinc-200 bg-white p-6">
           {weeklyChartData.length === 0 ? (
-            <p className="text-zinc-500 dark:text-zinc-400">Aucune réservation confirmée cette semaine.</p>
+            <p className="text-zinc-500">Aucune réservation confirmée cette semaine.</p>
           ) : (
             <BookingsChart data={weeklyChartData} />
           )}
@@ -225,30 +225,30 @@ export default async function PilotagePage(props: PageProps<"/pilotage">) {
       </section>
 
       <section>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+        <h2 className="mb-4 text-lg font-semibold text-zinc-950">
           Répartition des paiements (30 derniers jours)
         </h2>
         {methodTotalFcfa === 0 ? (
-          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
             Aucun paiement approuvé sur cette période.
           </p>
         ) : (
-          <div className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white p-6">
             {(Object.keys(PAYMENT_METHOD_LABELS) as (keyof typeof methodBreakdown)[]).map((method) => {
               const { amountFcfa, count } = methodBreakdown[method];
               const share = methodTotalFcfa > 0 ? Math.round((amountFcfa / methodTotalFcfa) * 100) : 0;
               return (
                 <div key={method} className="flex flex-col gap-1">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium text-zinc-950 dark:text-zinc-50">
+                    <span className="font-medium text-zinc-950">
                       {PAYMENT_METHOD_LABELS[method]}
                     </span>
-                    <span className="text-zinc-500 dark:text-zinc-400">
+                    <span className="text-zinc-500">
                       {formatFcfa(amountFcfa)} ({count}) · {share} %
                     </span>
                   </div>
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-                    <div className="h-full rounded-full bg-zinc-950 dark:bg-white" style={{ width: `${share}%` }} />
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100">
+                    <div className="h-full rounded-full bg-zinc-950" style={{ width: `${share}%` }} />
                   </div>
                 </div>
               );
@@ -258,11 +258,11 @@ export default async function PilotagePage(props: PageProps<"/pilotage">) {
       </section>
 
       <section>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+        <h2 className="mb-4 text-lg font-semibold text-zinc-950">
           Top 5 itinéraires (30 derniers jours)
         </h2>
         {topRoutes.length === 0 ? (
-          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
             Aucune réservation confirmée sur cette période.
           </p>
         ) : (
@@ -270,12 +270,12 @@ export default async function PilotagePage(props: PageProps<"/pilotage">) {
             {topRoutes.map((route, index) => (
               <li
                 key={`${route.originCity}-${route.destinationCity}`}
-                className="flex items-center justify-between gap-4 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-800 dark:bg-zinc-900"
+                className="flex items-center justify-between gap-4 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm"
               >
-                <span className="text-zinc-950 dark:text-zinc-50">
+                <span className="text-zinc-950">
                   {index + 1}. {route.originCity} → {route.destinationCity}
                 </span>
-                <span className="text-zinc-500 dark:text-zinc-400">{route.count} réservation{route.count > 1 ? "s" : ""}</span>
+                <span className="text-zinc-500">{route.count} réservation{route.count > 1 ? "s" : ""}</span>
               </li>
             ))}
           </ol>
@@ -284,25 +284,25 @@ export default async function PilotagePage(props: PageProps<"/pilotage">) {
 
       <section>
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">Calendrier des trajets</h2>
+          <h2 className="text-lg font-semibold text-zinc-950">Calendrier des trajets</h2>
           <div className="flex items-center gap-3">
             <Link
               href={`/pilotage?month=${prevMonth}`}
-              className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
             >
               ← Mois précédent
             </Link>
-            <span className="text-sm font-medium capitalize text-zinc-950 dark:text-zinc-50">{monthLabel(month)}</span>
+            <span className="text-sm font-medium capitalize text-zinc-950">{monthLabel(month)}</span>
             <Link
               href={`/pilotage?month=${nextMonth}`}
-              className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
             >
               Mois suivant →
             </Link>
           </div>
         </div>
-        <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <div className="rounded-xl border border-zinc-200 bg-white p-4">
+          <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-zinc-500">
             {WEEKDAY_LABELS.map((w) => (
               <span key={w}>{w}</span>
             ))}
@@ -317,8 +317,8 @@ export default async function PilotagePage(props: PageProps<"/pilotage">) {
                       key={day.date}
                       className={`relative flex h-12 flex-col items-center justify-start gap-1 rounded p-1 text-xs font-medium ${day.isCurrentMonth ? "" : "opacity-40"}`}
                     >
-                      <span className="text-zinc-900 dark:text-zinc-100">{day.dayOfMonth}</span>
-                      {hasTrip ? <span className="h-1.5 w-1.5 rounded-full bg-zinc-950 dark:bg-white" /> : null}
+                      <span className="text-zinc-900">{day.dayOfMonth}</span>
+                      {hasTrip ? <span className="h-1.5 w-1.5 rounded-full bg-zinc-950" /> : null}
                     </div>
                   );
                 })}
@@ -329,18 +329,18 @@ export default async function PilotagePage(props: PageProps<"/pilotage">) {
       </section>
 
       <section>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+        <h2 className="mb-4 text-lg font-semibold text-zinc-950">
           5 réservations les plus récentes
         </h2>
         {recentBookings.length === 0 ? (
-          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
             Aucune réservation pour le moment.
           </p>
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white">
             <table className="w-full min-w-[600px] border-collapse text-left text-sm">
               <thead>
-                <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+                <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500">
                   <th className="px-4 py-3 font-medium">Réservation</th>
                   <th className="px-4 py-3 font-medium">Montant</th>
                   <th className="px-4 py-3 font-medium">Statut</th>
@@ -351,23 +351,23 @@ export default async function PilotagePage(props: PageProps<"/pilotage">) {
                 {recentBookings.map((booking) => (
                   <tr
                     key={booking.id}
-                    className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
+                    className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50"
                   >
-                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{booking.booking_reference}</td>
-                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                    <td className="px-4 py-3 text-zinc-700">{booking.booking_reference}</td>
+                    <td className="px-4 py-3 text-zinc-700">
                       {formatFcfa(booking.total_price_fcfa)}
                     </td>
                     <td className="px-4 py-3">
                       <span
                         className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
                           BOOKING_STATUS_STYLES[booking.status] ??
-                          "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                          "bg-zinc-100 text-zinc-700"
                         }`}
                       >
                         {BOOKING_STATUS_LABELS[booking.status] ?? booking.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                    <td className="px-4 py-3 text-zinc-700">
                       {formatDepartureDateTime(booking.created_at)}
                     </td>
                   </tr>
@@ -379,23 +379,23 @@ export default async function PilotagePage(props: PageProps<"/pilotage">) {
       </section>
 
       <section>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-950 dark:text-zinc-50">Actions rapides</h2>
+        <h2 className="mb-4 text-lg font-semibold text-zinc-950">Actions rapides</h2>
         <div className="flex flex-wrap gap-3">
           <Link
             href="/reservations/nouvelle"
-            className="rounded-lg bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+            className="rounded-lg bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
           >
             + Nouvelle réservation
           </Link>
           <a
             href={`/reservations/export?from=${getBeninDateString()}&to=${getBeninDateString()}`}
-            className="rounded-lg border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="rounded-lg border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100"
           >
             ⭳ Export du jour
           </a>
           <Link
             href="/trajets/nouveau"
-            className="rounded-lg border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="rounded-lg border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100"
           >
             Créer un itinéraire
           </Link>

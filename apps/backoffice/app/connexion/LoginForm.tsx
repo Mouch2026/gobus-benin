@@ -13,7 +13,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
       <input type="hidden" name="redirectTo" value={redirectTo} />
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="email" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label htmlFor="email" className="text-sm font-medium text-zinc-700">
           Email
         </label>
         <input
@@ -22,12 +22,12 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
           type="email"
           required
           autoComplete="email"
-          className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-950 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
+          className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-950"
         />
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="password" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label htmlFor="password" className="text-sm font-medium text-zinc-700">
           Mot de passe
         </label>
         <input
@@ -36,12 +36,12 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
           type="password"
           required
           autoComplete="current-password"
-          className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-950 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
+          className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-950"
         />
       </div>
 
       {state.error ? (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+        <p className="text-sm text-red-600" role="alert">
           {state.error}
         </p>
       ) : null}
@@ -49,7 +49,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
       <button
         type="submit"
         disabled={pending}
-        className="mt-2 rounded-lg bg-zinc-950 px-4 py-2.5 font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+        className="mt-2 rounded-lg bg-zinc-950 px-4 py-2.5 font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {pending ? "Connexion..." : "Se connecter"}
       </button>

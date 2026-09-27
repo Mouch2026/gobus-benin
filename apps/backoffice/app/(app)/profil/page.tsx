@@ -42,33 +42,33 @@ export default async function ProfilPage() {
 
   return (
     <div className="mx-auto max-w-xl px-6 py-8">
-      <h1 className="mb-6 text-lg font-semibold text-zinc-950 dark:text-zinc-50">Profil</h1>
+      <h1 className="mb-6 text-lg font-semibold text-zinc-950">Profil</h1>
 
-      <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="rounded-xl border border-zinc-200 bg-white p-6">
         {profile ? (
           <ProfilForm company={profile} />
         ) : (
-          <p className="text-zinc-500 dark:text-zinc-400">
+          <p className="text-zinc-500">
             Impossible de charger le profil pour le moment.
           </p>
         )}
       </div>
 
-      <h2 className="mb-6 mt-8 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+      <h2 className="mb-6 mt-8 text-lg font-semibold text-zinc-950">
         Changer le mot de passe
       </h2>
-      <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="rounded-xl border border-zinc-200 bg-white p-6">
         <PasswordForm />
       </div>
 
-      <h2 className="mb-6 mt-8 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+      <h2 className="mb-6 mt-8 text-lg font-semibold text-zinc-950">
         Changer le code PIN
       </h2>
-      <p className="mb-4 -mt-4 text-sm text-zinc-500 dark:text-zinc-400">
+      <p className="mb-4 -mt-4 text-sm text-zinc-500">
         Utilisé pour déverrouiller votre poste après une inactivité, ou pour laisser un collègue
         reprendre la main dessus.
       </p>
-      <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="rounded-xl border border-zinc-200 bg-white p-6">
         <PinForm />
       </div>
     </div>

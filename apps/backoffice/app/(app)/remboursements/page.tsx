@@ -36,8 +36,8 @@ export default async function RemboursementsPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
-      <h2 className="mb-2 text-xl font-semibold text-zinc-950 dark:text-zinc-50">Remboursements</h2>
-      <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+      <h2 className="mb-2 text-xl font-semibold text-zinc-950">Remboursements</h2>
+      <p className="mb-4 text-sm text-zinc-500">
         Avoirs en attente de remboursement pour vos voyageurs. Cette page est informative : aucun
         paiement n&apos;est déclenché automatiquement, marquez un avoir comme traité une fois le
         remboursement effectué de votre côté.

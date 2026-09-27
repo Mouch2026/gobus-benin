@@ -121,7 +121,7 @@ export default async function DashboardPage(props: PageProps<"/">) {
       {swapped && swapFrom && swapTo ? (
         <p
           role="status"
-          className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200"
+          className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
         >
           Session de {swapFrom} fermée. Bienvenue {swapTo} — pensez à ouvrir votre propre session
           de caisse si nécessaire.
@@ -131,7 +131,7 @@ export default async function DashboardPage(props: PageProps<"/">) {
       {pinForgotten ? (
         <p
           role="status"
-          className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200"
+          className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
         >
           Reconnecté avec succès.{" "}
           <Link href="/profil" className="font-medium underline underline-offset-2">
@@ -142,17 +142,17 @@ export default async function DashboardPage(props: PageProps<"/">) {
       ) : null}
 
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">Dashboard</h1>
+        <h1 className="text-lg font-semibold text-zinc-950">Dashboard</h1>
 
-        <div className="flex gap-1 rounded-lg border border-zinc-200 p-1 dark:border-zinc-800">
+        <div className="flex gap-1 rounded-lg border border-zinc-200 p-1">
           {(Object.keys(PERIOD_LABELS) as Period[]).map((option) => (
             <Link
               key={option}
               href={`/?period=${option}`}
               className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                 period === option
-                  ? "bg-zinc-950 text-white dark:bg-white dark:text-zinc-950"
-                  : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                  ? "bg-zinc-950 text-white"
+                  : "text-zinc-600 hover:bg-zinc-100"
               }`}
             >
               {PERIOD_LABELS[option]}
@@ -173,12 +173,12 @@ export default async function DashboardPage(props: PageProps<"/">) {
       </div>
 
       <section>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+        <h2 className="mb-4 text-lg font-semibold text-zinc-950">
           Réservations par jour — {PERIOD_LABELS[period]}
         </h2>
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="rounded-xl border border-zinc-200 bg-white p-6">
           {chartData.length === 0 ? (
-            <p className="text-zinc-500 dark:text-zinc-400">
+            <p className="text-zinc-500">
               Aucune réservation confirmée sur cette période.
             </p>
           ) : (
@@ -188,17 +188,17 @@ export default async function DashboardPage(props: PageProps<"/">) {
       </section>
 
       <section>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-950 dark:text-zinc-50">Actions rapides</h2>
+        <h2 className="mb-4 text-lg font-semibold text-zinc-950">Actions rapides</h2>
         <div className="flex flex-wrap gap-3">
           <Link
             href="/reservations/nouvelle"
-            className="rounded-lg bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+            className="rounded-lg bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
           >
             + Nouvelle réservation
           </Link>
           <a
             href={`/reservations/export?from=${getBeninDateString()}&to=${getBeninDateString()}`}
-            className="rounded-lg border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="rounded-lg border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100"
           >
             ⭳ Export du jour
           </a>
@@ -207,19 +207,19 @@ export default async function DashboardPage(props: PageProps<"/">) {
       </section>
 
       <section>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+        <h2 className="mb-4 text-lg font-semibold text-zinc-950">
           5 réservations les plus récentes
         </h2>
 
         {recentBookings.length === 0 ? (
-          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
             Aucune réservation pour le moment.
           </p>
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white">
             <table className="w-full min-w-[600px] border-collapse text-left text-sm">
               <thead>
-                <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+                <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500">
                   <th className="px-4 py-3 font-medium">Réservation</th>
                   <th className="px-4 py-3 font-medium">Montant</th>
                   <th className="px-4 py-3 font-medium">Statut</th>
@@ -230,25 +230,25 @@ export default async function DashboardPage(props: PageProps<"/">) {
                 {recentBookings.map((booking) => (
                   <tr
                     key={booking.id}
-                    className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
+                    className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50"
                   >
-                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                    <td className="px-4 py-3 text-zinc-700">
                       {booking.booking_reference}
                     </td>
-                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                    <td className="px-4 py-3 text-zinc-700">
                       {formatFcfa(booking.total_price_fcfa)}
                     </td>
                     <td className="px-4 py-3">
                       <span
                         className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
                           BOOKING_STATUS_STYLES[booking.status] ??
-                          "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                          "bg-zinc-100 text-zinc-700"
                         }`}
                       >
                         {BOOKING_STATUS_LABELS[booking.status] ?? booking.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                    <td className="px-4 py-3 text-zinc-700">
                       {formatDepartureDateTime(booking.created_at)}
                     </td>
                   </tr>

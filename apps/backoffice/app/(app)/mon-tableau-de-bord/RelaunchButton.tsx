@@ -9,7 +9,7 @@ export function RelaunchButton({ paymentId, disabled }: { paymentId: string; dis
   const [state, formAction, pending] = useActionState(relaunchPaymentLink, initialState);
 
   if (state.success) {
-    return <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">Relancé.</span>;
+    return <span className="text-xs font-medium text-emerald-600">Relancé.</span>;
   }
 
   return (
@@ -19,12 +19,12 @@ export function RelaunchButton({ paymentId, disabled }: { paymentId: string; dis
         type="submit"
         disabled={disabled || pending}
         title={disabled ? "Lien expiré — ne peut plus être relancé" : undefined}
-        className="text-xs font-medium text-zinc-700 hover:underline disabled:cursor-not-allowed disabled:text-zinc-400 disabled:no-underline dark:text-zinc-300 dark:disabled:text-zinc-600"
+        className="text-xs font-medium text-zinc-700 hover:underline disabled:cursor-not-allowed disabled:text-zinc-400 disabled:no-underline"
       >
         {pending ? "Envoi..." : "Relancer"}
       </button>
       {state.error ? (
-        <span className="text-xs text-red-600 dark:text-red-400">{state.error}</span>
+        <span className="text-xs text-red-600">{state.error}</span>
       ) : null}
     </form>
   );

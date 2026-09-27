@@ -83,10 +83,10 @@ export default async function ReservationsPage(props: PageProps<"/reservations">
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-        <h2 className="text-xl font-semibold text-zinc-950 dark:text-zinc-50">Réservations</h2>
+        <h2 className="text-xl font-semibold text-zinc-950">Réservations</h2>
         <a
           href={exportHref}
-          className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100"
         >
           ⭳ Exporter
         </a>
@@ -94,7 +94,7 @@ export default async function ReservationsPage(props: PageProps<"/reservations">
 
       <form
         method="get"
-        className="mb-6 flex flex-wrap items-end gap-3 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
+        className="mb-6 flex flex-wrap items-end gap-3 rounded-xl border border-zinc-200 bg-white p-4"
       >
         <div className="flex min-w-[180px] flex-1 flex-col gap-1.5">
           <label htmlFor="q" className={LABEL_CLASSES}>
@@ -161,13 +161,13 @@ export default async function ReservationsPage(props: PageProps<"/reservations">
         <div className="flex gap-2">
           <button
             type="submit"
-            className="rounded-lg bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+            className="rounded-lg bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
           >
             Filtrer
           </button>
           <Link
             href="/reservations"
-            className="rounded-lg border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="rounded-lg border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100"
           >
             Réinitialiser
           </Link>
@@ -175,16 +175,16 @@ export default async function ReservationsPage(props: PageProps<"/reservations">
       </form>
 
       {bookings.length === 0 ? (
-        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
           {allBookings.length === 0
             ? "Aucune réservation pour le moment."
             : "Aucune réservation ne correspond à ces filtres."}
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white">
           <table className="w-full min-w-[960px] border-collapse text-left text-sm">
             <thead>
-              <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+              <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500">
                 <th className="px-4 py-3 font-medium">Réf</th>
                 <th className="px-4 py-3 font-medium">Client</th>
                 <th className="px-4 py-3 font-medium">Voyage</th>
@@ -211,21 +211,21 @@ export default async function ReservationsPage(props: PageProps<"/reservations">
                 return (
                   <tr
                     key={booking.booking_id}
-                    className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
+                    className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50"
                   >
-                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                    <td className="px-4 py-3 text-zinc-700">
                       {booking.booking_reference}
                     </td>
-                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                    <td className="px-4 py-3 text-zinc-700">
                       {booking.passenger_names || "—"}
                     </td>
-                    <td className="px-4 py-3 font-medium text-zinc-950 dark:text-zinc-50">
+                    <td className="px-4 py-3 font-medium text-zinc-950">
                       {booking.origin_city} → {booking.destination_city}
                     </td>
-                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                    <td className="px-4 py-3 text-zinc-700">
                       {formatDepartureDateTime(booking.departure_at)}
                     </td>
-                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                    <td className="px-4 py-3 text-zinc-700">
                       {booking.latest_payment_status
                         ? PAYMENT_STATUS_LABELS[booking.latest_payment_status] ??
                           booking.latest_payment_status
@@ -242,19 +242,19 @@ export default async function ReservationsPage(props: PageProps<"/reservations">
                       <div className="flex flex-wrap items-center gap-3">
                         <Link
                           href={`/reservations/${booking.booking_id}`}
-                          className="text-xs font-medium text-zinc-700 hover:underline dark:text-zinc-300"
+                          className="text-xs font-medium text-zinc-700 hover:underline"
                         >
                           Voir
                         </Link>
                         <Link
                           href={`/reservations/${booking.booking_id}/modifier`}
-                          className="text-xs font-medium text-zinc-700 hover:underline dark:text-zinc-300"
+                          className="text-xs font-medium text-zinc-700 hover:underline"
                         >
                           Modifier
                         </Link>
                         <Link
                           href={`/reservations/${booking.booking_id}/imprimer`}
-                          className="text-xs font-medium text-zinc-700 hover:underline dark:text-zinc-300"
+                          className="text-xs font-medium text-zinc-700 hover:underline"
                         >
                           Imprimer
                         </Link>
@@ -262,7 +262,7 @@ export default async function ReservationsPage(props: PageProps<"/reservations">
                           hasPendingCancellation ? (
                             <Link
                               href={`/reservations/${booking.booking_id}`}
-                              className="text-xs font-medium text-amber-700 hover:underline dark:text-amber-400"
+                              className="text-xs font-medium text-amber-700 hover:underline"
                             >
                               En attente de validation…
                             </Link>

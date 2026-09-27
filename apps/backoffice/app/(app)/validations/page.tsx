@@ -68,7 +68,7 @@ export default async function ValidationsPage() {
   if (!can(result.role, "supervisorApprovals.manage")) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-8">
-        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
           Réservé au propriétaire ou à un responsable d&apos;agence.
         </p>
       </div>
@@ -86,14 +86,14 @@ export default async function ValidationsPage() {
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-8">
-      <h1 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">Validations en attente</h1>
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+      <h1 className="text-lg font-semibold text-zinc-950">Validations en attente</h1>
+      <p className="text-sm text-zinc-500">
         Remises de plus de 10% et annulations à moins de 2h du départ demandées à distance par un
         agent — expirent automatiquement après 10 minutes sans réponse.
       </p>
 
       {requests.length === 0 ? (
-        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
           Aucune demande en attente.
         </p>
       ) : (
@@ -103,21 +103,21 @@ export default async function ValidationsPage() {
             return (
               <div
                 key={req.id}
-                className="flex flex-col gap-2 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
+                className="flex flex-col gap-2 rounded-xl border border-zinc-200 bg-white p-4"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-medium text-zinc-950 dark:text-zinc-50">
+                  <span className="font-medium text-zinc-950">
                     {req.action_type === "discount"
                       ? `Remise ${req.discount_percent}% (${formatFcfa(req.discount_amount_fcfa ?? 0)})`
                       : "Annulation"}{" "}
                     — {req.bookings?.booking_reference ?? "réservation inconnue"}
                   </span>
-                  <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                  <span className="text-xs text-zinc-500">
                     Demandé par {requesterNames[req.requested_by] ?? "Agent"}
                   </span>
                 </div>
                 {trip ? (
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  <p className="text-sm text-zinc-500">
                     {trip.routes.origin_city} → {trip.routes.destination_city} — départ{" "}
                     {formatDepartureDateTime(trip.departure_at)}
                   </p>

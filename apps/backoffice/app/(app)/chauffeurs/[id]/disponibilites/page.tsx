@@ -52,10 +52,10 @@ export default async function DriverAvailabilityPage(props: PageProps<"/chauffeu
   if (!driver) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-8">
-        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
           Ce chauffeur n&apos;existe pas ou ne vous appartient pas.
         </p>
-        <Link href="/chauffeurs" className="mt-4 inline-block font-medium text-zinc-950 hover:underline dark:text-zinc-50">
+        <Link href="/chauffeurs" className="mt-4 inline-block font-medium text-zinc-950 hover:underline">
           ← Retour aux chauffeurs
         </Link>
       </div>
@@ -79,10 +79,10 @@ export default async function DriverAvailabilityPage(props: PageProps<"/chauffeu
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-8">
       <div>
-        <Link href={`/chauffeurs/${id}`} className="text-sm font-medium text-zinc-500 hover:underline dark:text-zinc-400">
+        <Link href={`/chauffeurs/${id}`} className="text-sm font-medium text-zinc-500 hover:underline">
           ← {driver.full_name}
         </Link>
-        <h1 className="mt-1 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+        <h1 className="mt-1 text-lg font-semibold text-zinc-950">
           Disponibilités — {driver.full_name}
         </h1>
       </div>
@@ -90,21 +90,21 @@ export default async function DriverAvailabilityPage(props: PageProps<"/chauffeu
       <div className="flex items-center justify-between">
         <Link
           href={`/chauffeurs/${id}/disponibilites?month=${prevMonth}`}
-          className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
         >
           ← Mois précédent
         </Link>
-        <span className="text-sm font-medium capitalize text-zinc-950 dark:text-zinc-50">{monthLabel(month)}</span>
+        <span className="text-sm font-medium capitalize text-zinc-950">{monthLabel(month)}</span>
         <Link
           href={`/chauffeurs/${id}/disponibilites?month=${nextMonth}`}
-          className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
         >
           Mois suivant →
         </Link>
       </div>
 
-      <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-zinc-500 dark:text-zinc-400">
+      <div className="rounded-xl border border-zinc-200 bg-white p-4">
+        <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-zinc-500">
           {WEEKDAY_LABELS.map((w) => (
             <span key={w}>{w}</span>
           ))}
@@ -130,11 +130,11 @@ export default async function DriverAvailabilityPage(props: PageProps<"/chauffeu
                   >
                     {status === "conflit" ? (
                       <>
-                        <div className="absolute inset-x-0 top-0 h-1/2 bg-red-200 dark:bg-red-900" />
-                        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-amber-200 dark:bg-amber-900" />
+                        <div className="absolute inset-x-0 top-0 h-1/2 bg-red-200" />
+                        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-amber-200" />
                       </>
                     ) : null}
-                    <span className="relative text-zinc-900 dark:text-zinc-100">{day.dayOfMonth}</span>
+                    <span className="relative text-zinc-900">{day.dayOfMonth}</span>
                   </div>
                 );
               })}
@@ -142,7 +142,7 @@ export default async function DriverAvailabilityPage(props: PageProps<"/chauffeu
           ))}
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-4 border-t border-zinc-100 pt-3 text-xs text-zinc-600 dark:border-zinc-800 dark:text-zinc-400">
+        <div className="mt-4 flex flex-wrap gap-4 border-t border-zinc-100 pt-3 text-xs text-zinc-600">
           <span className="flex items-center gap-1.5">
             <span className={`h-3 w-3 rounded ${DRIVER_DAY_STATUS_STYLES.disponible}`} /> {DRIVER_DAY_STATUS_LABELS.disponible}
           </span>
@@ -154,8 +154,8 @@ export default async function DriverAvailabilityPage(props: PageProps<"/chauffeu
           </span>
           <span className="flex items-center gap-1.5">
             <span className="h-3 w-3 overflow-hidden rounded">
-              <span className="block h-1/2 bg-red-200 dark:bg-red-900" />
-              <span className="block h-1/2 bg-amber-200 dark:bg-amber-900" />
+              <span className="block h-1/2 bg-red-200" />
+              <span className="block h-1/2 bg-amber-200" />
             </span>{" "}
             {DRIVER_DAY_STATUS_LABELS.conflit} — les deux se chevauchent, non bloqué
           </span>
@@ -163,16 +163,16 @@ export default async function DriverAvailabilityPage(props: PageProps<"/chauffeu
       </div>
 
       {canManage ? (
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-          <h2 className="mb-4 text-sm font-semibold text-zinc-950 dark:text-zinc-50">Déclarer une indisponibilité</h2>
+        <div className="rounded-xl border border-zinc-200 bg-white p-6">
+          <h2 className="mb-4 text-sm font-semibold text-zinc-950">Déclarer une indisponibilité</h2>
           <DeclareUnavailabilityForm driverId={id} />
         </div>
       ) : null}
 
       <section>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-950 dark:text-zinc-50">Périodes déclarées ce mois</h2>
+        <h2 className="mb-4 text-lg font-semibold text-zinc-950">Périodes déclarées ce mois</h2>
         {periods.length === 0 ? (
-          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
             Aucune période d&apos;indisponibilité déclarée ce mois-ci.
           </p>
         ) : (

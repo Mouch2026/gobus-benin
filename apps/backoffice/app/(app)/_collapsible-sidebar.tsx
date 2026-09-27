@@ -21,7 +21,7 @@ export function CollapsibleSidebar({ children }: { children: ReactNode }) {
   return (
     <aside
       data-collapsed={collapsed ? "true" : "false"}
-      className="group/sidebar hidden shrink-0 border-r border-zinc-200 p-4 dark:border-zinc-800 md:block print:hidden data-[collapsed=true]:w-16 data-[collapsed=false]:w-[220px]"
+      className="group/sidebar hidden shrink-0 border-r border-sidebar-border bg-sidebar p-4 md:block print:hidden data-[collapsed=true]:w-16 data-[collapsed=false]:w-[220px]"
     >
       <nav className="flex flex-col gap-1">{children}</nav>
       <button
@@ -29,7 +29,7 @@ export function CollapsibleSidebar({ children }: { children: ReactNode }) {
         onClick={() => setCollapsed((value) => !value)}
         title={collapsed ? "Déplier la barre latérale" : "Réduire la barre latérale"}
         aria-label={collapsed ? "Déplier la barre latérale" : "Réduire la barre latérale"}
-        className="mt-2 flex w-full items-center justify-center rounded-md px-3 py-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
+        className="mt-2 flex w-full items-center justify-center rounded-md px-3 py-2 text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground"
       >
         <ChevronDownIcon
           className={`h-4 w-4 transition-transform ${collapsed ? "-rotate-90" : "rotate-90"}`}

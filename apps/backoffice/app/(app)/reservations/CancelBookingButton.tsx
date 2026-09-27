@@ -36,12 +36,12 @@ export function CancelBookingButton({
               e.preventDefault();
             }
           }}
-          className="text-xs font-medium text-red-600 hover:underline disabled:opacity-50 dark:text-red-400"
+          className="text-xs font-medium text-red-600 hover:underline disabled:opacity-50"
         >
           {pending ? "…" : "Annuler"}
         </button>
         {state.error ? (
-          <span className="text-xs text-red-600 dark:text-red-400">{state.error}</span>
+          <span className="text-xs text-red-600">{state.error}</span>
         ) : null}
       </form>
     );
@@ -52,7 +52,7 @@ export function CancelBookingButton({
       <button
         type="button"
         onClick={() => setExpanded(true)}
-        className="text-xs font-medium text-red-600 hover:underline dark:text-red-400"
+        className="text-xs font-medium text-red-600 hover:underline"
       >
         Annuler…
       </button>
@@ -60,12 +60,12 @@ export function CancelBookingButton({
   }
 
   return (
-    <form action={action} className="flex w-64 flex-col gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-950">
+    <form action={action} className="flex w-64 flex-col gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
       <input type="hidden" name="bookingId" value={bookingId} />
-      <p className="text-xs font-medium text-amber-900 dark:text-amber-200">
+      <p className="text-xs font-medium text-amber-900">
         Départ dans moins de 2h : validation d&apos;un superviseur requise.
       </p>
-      <div className="flex flex-col gap-1 text-xs text-amber-900 dark:text-amber-200">
+      <div className="flex flex-col gap-1 text-xs text-amber-900">
         <label className="flex items-center gap-1.5">
           <input
             type="radio"
@@ -116,12 +116,12 @@ export function CancelBookingButton({
         <button
           type="button"
           onClick={() => setExpanded(false)}
-          className="rounded-lg border border-amber-300 px-3 py-1.5 text-xs font-medium text-amber-900 hover:bg-amber-100 dark:border-amber-800 dark:text-amber-200 dark:hover:bg-amber-900"
+          className="rounded-lg border border-amber-300 px-3 py-1.5 text-xs font-medium text-amber-900 hover:bg-amber-100"
         >
           Annuler
         </button>
       </div>
-      {state.error ? <span className="text-xs text-red-600 dark:text-red-400">{state.error}</span> : null}
+      {state.error ? <span className="text-xs text-red-600">{state.error}</span> : null}
     </form>
   );
 }

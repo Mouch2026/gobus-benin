@@ -94,16 +94,16 @@ export default async function NewBookingPage() {
 
   return (
     <div className="mx-auto max-w-xl px-6 py-8">
-      <h1 className="mb-2 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+      <h1 className="mb-2 text-lg font-semibold text-zinc-950">
         Nouvelle réservation
       </h1>
-      <p className="mb-6 text-sm text-zinc-500 dark:text-zinc-400">
+      <p className="mb-6 text-sm text-zinc-500">
         Pour un client qui ne peut pas réserver lui-même en ligne. Un lien de paiement sécurisé lui
         sera envoyé par e-mail — il n&apos;a besoin d&apos;aucun compte ni mot de passe.
       </p>
 
       {trips.length === 0 ? (
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+        <div className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
           {selectedStation ? (
             <>
               Aucun trajet réservable au départ ou à l&apos;arrivée de{" "}
@@ -114,7 +114,7 @@ export default async function NewBookingPage() {
           )}
         </div>
       ) : (
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="rounded-xl border border-zinc-200 bg-white p-6">
           <NewBookingForm trips={trips} isAgent={result.role === "agent"} />
         </div>
       )}

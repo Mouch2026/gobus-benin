@@ -38,7 +38,7 @@ export function PromoCodeForm() {
 
       <div className="flex flex-col gap-1.5">
         <span className={LABEL_CLASSES}>Type de réduction</span>
-        <div className="flex gap-4 text-sm text-zinc-700 dark:text-zinc-300">
+        <div className="flex gap-4 text-sm text-zinc-700">
           <label className="flex items-center gap-1.5">
             <input
               type="radio"
@@ -130,7 +130,7 @@ export function PromoCodeForm() {
       </div>
 
       {state.error ? (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+        <p className="text-sm text-red-600" role="alert">
           {state.error}
         </p>
       ) : null}
@@ -138,7 +138,7 @@ export function PromoCodeForm() {
       <button
         type="submit"
         disabled={pending}
-        className="self-start rounded-lg bg-zinc-950 px-4 py-2.5 font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+        className="self-start rounded-lg bg-zinc-950 px-4 py-2.5 font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {pending ? "Création..." : "Créer le code"}
       </button>

@@ -52,17 +52,17 @@ export default async function PaiementsPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
-      <h2 className="mb-4 text-xl font-semibold text-zinc-950 dark:text-zinc-50">Paiements</h2>
+      <h2 className="mb-4 text-xl font-semibold text-zinc-950">Paiements</h2>
 
       {payments.length === 0 ? (
-        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
           Aucun paiement pour le moment.
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white">
           <table className="w-full min-w-[1100px] border-collapse text-left text-sm">
             <thead>
-              <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+              <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500">
                 <th className="px-4 py-3 font-medium">Réservation</th>
                 <th className="px-4 py-3 font-medium">Trajet</th>
                 <th className="px-4 py-3 font-medium">Base</th>
@@ -80,52 +80,52 @@ export default async function PaiementsPage() {
               {payments.map((payment) => (
                 <tr
                   key={payment.payment_id}
-                  className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
+                  className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50"
                 >
-                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                  <td className="px-4 py-3 text-zinc-700">
                     {payment.booking_reference}
                   </td>
-                  <td className="px-4 py-3 font-medium text-zinc-950 dark:text-zinc-50">
+                  <td className="px-4 py-3 font-medium text-zinc-950">
                     {payment.origin_city} → {payment.destination_city}
                   </td>
-                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                  <td className="px-4 py-3 text-zinc-700">
                     {formatFcfa(payment.base_amount_fcfa)}
                   </td>
-                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                  <td className="px-4 py-3 text-zinc-700">
                     {payment.discount_amount_fcfa > 0
                       ? `− ${formatFcfa(payment.discount_amount_fcfa)} (${payment.discount_percent} %)`
                       : "—"}
                   </td>
-                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                  <td className="px-4 py-3 text-zinc-700">
                     {formatFcfa(payment.platform_fee_fcfa + payment.transaction_fee_fcfa)}
                   </td>
-                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                  <td className="px-4 py-3 text-zinc-700">
                     {payment.voucher_amount_fcfa > 0
                       ? `− ${formatFcfa(payment.voucher_amount_fcfa)}`
                       : "—"}
                   </td>
-                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                  <td className="px-4 py-3 text-zinc-700">
                     {payment.points_redeemed_fcfa > 0
                       ? `− ${formatFcfa(payment.points_redeemed_fcfa)}`
                       : "—"}
                   </td>
-                  <td className="px-4 py-3 font-medium text-zinc-950 dark:text-zinc-50">
+                  <td className="px-4 py-3 font-medium text-zinc-950">
                     {formatFcfa(payment.amount_charged_fcfa)}
                   </td>
-                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                  <td className="px-4 py-3 text-zinc-700">
                     {payment.provider}
                   </td>
                   <td className="px-4 py-3">
                     <span
                       className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
                         PAYMENT_STATUS_STYLES[payment.status] ??
-                        "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                        "bg-zinc-100 text-zinc-700"
                       }`}
                     >
                       {PAYMENT_STATUS_LABELS[payment.status] ?? payment.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                  <td className="px-4 py-3 text-zinc-700">
                     {formatDepartureDateTime(payment.created_at)}
                   </td>
                 </tr>

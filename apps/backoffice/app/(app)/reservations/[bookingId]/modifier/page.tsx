@@ -78,7 +78,7 @@ export default async function ModifyBookingPage(props: PageProps<"/reservations/
   if (!booking) {
     return (
       <div className="mx-auto max-w-xl px-6 py-8">
-        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
           Cette réservation n&apos;existe pas ou ne vous appartient pas.
         </p>
       </div>
@@ -88,12 +88,12 @@ export default async function ModifyBookingPage(props: PageProps<"/reservations/
   if (booking.status === "cancelled" || booking.status === "completed") {
     return (
       <div className="mx-auto max-w-xl px-6 py-8">
-        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
           Cette réservation est annulée ou terminée, elle ne peut plus être modifiée.
         </p>
         <Link
           href={`/reservations/${booking.id}`}
-          className="mt-4 inline-block font-medium text-zinc-950 hover:underline dark:text-zinc-50"
+          className="mt-4 inline-block font-medium text-zinc-950 hover:underline"
         >
           ← Retour à la réservation
         </Link>
@@ -105,11 +105,11 @@ export default async function ModifyBookingPage(props: PageProps<"/reservations/
 
   return (
     <div className="mx-auto max-w-xl px-6 py-8">
-      <h1 className="mb-6 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+      <h1 className="mb-6 text-lg font-semibold text-zinc-950">
         Modifier la réservation
       </h1>
 
-      <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="rounded-xl border border-zinc-200 bg-white p-6">
         <EditBookingForm booking={booking} allSeats={allSeats} takenByOthers={takenByOthers} />
       </div>
     </div>

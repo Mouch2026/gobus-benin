@@ -64,8 +64,8 @@ const METHOD_LABELS: Record<"scan" | "manuel", string> = {
 };
 
 const METHOD_STYLES: Record<"scan" | "manuel", string> = {
-  scan: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
-  manuel: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
+  scan: "bg-blue-50 text-blue-700",
+  manuel: "bg-zinc-100 text-zinc-700",
 };
 
 export default async function EmbarquementPage(props: PageProps<"/embarquement">) {
@@ -76,7 +76,7 @@ export default async function EmbarquementPage(props: PageProps<"/embarquement">
   if (requirePermission(result, "boarding.validate")) {
     return (
       <div className="mx-auto max-w-6xl px-6 py-8">
-        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
           Vous n&apos;avez pas la permission d&apos;accéder à cette page.
         </p>
       </div>
@@ -118,9 +118,9 @@ export default async function EmbarquementPage(props: PageProps<"/embarquement">
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
-      <h2 className="mb-4 text-xl font-semibold text-zinc-950 dark:text-zinc-50">Embarquement</h2>
+      <h2 className="mb-4 text-xl font-semibold text-zinc-950">Embarquement</h2>
 
-      <form method="get" className="mb-6 flex flex-wrap items-end gap-3 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+      <form method="get" className="mb-6 flex flex-wrap items-end gap-3 rounded-xl border border-zinc-200 bg-white p-4">
         <div className="flex min-w-[240px] flex-1 flex-col gap-1.5">
           <label htmlFor="trip-select" className={LABEL_CLASSES}>
             Trajet en cours
@@ -137,7 +137,7 @@ export default async function EmbarquementPage(props: PageProps<"/embarquement">
         </div>
         <button
           type="submit"
-          className="rounded-lg bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+          className="rounded-lg bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
         >
           Choisir ce trajet
         </button>
@@ -148,10 +148,10 @@ export default async function EmbarquementPage(props: PageProps<"/embarquement">
       </div>
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-        <h3 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">Validations</h3>
+        <h3 className="text-lg font-semibold text-zinc-950">Validations</h3>
         <a
           href={exportHref}
-          className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100"
         >
           ⭳ Exporter
         </a>
@@ -159,7 +159,7 @@ export default async function EmbarquementPage(props: PageProps<"/embarquement">
 
       <form
         method="get"
-        className="mb-6 flex flex-wrap items-end gap-3 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
+        className="mb-6 flex flex-wrap items-end gap-3 rounded-xl border border-zinc-200 bg-white p-4"
       >
         <div className="flex min-w-[180px] flex-1 flex-col gap-1.5">
           <label htmlFor="q" className={LABEL_CLASSES}>
@@ -224,13 +224,13 @@ export default async function EmbarquementPage(props: PageProps<"/embarquement">
         <div className="flex gap-2">
           <button
             type="submit"
-            className="rounded-lg bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+            className="rounded-lg bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
           >
             Filtrer
           </button>
           <Link
             href="/embarquement"
-            className="rounded-lg border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="rounded-lg border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100"
           >
             Réinitialiser
           </Link>
@@ -238,16 +238,16 @@ export default async function EmbarquementPage(props: PageProps<"/embarquement">
       </form>
 
       {validations.length === 0 ? (
-        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
           {allValidations.length === 0
             ? "Aucune validation pour le moment."
             : "Aucune validation ne correspond à ces filtres."}
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white">
           <table className="w-full min-w-[960px] border-collapse text-left text-sm">
             <thead>
-              <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+              <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500">
                 <th className="px-4 py-3 font-medium">ID</th>
                 <th className="px-4 py-3 font-medium">Billet</th>
                 <th className="px-4 py-3 font-medium">Voyage</th>
@@ -262,27 +262,27 @@ export default async function EmbarquementPage(props: PageProps<"/embarquement">
               {validations.map((v) => (
                 <tr
                   key={v.validation_id}
-                  className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
+                  className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50"
                 >
-                  <td className="px-4 py-3 text-zinc-500 dark:text-zinc-400">
+                  <td className="px-4 py-3 text-zinc-500">
                     {v.validation_id.slice(0, 8)}
                   </td>
-                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{v.booking_reference}</td>
-                  <td className="px-4 py-3 font-medium text-zinc-950 dark:text-zinc-50">
+                  <td className="px-4 py-3 text-zinc-700">{v.booking_reference}</td>
+                  <td className="px-4 py-3 font-medium text-zinc-950">
                     {v.origin_city} → {v.destination_city}
                   </td>
-                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                  <td className="px-4 py-3 text-zinc-700">
                     {v.full_name}
                     {v.seat_number ? ` · Siège ${v.seat_number}` : ""}
                   </td>
-                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                  <td className="px-4 py-3 text-zinc-700">
                     {new Date(v.validated_at).toLocaleString("fr-BJ", {
                       dateStyle: "medium",
                       timeStyle: "short",
                       timeZone: "Africa/Porto-Novo",
                     })}
                   </td>
-                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{v.bus_number}</td>
+                  <td className="px-4 py-3 text-zinc-700">{v.bus_number}</td>
                   <td className="px-4 py-3">
                     <span
                       className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${METHOD_STYLES[v.method]}`}
@@ -293,7 +293,7 @@ export default async function EmbarquementPage(props: PageProps<"/embarquement">
                   <td className="px-4 py-3">
                     <Link
                       href={`/reservations/${v.booking_id}`}
-                      className="text-xs font-medium text-zinc-700 hover:underline dark:text-zinc-300"
+                      className="text-xs font-medium text-zinc-700 hover:underline"
                     >
                       Voir
                     </Link>

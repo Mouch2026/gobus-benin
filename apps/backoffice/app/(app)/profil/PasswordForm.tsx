@@ -65,13 +65,13 @@ export function PasswordForm() {
       </div>
 
       {state.error ? (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+        <p className="text-sm text-red-600" role="alert">
           {state.error}
         </p>
       ) : null}
 
       {state.success ? (
-        <p className="text-sm text-emerald-600 dark:text-emerald-400" role="status">
+        <p className="text-sm text-emerald-600" role="status">
           Mot de passe changé.
         </p>
       ) : null}
@@ -79,7 +79,7 @@ export function PasswordForm() {
       <button
         type="submit"
         disabled={pending}
-        className="self-start rounded-lg bg-zinc-950 px-4 py-2.5 font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+        className="self-start rounded-lg bg-zinc-950 px-4 py-2.5 font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {pending ? "Modification..." : "Changer le mot de passe"}
       </button>

@@ -158,16 +158,16 @@ export function NewBookingForm({ trips, isAgent }: { trips: BookableTrip[]; isAg
             type="button"
             onClick={handleLookup}
             disabled={isLookingUp || !email.trim().includes("@")}
-            className="shrink-0 rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="shrink-0 rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isLookingUp ? "Recherche..." : "Rechercher"}
           </button>
         </div>
-        <span className="text-xs text-zinc-500 dark:text-zinc-400">
+        <span className="text-xs text-zinc-500">
           Sert à créer ou retrouver son compte — aucun mot de passe à connaître de son côté.
         </span>
         {lookupResult ? (
-          <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+          <span className="text-xs font-medium text-zinc-700">
             {lookupResult.existing
               ? "Client déjà connu — avoirs/points ci-dessous si disponibles."
               : "Aucun compte existant — un nouveau compte sera créé."}
@@ -182,7 +182,7 @@ export function NewBookingForm({ trips, isAgent }: { trips: BookableTrip[]; isAg
         <input id="phone" name="phone" type="tel" required className={FIELD_CLASSES} />
       </div>
 
-      <div className="flex flex-col gap-1.5 border-t border-zinc-200 pt-4 dark:border-zinc-800">
+      <div className="flex flex-col gap-1.5 border-t border-zinc-200 pt-4">
         <label htmlFor="discountPercent" className={LABEL_CLASSES}>
           Remise (%)
         </label>
@@ -198,18 +198,18 @@ export function NewBookingForm({ trips, isAgent }: { trips: BookableTrip[]; isAg
           className={FIELD_CLASSES}
         />
         {discountAmountPreviewFcfa > 0 ? (
-          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+          <span className="text-xs text-zinc-500">
             Remise ({Number(discountPercent)} %) : − {formatFcfa(discountAmountPreviewFcfa)}
           </span>
         ) : null}
 
         {requiresApproval ? (
-          <div className="mt-2 flex flex-col gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-950">
-            <p className="text-xs font-medium text-amber-900 dark:text-amber-200">
+          <div className="mt-2 flex flex-col gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+            <p className="text-xs font-medium text-amber-900">
               Une remise de plus de {DISCOUNT_APPROVAL_THRESHOLD_PERCENT}% nécessite la validation
               d&apos;un superviseur (propriétaire ou responsable d&apos;agence).
             </p>
-            <div className="flex gap-4 text-sm text-amber-900 dark:text-amber-200">
+            <div className="flex gap-4 text-sm text-amber-900">
               <label className="flex items-center gap-1.5">
                 <input
                   type="radio"
@@ -264,13 +264,13 @@ export function NewBookingForm({ trips, isAgent }: { trips: BookableTrip[]; isAg
       </div>
 
       {lookupResult?.existing && (lookupResult.vouchers.length > 0 || lookupResult.pointsBalance > 0) ? (
-        <div className="flex flex-col gap-3 border-t border-zinc-200 pt-4 dark:border-zinc-800">
-          <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
+        <div className="flex flex-col gap-3 border-t border-zinc-200 pt-4">
+          <h3 className="text-sm font-semibold text-zinc-950">
             Avoirs et points de ce client
           </h3>
           {lookupResult.vouchers.length > 0 ? (
             <div className="flex flex-col gap-1.5">
-              <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+              <label className="flex items-center gap-2 text-sm text-zinc-700">
                 <input
                   type="radio"
                   name="voucherId"
@@ -281,7 +281,7 @@ export function NewBookingForm({ trips, isAgent }: { trips: BookableTrip[]; isAg
                 Aucun avoir
               </label>
               {lookupResult.vouchers.map((v) => (
-                <label key={v.id} className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+                <label key={v.id} className="flex items-center gap-2 text-sm text-zinc-700">
                   <input
                     type="radio"
                     name="voucherId"
@@ -295,7 +295,7 @@ export function NewBookingForm({ trips, isAgent }: { trips: BookableTrip[]; isAg
             </div>
           ) : null}
           {lookupResult.pointsBalance > 0 ? (
-            <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+            <label className="flex items-center gap-2 text-sm text-zinc-700">
               <input
                 type="checkbox"
                 name="usePoints"
@@ -309,8 +309,8 @@ export function NewBookingForm({ trips, isAgent }: { trips: BookableTrip[]; isAg
         </div>
       ) : null}
 
-      <div className="flex flex-col gap-4 border-t border-zinc-200 pt-4 dark:border-zinc-800">
-        <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
+      <div className="flex flex-col gap-4 border-t border-zinc-200 pt-4">
+        <h3 className="text-sm font-semibold text-zinc-950">
           Passager(s) — laissez vide si inutilisé
         </h3>
         {Array.from({ length: MAX_PASSENGERS }, (_, i) => {
@@ -384,9 +384,9 @@ export function NewBookingForm({ trips, isAgent }: { trips: BookableTrip[]; isAg
         })}
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-zinc-200 pt-4 dark:border-zinc-800">
-        <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">Paiement</h3>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+      <div className="flex flex-col gap-3 border-t border-zinc-200 pt-4">
+        <h3 className="text-sm font-semibold text-zinc-950">Paiement</h3>
+        <p className="text-xs text-zinc-500">
           Prix total du billet : {formatFcfa(totalPriceFcfa)}. Répartissez ce montant entre un ou
           plusieurs moyens de paiement — la somme doit correspondre exactement.
         </p>
@@ -431,7 +431,7 @@ export function NewBookingForm({ trips, isAgent }: { trips: BookableTrip[]; isAg
               <button
                 type="button"
                 onClick={() => setParts(parts.filter((_, idx) => idx !== i))}
-                className="self-end rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                className="self-end rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-100"
               >
                 Retirer
               </button>
@@ -443,19 +443,19 @@ export function NewBookingForm({ trips, isAgent }: { trips: BookableTrip[]; isAg
           <button
             type="button"
             onClick={() => setParts([...parts, { mode: "cash", amountFcfa: "" }])}
-            className="self-start text-sm font-medium text-zinc-700 hover:underline dark:text-zinc-300"
+            className="self-start text-sm font-medium text-zinc-700 hover:underline"
           >
             + Ajouter un mode de paiement
           </button>
         ) : null}
 
-        <p className={`text-sm ${sumMatches ? "text-zinc-500 dark:text-zinc-400" : "font-medium text-red-600 dark:text-red-400"}`}>
+        <p className={`text-sm ${sumMatches ? "text-zinc-500" : "font-medium text-red-600"}`}>
           Somme des moyens de paiement : {formatFcfa(partsSum)} / {formatFcfa(totalPriceFcfa)}
         </p>
       </div>
 
       {state.error ? (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+        <p className="text-sm text-red-600" role="alert">
           {state.error}
         </p>
       ) : null}
@@ -463,7 +463,7 @@ export function NewBookingForm({ trips, isAgent }: { trips: BookableTrip[]; isAg
       <button
         type="submit"
         disabled={pending || !sumMatches}
-        className="self-start rounded-lg bg-zinc-950 px-4 py-2.5 font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+        className="self-start rounded-lg bg-zinc-950 px-4 py-2.5 font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {pending
           ? "Création..."

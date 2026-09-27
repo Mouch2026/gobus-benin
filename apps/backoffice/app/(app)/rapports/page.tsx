@@ -66,9 +66,9 @@ async function getStats(companyId: string): Promise<Stats> {
 
 function StatCard({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-1 rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-      <span className="text-sm text-zinc-500 dark:text-zinc-400">{label}</span>
-      <span className="font-display text-2xl font-semibold text-zinc-950 dark:text-zinc-50">
+    <div className="flex flex-col gap-1 rounded-xl border border-zinc-200 bg-white p-6">
+      <span className="text-sm text-zinc-500">{label}</span>
+      <span className="font-display text-2xl font-semibold text-zinc-950">
         {value}
       </span>
     </div>
@@ -90,7 +90,7 @@ export default async function RapportsPage() {
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8 px-6 py-8">
-      <h1 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">Rapports</h1>
+      <h1 className="text-lg font-semibold text-zinc-950">Rapports</h1>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <StatCard label="Réservations" value={stats.bookingsCount} />
@@ -98,12 +98,12 @@ export default async function RapportsPage() {
       </div>
 
       <section>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+        <h2 className="mb-4 text-lg font-semibold text-zinc-950">
           Trajets par statut
         </h2>
 
         {statusEntries.length === 0 ? (
-          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
             Aucun trajet pour le moment.
           </p>
         ) : (

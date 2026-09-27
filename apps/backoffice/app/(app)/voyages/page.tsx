@@ -66,17 +66,17 @@ export default async function VoyagesPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
-      <h2 className="mb-4 text-xl font-semibold text-zinc-950 dark:text-zinc-50">
+      <h2 className="mb-4 text-xl font-semibold text-zinc-950">
         Voyages
         {selectedStation ? (
-          <span className="ml-2 text-base font-normal text-zinc-500 dark:text-zinc-400">
+          <span className="ml-2 text-base font-normal text-zinc-500">
             · {stationLabel(selectedStation)}
           </span>
         ) : null}
       </h2>
 
       {trips.length === 0 ? (
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+        <div className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
           {selectedStation ? (
             <>
               Aucun trajet au départ ou à l&apos;arrivée de {stationLabel(selectedStation)}.{" "}
@@ -87,10 +87,10 @@ export default async function VoyagesPage() {
           )}
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white">
           <table className="w-full min-w-[720px] border-collapse text-left text-sm">
             <thead>
-              <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+              <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500">
                 <th className="px-4 py-3 font-medium">Trajet</th>
                 <th className="px-4 py-3 font-medium">Départ</th>
                 <th className="px-4 py-3 font-medium">Classe</th>
@@ -104,35 +104,35 @@ export default async function VoyagesPage() {
               {trips.map((trip) => (
                 <tr
                   key={trip.id}
-                  className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
+                  className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50"
                 >
                   <td className="p-0">
                     <Link
                       href={`/trajets/${trip.id}`}
-                      className="block px-4 py-3 font-medium text-zinc-950 dark:text-zinc-50"
+                      className="block px-4 py-3 font-medium text-zinc-950"
                     >
                       {trip.routes.origin_city} → {trip.routes.destination_city}
                       {isOrphanRoute(trip.routes) ? <OrphanRouteBadge /> : null}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                  <td className="px-4 py-3 text-zinc-700">
                     {formatDepartureDateTime(trip.departure_at)}
                   </td>
-                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                  <td className="px-4 py-3 text-zinc-700">
                     {SEAT_CLASS_LABELS[trip.seat_class] ?? trip.seat_class}
                   </td>
-                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                  <td className="px-4 py-3 text-zinc-700">
                     {formatFcfa(trip.price_fcfa)}
                   </td>
-                  <td className="px-4 py-3 tabular-nums text-zinc-700 dark:text-zinc-300">
+                  <td className="px-4 py-3 tabular-nums text-zinc-700">
                     {trip.available_seats} / {trip.total_seats}
                   </td>
-                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{trip.bus_number}</td>
+                  <td className="px-4 py-3 text-zinc-700">{trip.bus_number}</td>
                   <td className="px-4 py-3">
                     <span
                       className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
                         STATUS_STYLES[trip.status] ??
-                        "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                        "bg-zinc-100 text-zinc-700"
                       }`}
                     >
                       {STATUS_LABELS[trip.status] ?? trip.status}

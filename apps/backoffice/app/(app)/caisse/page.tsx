@@ -88,14 +88,14 @@ export default async function CaissePage() {
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8 px-6 py-8">
-      <h1 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">Caisse</h1>
+      <h1 className="text-lg font-semibold text-zinc-950">Caisse</h1>
 
       {canManageCeiling ? (
         <section>
-          <h2 className="mb-2 text-sm font-semibold text-zinc-950 dark:text-zinc-50">
+          <h2 className="mb-2 text-sm font-semibold text-zinc-950">
             Plafond d&apos;espèces
           </h2>
-          <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="mb-3 text-sm text-zinc-500">
             Au-delà de ce montant, un paiement en espèces est refusé pendant une session — laissez
             vide pour n&apos;imposer aucun plafond.
           </p>
@@ -105,21 +105,21 @@ export default async function CaissePage() {
 
       {result.agency ? (
         <section>
-          <h2 className="mb-3 text-sm font-semibold text-zinc-950 dark:text-zinc-50">Ma session</h2>
+          <h2 className="mb-3 text-sm font-semibold text-zinc-950">Ma session</h2>
           {ownSession ? (
-            <div className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <div className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-6">
+              <p className="text-sm text-zinc-500">
                 Ouverte le {formatDepartureDateTime(ownSession.openedAt)}
               </p>
-              <p className="text-2xl font-bold text-zinc-950 dark:text-zinc-50">
+              <p className="text-2xl font-bold text-zinc-950">
                 {formatFcfa(ownBalance ?? 0)}
               </p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Solde théorique en espèces</p>
+              <p className="text-xs text-zinc-500">Solde théorique en espèces</p>
               <div className="flex flex-wrap gap-3">
                 <CashDropForm />
                 <Link
                   href="/caisse/cloture"
-                  className="self-start rounded-lg border border-zinc-300 px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  className="self-start rounded-lg border border-zinc-300 px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100"
                 >
                   Clôturer ma session
                 </Link>
@@ -133,11 +133,11 @@ export default async function CaissePage() {
 
       {isSupervisor ? (
         <section>
-          <h2 className="mb-3 text-sm font-semibold text-zinc-950 dark:text-zinc-50">
+          <h2 className="mb-3 text-sm font-semibold text-zinc-950">
             Sessions ouvertes {result.role === "owner" ? "— toute la compagnie" : "— votre agence"}
           </h2>
           {supervisedSessions.length === 0 ? (
-            <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+            <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
               Aucune session ouverte pour le moment.
             </p>
           ) : (
@@ -145,15 +145,15 @@ export default async function CaissePage() {
               {supervisedSessions.map((s) => (
                 <div
                   key={s.id}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-zinc-200 bg-white p-4"
                 >
                   <div>
-                    <p className="font-medium text-zinc-950 dark:text-zinc-50">{s.agentName}</p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    <p className="font-medium text-zinc-950">{s.agentName}</p>
+                    <p className="text-xs text-zinc-500">
                       {s.agencies?.name ?? "—"} · ouverte le {formatDepartureDateTime(s.opened_at)}
                     </p>
                   </div>
-                  <span className="font-semibold text-zinc-950 dark:text-zinc-50">
+                  <span className="font-semibold text-zinc-950">
                     {formatFcfa(s.balanceFcfa)}
                   </span>
                 </div>

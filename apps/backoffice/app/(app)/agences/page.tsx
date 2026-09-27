@@ -66,14 +66,14 @@ export default async function AgencesPage() {
     <div className="mx-auto flex max-w-3xl flex-col gap-8 px-6 py-8">
       {canManage ? (
         <section>
-          <h1 className="mb-2 text-lg font-semibold text-zinc-950 dark:text-zinc-50">Nouvelle agence</h1>
-          <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+          <h1 className="mb-2 text-lg font-semibold text-zinc-950">Nouvelle agence</h1>
+          <p className="mb-4 text-sm text-zinc-500">
             Un guichet de votre compagnie, rattaché à une gare. La liste des gares est gérée par
             GoBus — contactez-nous si la vôtre n&apos;y figure pas encore.
           </p>
-          <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="rounded-xl border border-zinc-200 bg-white p-6">
             {stations.length === 0 ? (
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              <p className="text-sm text-zinc-500">
                 Aucune gare disponible pour le moment. Contactez GoBus pour en faire ajouter une.
               </p>
             ) : (
@@ -84,10 +84,10 @@ export default async function AgencesPage() {
       ) : null}
 
       <section>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-950 dark:text-zinc-50">Vos agences</h2>
+        <h2 className="mb-4 text-lg font-semibold text-zinc-950">Vos agences</h2>
 
         {agencies.length === 0 ? (
-          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
             Aucune agence pour le moment — créez-en une ci-dessus.
           </p>
         ) : (
@@ -96,21 +96,21 @@ export default async function AgencesPage() {
               <Link
                 key={agency.id}
                 href={`/agences/${agency.id}`}
-                className="rounded-xl border border-zinc-200 bg-white p-4 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800/50"
+                className="rounded-xl border border-zinc-200 bg-white p-4 transition-colors hover:bg-zinc-50"
               >
                 <div className="flex items-center justify-between gap-4">
-                  <span className="font-medium text-zinc-950 dark:text-zinc-50">{agency.name}</span>
+                  <span className="font-medium text-zinc-950">{agency.name}</span>
                   <span
                     className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
                       agency.is_active
-                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
-                        : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                        ? "bg-emerald-50 text-emerald-700"
+                        : "bg-zinc-100 text-zinc-600"
                     }`}
                   >
                     {agency.is_active ? "Active" : "Inactive"}
                   </span>
                 </div>
-                <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+                <p className="mt-2 text-sm text-zinc-500">
                   {agency.stations
                     ? agency.stations.name === agency.stations.city
                       ? agency.stations.name

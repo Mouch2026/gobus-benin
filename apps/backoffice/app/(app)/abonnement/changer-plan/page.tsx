@@ -57,7 +57,7 @@ export default async function ChangerPlanPage({
   if (!can(result.role, "subscription.manage")) {
     return (
       <div className="mx-auto max-w-xl px-6 py-8">
-        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
           Cette page est réservée au propriétaire du compte.
         </p>
       </div>
@@ -72,10 +72,10 @@ export default async function ChangerPlanPage({
   if (!plan) {
     return (
       <div className="mx-auto flex max-w-md flex-col items-center gap-4 px-6 py-8 text-center">
-        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
           Ce plan n&apos;existe pas ou n&apos;est plus disponible.
         </p>
-        <Link href="/abonnement" className="font-medium text-zinc-700 hover:underline dark:text-zinc-300">
+        <Link href="/abonnement" className="font-medium text-zinc-700 hover:underline">
           ← Retour à l&apos;abonnement
         </Link>
       </div>
@@ -84,24 +84,24 @@ export default async function ChangerPlanPage({
 
   return (
     <div className="mx-auto flex max-w-md flex-col gap-4 px-6 py-8">
-      <Link href="/abonnement" className="text-sm text-zinc-500 hover:underline dark:text-zinc-400">
+      <Link href="/abonnement" className="text-sm text-zinc-500 hover:underline">
         ← Retour à l&apos;abonnement
       </Link>
 
-      <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-        <h1 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">Changer de plan</h1>
+      <div className="rounded-xl border border-zinc-200 bg-white p-6">
+        <h1 className="text-lg font-semibold text-zinc-950">Changer de plan</h1>
 
-        <div className="mt-4 flex items-center justify-between border-b border-t border-zinc-200 py-4 dark:border-zinc-800">
-          <span className="text-zinc-500 dark:text-zinc-400">Plan {plan.name}</span>
-          <span className="text-xl font-semibold text-zinc-950 dark:text-zinc-50">
+        <div className="mt-4 flex items-center justify-between border-b border-t border-zinc-200 py-4">
+          <span className="text-zinc-500">Plan {plan.name}</span>
+          <span className="text-xl font-semibold text-zinc-950">
             {formatFcfa(plan.price_fcfa)}
-            <span className="text-sm font-normal text-zinc-500 dark:text-zinc-400">
+            <span className="text-sm font-normal text-zinc-500">
               {BILLING_PERIOD_LABELS[plan.billing_period] ?? ""}
             </span>
           </span>
         </div>
 
-        <p className="mt-4 rounded-lg bg-zinc-100 px-3 py-2 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+        <p className="mt-4 rounded-lg bg-zinc-100 px-3 py-2 text-xs font-medium text-zinc-600">
           Simulation — le vrai paiement (FedaPay) n&apos;est pas encore branché. Ce bouton active le
           nouveau plan directement, sans paiement réel. Effet immédiat : la période en cours
           redémarre à partir d&apos;aujourd&apos;hui, sans calcul au prorata.

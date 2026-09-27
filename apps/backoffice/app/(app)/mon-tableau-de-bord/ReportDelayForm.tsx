@@ -12,7 +12,7 @@ export function ReportDelayForm({ tripId }: { tripId: string }) {
   const [opening, setOpening] = useState(false);
 
   if (state.success) {
-    return <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">Signalé.</span>;
+    return <span className="text-xs font-medium text-emerald-600">Signalé.</span>;
   }
 
   if (!opening) {
@@ -20,7 +20,7 @@ export function ReportDelayForm({ tripId }: { tripId: string }) {
       <button
         type="button"
         onClick={() => setOpening(true)}
-        className="text-xs font-medium text-zinc-700 hover:underline dark:text-zinc-300"
+        className="text-xs font-medium text-zinc-700 hover:underline"
       >
         Signaler un retard
       </button>
@@ -28,7 +28,7 @@ export function ReportDelayForm({ tripId }: { tripId: string }) {
   }
 
   return (
-    <form action={formAction} className="flex flex-col gap-2 rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
+    <form action={formAction} className="flex flex-col gap-2 rounded-lg border border-zinc-200 p-3">
       <input type="hidden" name="tripId" value={tripId} />
       <div className="flex items-center gap-2">
         <input
@@ -37,17 +37,17 @@ export function ReportDelayForm({ tripId }: { tripId: string }) {
           min={0}
           required
           placeholder="Minutes"
-          className="w-24 rounded-lg border border-zinc-300 bg-white px-2 py-1 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+          className="w-24 rounded-lg border border-zinc-300 bg-white px-2 py-1 text-sm text-zinc-900"
         />
         <input
           name="reason"
           type="text"
           placeholder="Motif (optionnel)"
-          className="flex-1 rounded-lg border border-zinc-300 bg-white px-2 py-1 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+          className="flex-1 rounded-lg border border-zinc-300 bg-white px-2 py-1 text-sm text-zinc-900"
         />
       </div>
       {state.error ? (
-        <p className="text-xs text-red-600 dark:text-red-400" role="alert">
+        <p className="text-xs text-red-600" role="alert">
           {state.error}
         </p>
       ) : null}
@@ -55,7 +55,7 @@ export function ReportDelayForm({ tripId }: { tripId: string }) {
         <button
           type="submit"
           disabled={pending}
-          className="rounded-lg bg-zinc-950 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+          className="rounded-lg bg-zinc-950 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {pending ? "Envoi..." : "Confirmer"}
         </button>
@@ -63,7 +63,7 @@ export function ReportDelayForm({ tripId }: { tripId: string }) {
           type="button"
           onClick={() => setOpening(false)}
           disabled={pending}
-          className="text-xs font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+          className="text-xs font-medium text-zinc-500 hover:text-zinc-700"
         >
           Annuler
         </button>

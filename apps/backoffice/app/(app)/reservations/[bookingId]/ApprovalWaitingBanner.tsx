@@ -29,9 +29,9 @@ export function ApprovalWaitingBanner({ bookingId }: { bookingId: string }) {
   }, [bookingId, router]);
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm dark:border-amber-900 dark:bg-amber-950">
+    <div className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm">
       <span className="h-2 w-2 animate-pulse rounded-full bg-amber-500" aria-hidden="true" />
-      <p className="text-amber-900 dark:text-amber-200">
+      <p className="text-amber-900">
         Validation en attente d&apos;un superviseur. Cette page se met à jour automatiquement.
       </p>
     </div>

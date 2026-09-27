@@ -67,24 +67,24 @@ export default async function ChauffeursPage(props: PageProps<"/chauffeurs">) {
     <div className="mx-auto max-w-6xl px-6 py-8">
       {canConfigureAlerts ? (
         <section className="mb-8">
-          <h2 className="mb-2 text-lg font-semibold text-zinc-950 dark:text-zinc-50">Alertes de documents</h2>
-          <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+          <h2 className="mb-2 text-lg font-semibold text-zinc-950">Alertes de documents</h2>
+          <p className="mb-4 text-sm text-zinc-500">
             Le propriétaire et les chefs d&apos;agence sont prévenus (cloche + e-mail), une seule fois,
             quand un document de chauffeur (permis, carte d&apos;identité…) atteint ce nombre de jours
             avant son expiration.
           </p>
-          <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="rounded-xl border border-zinc-200 bg-white p-6">
             <DocumentAlertForm currentDays={alertDays} />
           </div>
         </section>
       ) : null}
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-        <h2 className="text-xl font-semibold text-zinc-950 dark:text-zinc-50">Chauffeurs</h2>
+        <h2 className="text-xl font-semibold text-zinc-950">Chauffeurs</h2>
         {canManage ? (
           <Link
             href="/chauffeurs/nouveau"
-            className="rounded-lg bg-zinc-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+            className="rounded-lg bg-zinc-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
           >
             + Ajouter un chauffeur
           </Link>
@@ -93,7 +93,7 @@ export default async function ChauffeursPage(props: PageProps<"/chauffeurs">) {
 
       <form
         method="get"
-        className="mb-6 flex flex-wrap items-end gap-3 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
+        className="mb-6 flex flex-wrap items-end gap-3 rounded-xl border border-zinc-200 bg-white p-4"
       >
         <div className="flex min-w-[180px] flex-1 flex-col gap-1.5">
           <label htmlFor="q" className={LABEL_CLASSES}>
@@ -126,13 +126,13 @@ export default async function ChauffeursPage(props: PageProps<"/chauffeurs">) {
         <div className="flex gap-2">
           <button
             type="submit"
-            className="rounded-lg bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+            className="rounded-lg bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
           >
             Filtrer
           </button>
           <Link
             href="/chauffeurs"
-            className="rounded-lg border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="rounded-lg border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100"
           >
             Réinitialiser
           </Link>
@@ -140,16 +140,16 @@ export default async function ChauffeursPage(props: PageProps<"/chauffeurs">) {
       </form>
 
       {drivers.length === 0 ? (
-        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
           {allDrivers.length === 0
             ? "Aucun chauffeur pour le moment."
             : "Aucun chauffeur ne correspond à ces filtres."}
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white">
           <table className="w-full min-w-[1000px] border-collapse text-left text-sm">
             <thead>
-              <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+              <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500">
                 <th className="px-4 py-3 font-medium">ID</th>
                 <th className="px-4 py-3 font-medium">Nom</th>
                 <th className="px-4 py-3 font-medium">Contact</th>
@@ -166,15 +166,15 @@ export default async function ChauffeursPage(props: PageProps<"/chauffeurs">) {
                 return (
                   <tr
                     key={driver.driver_id}
-                    className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
+                    className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50"
                   >
-                    <td className="px-4 py-3 text-zinc-500 dark:text-zinc-400">
+                    <td className="px-4 py-3 text-zinc-500">
                       {driver.driver_id.slice(0, 8)}
                     </td>
-                    <td className="px-4 py-3 font-medium text-zinc-950 dark:text-zinc-50">
+                    <td className="px-4 py-3 font-medium text-zinc-950">
                       {driver.full_name}
                     </td>
-                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{driver.phone ?? "—"}</td>
+                    <td className="px-4 py-3 text-zinc-700">{driver.phone ?? "—"}</td>
                     <td className="px-4 py-3">
                       <span
                         className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${DRIVER_DISPLAY_STATUS_STYLES[displayStatus]}`}
@@ -182,15 +182,15 @@ export default async function ChauffeursPage(props: PageProps<"/chauffeurs">) {
                         {DRIVER_DISPLAY_STATUS_LABELS[displayStatus]}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                    <td className="px-4 py-3 text-zinc-700">
                       {driver.ratings_count > 0
                         ? `★ ${driver.average_rating} (${driver.ratings_count} avis)`
                         : "—"}
                     </td>
-                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                    <td className="px-4 py-3 text-zinc-700">
                       {driver.current_bus_number ?? "—"}
                     </td>
-                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                    <td className="px-4 py-3 text-zinc-700">
                       {driver.current_trip_id
                         ? `${driver.current_origin_city} → ${driver.current_destination_city} · ${formatDepartureDateTime(driver.current_departure_at!)}`
                         : "—"}
@@ -199,7 +199,7 @@ export default async function ChauffeursPage(props: PageProps<"/chauffeurs">) {
                       <div className="flex flex-wrap items-center gap-3">
                         <Link
                           href={`/chauffeurs/${driver.driver_id}`}
-                          className="text-xs font-medium text-zinc-700 hover:underline dark:text-zinc-300"
+                          className="text-xs font-medium text-zinc-700 hover:underline"
                         >
                           {canManage ? "Éditer" : "Voir"}
                         </Link>
@@ -209,7 +209,7 @@ export default async function ChauffeursPage(props: PageProps<"/chauffeurs">) {
                             <input type="hidden" name="isActive" value={driver.is_active ? "0" : "1"} />
                             <button
                               type="submit"
-                              className="text-xs font-medium text-zinc-700 hover:underline dark:text-zinc-300"
+                              className="text-xs font-medium text-zinc-700 hover:underline"
                             >
                               {driver.is_active ? "Désactiver" : "Réactiver"}
                             </button>

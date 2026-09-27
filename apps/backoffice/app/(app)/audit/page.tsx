@@ -91,7 +91,7 @@ export default async function AuditPage() {
   if (!can(result.role, "auditLog.view")) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-8">
-        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
           Réservé au propriétaire ou à un responsable d&apos;agence.
         </p>
       </div>
@@ -110,21 +110,21 @@ export default async function AuditPage() {
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6 px-6 py-8">
-      <h1 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">Journal d&apos;audit</h1>
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+      <h1 className="text-lg font-semibold text-zinc-950">Journal d&apos;audit</h1>
+      <p className="text-sm text-zinc-500">
         Historique consolidé des réservations, mouvements de caisse, validations et notifications —{" "}
         {scopeAgencyId ? "limité à votre agence." : "toute la compagnie."}
       </p>
 
       {feed.length === 0 ? (
-        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
           Aucun événement pour le moment.
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white">
           <table className="w-full border-collapse text-left text-sm">
             <thead>
-              <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+              <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500">
                 <th className="px-4 py-3 font-medium">Date</th>
                 <th className="px-4 py-3 font-medium">Type</th>
                 <th className="px-4 py-3 font-medium">Action</th>
@@ -136,21 +136,21 @@ export default async function AuditPage() {
               {feed.map((row, index) => (
                 <tr
                   key={`${row.source}-${row.occurred_at}-${index}`}
-                  className="border-b border-zinc-100 last:border-b-0 dark:border-zinc-800"
+                  className="border-b border-zinc-100 last:border-b-0"
                 >
-                  <td className="whitespace-nowrap px-4 py-3 text-zinc-500 dark:text-zinc-400">
+                  <td className="whitespace-nowrap px-4 py-3 text-zinc-500">
                     {formatDepartureDateTime(row.occurred_at)}
                   </td>
-                  <td className="px-4 py-3 text-zinc-500 dark:text-zinc-400">
+                  <td className="px-4 py-3 text-zinc-500">
                     {SOURCE_LABELS[row.source] ?? row.source}
                   </td>
-                  <td className="px-4 py-3 text-zinc-950 dark:text-zinc-50">
+                  <td className="px-4 py-3 text-zinc-950">
                     {ACTION_LABELS[row.action] ?? row.action}
                   </td>
-                  <td className="px-4 py-3 text-zinc-500 dark:text-zinc-400">
+                  <td className="px-4 py-3 text-zinc-500">
                     {row.booking_id ? (bookingReferences[row.booking_id] ?? "—") : "—"}
                   </td>
-                  <td className="px-4 py-3 text-zinc-500 dark:text-zinc-400">
+                  <td className="px-4 py-3 text-zinc-500">
                     {row.acteur_id ? (actorNames[row.acteur_id] ?? "Agent") : "—"}
                   </td>
                 </tr>

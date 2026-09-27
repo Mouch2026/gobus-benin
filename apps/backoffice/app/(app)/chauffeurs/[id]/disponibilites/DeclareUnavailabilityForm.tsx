@@ -53,23 +53,23 @@ export function DeclareUnavailabilityForm({ driverId }: { driverId: string }) {
       </div>
 
       {state.error ? (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+        <p className="text-sm text-red-600" role="alert">
           {state.error}
         </p>
       ) : null}
       {state.warning ? (
-        <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-200">
+        <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
           {state.warning}
         </p>
       ) : null}
       {state.success && !state.warning ? (
-        <p className="text-sm text-emerald-600 dark:text-emerald-400">Indisponibilité enregistrée.</p>
+        <p className="text-sm text-emerald-600">Indisponibilité enregistrée.</p>
       ) : null}
 
       <button
         type="submit"
         disabled={pending}
-        className="self-start rounded-lg bg-zinc-950 px-4 py-2.5 font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+        className="self-start rounded-lg bg-zinc-950 px-4 py-2.5 font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {pending ? "Enregistrement..." : "Déclarer l'indisponibilité"}
       </button>

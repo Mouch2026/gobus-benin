@@ -13,7 +13,7 @@ export default async function NewDriverPage() {
   if (!can(result.role, "drivers.manage")) {
     return (
       <div className="mx-auto max-w-xl px-6 py-8">
-        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
           Cette page est réservée au propriétaire du compte.
         </p>
       </div>
@@ -22,8 +22,8 @@ export default async function NewDriverPage() {
 
   return (
     <div className="mx-auto max-w-xl px-6 py-8">
-      <h1 className="mb-6 text-lg font-semibold text-zinc-950 dark:text-zinc-50">Nouveau chauffeur</h1>
-      <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+      <h1 className="mb-6 text-lg font-semibold text-zinc-950">Nouveau chauffeur</h1>
+      <div className="rounded-xl border border-zinc-200 bg-white p-6">
         <DriverForm />
       </div>
     </div>

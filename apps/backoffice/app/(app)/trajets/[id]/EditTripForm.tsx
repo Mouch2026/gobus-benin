@@ -51,7 +51,7 @@ export function EditTripForm({
   return (
     <div className="flex flex-col gap-6">
       {!canManage ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-sm text-zinc-500">
           Réservé au propriétaire et aux chefs d&apos;agence.
         </p>
       ) : null}
@@ -88,7 +88,7 @@ export function EditTripForm({
             defaultValue={trip.bus_number}
             className={FIELD_CLASSES}
           />
-          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+          <span className="text-xs text-zinc-500">
             Modifiable tant que le trajet n&apos;est pas parti (panne, réaffectation de flotte).
           </span>
         </div>
@@ -155,14 +155,14 @@ export function EditTripForm({
               inatteignable et a été retirée. */}
           <input type="hidden" name="totalSeats" value={trip.total_seats} />
           <p className={FIELD_CLASSES}>{trip.total_seats} (dérivé du plan de bus)</p>
-          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+          <span className="text-xs text-zinc-500">
             {booked} place{booked > 1 ? "s" : ""} déjà réservée{booked > 1 ? "s" : ""} — dérivé du
             plan de bus choisi, non modifiable ici.
           </span>
         </div>
 
         {detailsState.error ? (
-          <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+          <p className="text-sm text-red-600" role="alert">
             {detailsState.error}
           </p>
         ) : null}
@@ -170,15 +170,15 @@ export function EditTripForm({
         <button
           type="submit"
           disabled={!canManage || detailsPending}
-          className="self-start rounded-lg bg-zinc-950 px-4 py-2.5 font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+          className="self-start rounded-lg bg-zinc-950 px-4 py-2.5 font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {detailsPending ? "Enregistrement..." : "Enregistrer"}
         </button>
       </form>
 
-      <div className="border-t border-zinc-200 pt-6 dark:border-zinc-800">
-        <h3 className="mb-3 text-sm font-semibold text-zinc-950 dark:text-zinc-50">Route</h3>
-        <p className="mb-4 text-xs text-zinc-500 dark:text-zinc-400">
+      <div className="border-t border-zinc-200 pt-6">
+        <h3 className="mb-3 text-sm font-semibold text-zinc-950">Route</h3>
+        <p className="mb-4 text-xs text-zinc-500">
           Ces informations sont partagées avec tous les trajets utilisant cette route — la
           modification s&apos;appliquera à chacun d&apos;eux.
         </p>
@@ -244,7 +244,7 @@ export function EditTripForm({
           </div>
 
           {routeState.error ? (
-            <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+            <p className="text-sm text-red-600" role="alert">
               {routeState.error}
             </p>
           ) : null}
@@ -252,25 +252,25 @@ export function EditTripForm({
           <button
             type="submit"
             disabled={!canManage || routePending}
-            className="self-start rounded-lg border border-zinc-300 px-4 py-2.5 font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="self-start rounded-lg border border-zinc-300 px-4 py-2.5 font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {routePending ? "Enregistrement..." : "Enregistrer la route"}
           </button>
         </form>
       </div>
 
-      <div className="border-t border-zinc-200 pt-6 dark:border-zinc-800">
+      <div className="border-t border-zinc-200 pt-6">
         <form action={cancelAction} className="flex flex-col items-start gap-3">
           <input type="hidden" name="tripId" value={trip.id} />
 
           {cancelState.error ? (
-            <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+            <p className="text-sm text-red-600" role="alert">
               {cancelState.error}
             </p>
           ) : null}
 
           {cancelState.warning ? (
-            <p className="text-sm text-amber-600 dark:text-amber-400" role="alert">
+            <p className="text-sm text-amber-600" role="alert">
               {cancelState.warning}
             </p>
           ) : null}
@@ -278,7 +278,7 @@ export function EditTripForm({
           <button
             type="submit"
             disabled={!canCancel || cancelPending}
-            className="rounded-lg border border-red-200 px-4 py-2.5 font-medium text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950"
+            className="rounded-lg border border-red-200 px-4 py-2.5 font-medium text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {cancelPending
               ? "Annulation..."

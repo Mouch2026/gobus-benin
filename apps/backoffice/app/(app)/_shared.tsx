@@ -11,10 +11,10 @@ export const STATUS_LABELS: Record<string, string> = {
 };
 
 export const STATUS_STYLES: Record<string, string> = {
-  scheduled: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
-  in_progress: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
-  completed: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
-  cancelled: "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300",
+  scheduled: "bg-blue-50 text-blue-700",
+  in_progress: "bg-amber-50 text-amber-700",
+  completed: "bg-emerald-50 text-emerald-700",
+  cancelled: "bg-red-50 text-red-700",
 };
 
 // Distinct from STATUS_LABELS/STATUS_STYLES above, which describe a
@@ -27,10 +27,10 @@ export const BOOKING_STATUS_LABELS: Record<string, string> = {
 };
 
 export const BOOKING_STATUS_STYLES: Record<string, string> = {
-  pending: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
-  confirmed: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
-  cancelled: "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300",
-  completed: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+  pending: "bg-amber-50 text-amber-700",
+  confirmed: "bg-emerald-50 text-emerald-700",
+  cancelled: "bg-red-50 text-red-700",
+  completed: "bg-blue-50 text-blue-700",
 };
 
 // Distinct from STATUS_LABELS/BOOKING_STATUS_LABELS above — a payment has
@@ -49,12 +49,12 @@ export const PAYMENT_STATUS_LABELS: Record<string, string> = {
 };
 
 export const PAYMENT_STATUS_STYLES: Record<string, string> = {
-  pending: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
-  received: "bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-300",
-  approved: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
-  failed: "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300",
-  refunded: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
-  voucher_issued: "bg-violet-50 text-violet-700 dark:bg-violet-950 dark:text-violet-300",
+  pending: "bg-amber-50 text-amber-700",
+  received: "bg-sky-50 text-sky-700",
+  approved: "bg-emerald-50 text-emerald-700",
+  failed: "bg-red-50 text-red-700",
+  refunded: "bg-blue-50 text-blue-700",
+  voucher_issued: "bg-violet-50 text-violet-700",
 };
 
 // Distinct des 3 maps de statut ci-dessus : c'est un statut AFFICHÉ,
@@ -70,10 +70,10 @@ export const BOOKING_DISPLAY_STATUS_LABELS: Record<BookingDisplayStatus, string>
 };
 
 export const BOOKING_DISPLAY_STATUS_STYLES: Record<BookingDisplayStatus, string> = {
-  confirmed: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
-  pending: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
-  cancelled: "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300",
-  refunded: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+  confirmed: "bg-emerald-50 text-emerald-700",
+  pending: "bg-amber-50 text-amber-700",
+  cancelled: "bg-red-50 text-red-700",
+  refunded: "bg-blue-50 text-blue-700",
 };
 
 // Règle exacte de dérivation (voir le plan du chantier) : bookings.status
@@ -111,9 +111,9 @@ export const NOTIFICATION_LEVEL_LABELS: Record<string, string> = {
 };
 
 export const NOTIFICATION_LEVEL_STYLES: Record<string, string> = {
-  critical: "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300",
-  warning: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
-  info: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+  critical: "bg-red-50 text-red-700",
+  warning: "bg-amber-50 text-amber-700",
+  info: "bg-blue-50 text-blue-700",
 };
 
 // Chantier A (chauffeurs) : premier statut DÉRIVÉ d'un intervalle de temps
@@ -139,9 +139,9 @@ export const DRIVER_DISPLAY_STATUS_LABELS: Record<DriverDisplayStatus, string> =
 };
 
 export const DRIVER_DISPLAY_STATUS_STYLES: Record<DriverDisplayStatus, string> = {
-  en_mission: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
-  disponible: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
-  archive: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+  en_mission: "bg-amber-50 text-amber-700",
+  disponible: "bg-emerald-50 text-emerald-700",
+  archive: "bg-zinc-100 text-zinc-600",
 };
 
 // Chantier B (disponibilités) : statut d'UN JOUR sur le calendrier —
@@ -171,9 +171,9 @@ export const DRIVER_DAY_STATUS_LABELS: Record<DriverDayStatus, string> = {
 // (voir DayCell dans disponibilites/), ces couleurs pilotent les bandes
 // individuelles et la légende, jamais un fond mélangé.
 export const DRIVER_DAY_STATUS_STYLES: Record<Exclude<DriverDayStatus, "conflit">, string> = {
-  disponible: "bg-emerald-100 dark:bg-emerald-900",
-  occupe: "bg-red-200 dark:bg-red-900",
-  indisponible: "bg-amber-200 dark:bg-amber-900",
+  disponible: "bg-emerald-100",
+  occupe: "bg-red-200",
+  indisponible: "bg-amber-200",
 };
 
 export const UNAVAILABILITY_REASON_LABELS: Record<string, string> = {
@@ -210,10 +210,10 @@ export function deriveDocumentExpiryStatus(
 }
 
 export const DOCUMENT_EXPIRY_STATUS_STYLES: Record<DocumentExpiryStatus, string> = {
-  expire: "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300",
-  bientot_expire: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
-  valide: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
-  sans_expiration: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+  expire: "bg-red-50 text-red-700",
+  bientot_expire: "bg-amber-50 text-amber-700",
+  valide: "bg-emerald-50 text-emerald-700",
+  sans_expiration: "bg-zinc-100 text-zinc-600",
 };
 
 export function documentExpiryLabel(status: DocumentExpiryStatus, daysLeft: number | null): string {
@@ -238,8 +238,8 @@ export function formatDepartureDateTime(departureAt: string): string {
 }
 
 const fieldClasses =
-  "rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-950 outline-none transition-colors focus:border-zinc-950 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:focus:border-zinc-50";
+  "rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-950 outline-none transition-colors focus:border-zinc-950";
 export const FIELD_CLASSES = fieldClasses;
 
-const labelClasses = "text-sm font-medium text-zinc-700 dark:text-zinc-300";
+const labelClasses = "text-sm font-medium text-zinc-700";
 export const LABEL_CLASSES = labelClasses;

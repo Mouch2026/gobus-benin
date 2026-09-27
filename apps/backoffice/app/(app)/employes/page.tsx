@@ -57,7 +57,7 @@ export default async function EmployesPage() {
   if (!can(result.role, "employees.manage")) {
     return (
       <div className="mx-auto max-w-xl px-6 py-8">
-        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
           Cette page est réservée au propriétaire du compte.
         </p>
       </div>
@@ -78,27 +78,27 @@ export default async function EmployesPage() {
     <div className="mx-auto flex max-w-3xl flex-col gap-8 px-6 py-8">
       {can(result.role, "lockPolicy.manage") ? (
         <section>
-          <h2 className="mb-2 text-lg font-semibold text-zinc-950 dark:text-zinc-50">Sécurité</h2>
-          <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+          <h2 className="mb-2 text-lg font-semibold text-zinc-950">Sécurité</h2>
+          <p className="mb-4 text-sm text-zinc-500">
             Un poste inactif se verrouille automatiquement — un code PIN (défini par chaque agent
             depuis son profil) le déverrouille, ou permet à un collègue de reprendre la main.
           </p>
-          <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="rounded-xl border border-zinc-200 bg-white p-6">
             <LockPolicyForm currentMinutes={result.lockTimeoutMinutes} />
           </div>
         </section>
       ) : null}
 
       <section>
-        <h1 className="mb-2 text-lg font-semibold text-zinc-950 dark:text-zinc-50">Nouvel employé</h1>
-        <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+        <h1 className="mb-2 text-lg font-semibold text-zinc-950">Nouvel employé</h1>
+        <p className="mb-4 text-sm text-zinc-500">
           Créez un compte pour un chef d&apos;agence ou un agent, rattaché à une agence.
           Communiquez-lui l&apos;email et le mot de passe choisis ici — aucun e-mail n&apos;est
           envoyé automatiquement.
         </p>
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="rounded-xl border border-zinc-200 bg-white p-6">
           {agencies.length === 0 ? (
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-sm text-zinc-500">
               Créez d&apos;abord une agence (rubrique Agences) avant de pouvoir y rattacher un
               employé.
             </p>
@@ -109,10 +109,10 @@ export default async function EmployesPage() {
       </section>
 
       <section>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-950 dark:text-zinc-50">Vos employés</h2>
+        <h2 className="mb-4 text-lg font-semibold text-zinc-950">Vos employés</h2>
 
         {employees.length === 0 ? (
-          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
             Aucun employé pour le moment — créez-en un ci-dessus.
           </p>
         ) : (

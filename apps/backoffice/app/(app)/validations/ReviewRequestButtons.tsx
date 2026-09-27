@@ -26,13 +26,13 @@ export function ReviewRequestButtons({ requestId }: { requestId: string }) {
           name="decision"
           value="rejected"
           disabled={pending}
-          className="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          className="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:opacity-50"
         >
           {pending ? "…" : "Refuser"}
         </button>
       </div>
       {state.error ? (
-        <span className="text-xs text-red-600 dark:text-red-400">{state.error}</span>
+        <span className="text-xs text-red-600">{state.error}</span>
       ) : null}
     </form>
   );

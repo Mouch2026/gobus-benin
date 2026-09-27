@@ -27,7 +27,7 @@ export function UnavailabilityRow({
 
   if (editing) {
     return (
-      <li className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+      <li className="rounded-lg border border-zinc-200 bg-white p-4">
         <form action={editAction} className="flex flex-col gap-3">
           <input type="hidden" name="unavailabilityId" value={period.id} />
           <input type="hidden" name="driverId" value={driverId} />
@@ -52,7 +52,7 @@ export function UnavailabilityRow({
             </div>
           </div>
           {editState.error ? (
-            <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+            <p className="text-sm text-red-600" role="alert">
               {editState.error}
             </p>
           ) : null}
@@ -60,14 +60,14 @@ export function UnavailabilityRow({
             <button
               type="submit"
               disabled={editPending}
-              className="rounded-lg bg-zinc-950 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+              className="rounded-lg bg-zinc-950 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {editPending ? "Enregistrement..." : "Enregistrer"}
             </button>
             <button
               type="button"
               onClick={() => setEditing(false)}
-              className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100"
             >
               Annuler
             </button>
@@ -78,8 +78,8 @@ export function UnavailabilityRow({
   }
 
   return (
-    <li className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
-      <span className="text-sm text-zinc-950 dark:text-zinc-50">
+    <li className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3">
+      <span className="text-sm text-zinc-950">
         {UNAVAILABILITY_REASON_LABELS[period.reason] ?? period.reason} — du {period.startDate} au {period.endDate}
       </span>
       {canManage ? (
@@ -87,7 +87,7 @@ export function UnavailabilityRow({
           <button
             type="button"
             onClick={() => setEditing(true)}
-            className="text-xs font-medium text-zinc-700 hover:underline dark:text-zinc-300"
+            className="text-xs font-medium text-zinc-700 hover:underline"
           >
             Modifier
           </button>
@@ -102,7 +102,7 @@ export function UnavailabilityRow({
                   e.preventDefault();
                 }
               }}
-              className="text-xs font-medium text-red-600 hover:underline disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-400"
+              className="text-xs font-medium text-red-600 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
             >
               {deletePending ? "…" : "Supprimer"}
             </button>
@@ -110,7 +110,7 @@ export function UnavailabilityRow({
         </div>
       ) : null}
       {deleteState.error ? (
-        <span className="w-full text-xs text-red-600 dark:text-red-400">{deleteState.error}</span>
+        <span className="w-full text-xs text-red-600">{deleteState.error}</span>
       ) : null}
     </li>
   );

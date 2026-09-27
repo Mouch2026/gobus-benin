@@ -137,34 +137,34 @@ export default async function AbonnementPage(props: PageProps<"/abonnement">) {
       {planChanged ? (
         <p
           role="status"
-          className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200"
+          className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
         >
           Votre nouveau plan est actif.
         </p>
       ) : null}
 
       <section>
-        <h1 className="mb-4 text-lg font-semibold text-zinc-950 dark:text-zinc-50">Abonnement</h1>
+        <h1 className="mb-4 text-lg font-semibold text-zinc-950">Abonnement</h1>
 
         {subscription && subscription.subscription_plans ? (
-          <div className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white p-6">
             <div className="flex items-center justify-between">
-              <span className="text-lg font-medium text-zinc-950 dark:text-zinc-50">
+              <span className="text-lg font-medium text-zinc-950">
                 Plan {subscription.subscription_plans.name}
               </span>
-              <span className="font-semibold text-zinc-950 dark:text-zinc-50">
+              <span className="font-semibold text-zinc-950">
                 {formatFcfa(subscription.subscription_plans.price_fcfa)}
-                <span className="text-sm font-normal text-zinc-500 dark:text-zinc-400">
+                <span className="text-sm font-normal text-zinc-500">
                   {BILLING_PERIOD_LABELS[subscription.subscription_plans.billing_period] ?? ""}
                 </span>
               </span>
             </div>
-            <div className="flex items-center justify-between text-sm text-zinc-500 dark:text-zinc-400">
+            <div className="flex items-center justify-between text-sm text-zinc-500">
               <span>Statut</span>
               <span>{SUBSCRIPTION_STATUS_LABELS[subscription.status] ?? subscription.status}</span>
             </div>
             {subscription.current_period_start ? (
-              <div className="flex items-center justify-between text-sm text-zinc-500 dark:text-zinc-400">
+              <div className="flex items-center justify-between text-sm text-zinc-500">
                 <span>Période en cours</span>
                 <span>
                   {formatDepartureDateTime(subscription.current_period_start)} →{" "}
@@ -176,7 +176,7 @@ export default async function AbonnementPage(props: PageProps<"/abonnement">) {
             ) : null}
           </div>
         ) : (
-          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
             Aucun abonnement trouvé.
           </p>
         )}
@@ -184,12 +184,12 @@ export default async function AbonnementPage(props: PageProps<"/abonnement">) {
 
       {canManageSubscription ? (
         <section>
-          <h2 className="mb-4 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+          <h2 className="mb-4 text-lg font-semibold text-zinc-950">
             Changer de plan
           </h2>
 
           {availablePlans.length === 0 ? (
-            <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+            <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
               Aucun autre plan disponible pour le moment.
             </p>
           ) : (
@@ -197,18 +197,18 @@ export default async function AbonnementPage(props: PageProps<"/abonnement">) {
               {availablePlans.map((plan) => (
                 <div
                   key={plan.id}
-                  className="flex items-center justify-between rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
+                  className="flex items-center justify-between rounded-xl border border-zinc-200 bg-white p-4"
                 >
                   <div>
-                    <span className="font-medium text-zinc-950 dark:text-zinc-50">{plan.name}</span>
-                    <span className="ml-2 text-sm text-zinc-500 dark:text-zinc-400">
+                    <span className="font-medium text-zinc-950">{plan.name}</span>
+                    <span className="ml-2 text-sm text-zinc-500">
                       {formatFcfa(plan.price_fcfa)}
                       {BILLING_PERIOD_LABELS[plan.billing_period] ?? ""}
                     </span>
                   </div>
                   <Link
                     href={`/abonnement/changer-plan?plan=${plan.id}`}
-                    className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                    className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100"
                   >
                     Changer pour ce plan
                   </Link>
@@ -220,19 +220,19 @@ export default async function AbonnementPage(props: PageProps<"/abonnement">) {
       ) : null}
 
       <section>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+        <h2 className="mb-4 text-lg font-semibold text-zinc-950">
           Historique des paiements
         </h2>
 
         {history.length === 0 ? (
-          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
             Aucun paiement enregistré.
           </p>
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white">
             <table className="w-full min-w-[560px] border-collapse text-left text-sm">
               <thead>
-                <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+                <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500">
                   <th className="px-4 py-3 font-medium">Date</th>
                   <th className="px-4 py-3 font-medium">Plan</th>
                   <th className="px-4 py-3 font-medium">Montant</th>
@@ -244,21 +244,21 @@ export default async function AbonnementPage(props: PageProps<"/abonnement">) {
                 {history.map((payment) => (
                   <tr
                     key={payment.id}
-                    className="border-b border-zinc-100 last:border-b-0 dark:border-zinc-800"
+                    className="border-b border-zinc-100 last:border-b-0"
                   >
-                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                    <td className="px-4 py-3 text-zinc-700">
                       {formatDepartureDateTime(payment.paid_at ?? payment.created_at)}
                     </td>
-                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                    <td className="px-4 py-3 text-zinc-700">
                       {payment.subscription_plans?.name ?? "—"}
                     </td>
-                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                    <td className="px-4 py-3 text-zinc-700">
                       {formatFcfa(payment.amount_fcfa)}
                     </td>
-                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                    <td className="px-4 py-3 text-zinc-700">
                       {PAYMENT_STATUS_LABELS[payment.status] ?? payment.status}
                     </td>
-                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                    <td className="px-4 py-3 text-zinc-700">
                       {payment.provider === "simulated" ? "Simulé" : payment.provider}
                     </td>
                   </tr>

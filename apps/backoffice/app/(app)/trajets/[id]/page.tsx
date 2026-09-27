@@ -119,11 +119,11 @@ export default async function TripDetailPage(props: PageProps<"/trajets/[id]">) 
 
   if (!trip) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-zinc-50 px-4 text-center dark:bg-black">
-        <p className="max-w-sm rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-zinc-50 px-4 text-center">
+        <p className="max-w-sm rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
           Ce trajet n&apos;existe pas ou ne vous appartient pas.
         </p>
-        <Link href="/voyages" className="font-medium text-zinc-950 hover:underline dark:text-zinc-50">
+        <Link href="/voyages" className="font-medium text-zinc-950 hover:underline">
           ← Retour aux trajets
         </Link>
       </div>
@@ -134,41 +134,41 @@ export default async function TripDetailPage(props: PageProps<"/trajets/[id]">) 
 
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-6 px-6 py-8">
-      <h1 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+      <h1 className="text-lg font-semibold text-zinc-950">
         {trip.routes.origin_city} → {trip.routes.destination_city}
       </h1>
-      <div className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white p-6">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-zinc-500 dark:text-zinc-400">
+          <span className="text-sm text-zinc-500">
             {formatDepartureDateTime(trip.departure_at)} ·{" "}
             {SEAT_CLASS_LABELS[trip.seat_class] ?? trip.seat_class}
           </span>
           <span
             className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
-              STATUS_STYLES[trip.status] ?? "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+              STATUS_STYLES[trip.status] ?? "bg-zinc-100 text-zinc-700"
             }`}
           >
             {STATUS_LABELS[trip.status] ?? trip.status}
           </span>
         </div>
-        <div className="text-sm text-zinc-500 dark:text-zinc-400">
+        <div className="text-sm text-zinc-500">
           Prix actuel : {formatFcfa(trip.price_fcfa)} · {trip.available_seats}/{trip.total_seats}{" "}
           places disponibles
         </div>
-        <div className="text-sm text-zinc-500 dark:text-zinc-400">Bus n° {trip.bus_number}</div>
+        <div className="text-sm text-zinc-500">Bus n° {trip.bus_number}</div>
       </div>
 
-      <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="rounded-xl border border-zinc-200 bg-white p-6">
         <EditTripForm trip={trip} drivers={drivers} canManage={can(result.role, "trips.manage")} />
       </div>
 
       <section>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+        <h2 className="mb-4 text-lg font-semibold text-zinc-950">
           Réservations
         </h2>
 
         {bookings.length === 0 ? (
-          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
             Aucune réservation pour ce trajet.
           </p>
         ) : (
@@ -176,20 +176,20 @@ export default async function TripDetailPage(props: PageProps<"/trajets/[id]">) 
             {bookings.map((booking) => (
               <div
                 key={booking.id}
-                className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
+                className="rounded-xl border border-zinc-200 bg-white p-4"
               >
                 <div className="flex items-center justify-between gap-4">
-                  <span className="font-medium text-zinc-950 dark:text-zinc-50">
+                  <span className="font-medium text-zinc-950">
                     {booking.booking_reference}
                   </span>
                   <span className="flex items-center gap-3">
-                    <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                    <span className="text-sm text-zinc-500">
                       {booking.seat_count} place{booking.seat_count > 1 ? "s" : ""}
                     </span>
                     <span
                       className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
                         BOOKING_STATUS_STYLES[booking.status] ??
-                        "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                        "bg-zinc-100 text-zinc-700"
                       }`}
                     >
                       {BOOKING_STATUS_LABELS[booking.status] ?? booking.status}
@@ -198,17 +198,17 @@ export default async function TripDetailPage(props: PageProps<"/trajets/[id]">) 
                 </div>
 
                 {booking.phone ? (
-                  <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                  <p className="mt-1 text-sm text-zinc-500">
                     Contact : {booking.phone}
                   </p>
                 ) : null}
 
                 {booking.passengers.length > 0 ? (
-                  <ul className="mt-3 flex flex-col gap-1 border-t border-zinc-100 pt-3 text-sm text-zinc-700 dark:border-zinc-800 dark:text-zinc-300">
+                  <ul className="mt-3 flex flex-col gap-1 border-t border-zinc-100 pt-3 text-sm text-zinc-700">
                     {booking.passengers.map((passenger) => (
                       <li key={passenger.id} className="flex items-center justify-between gap-4">
                         <span>{passenger.full_name}</span>
-                        <span className="text-zinc-500 dark:text-zinc-400">
+                        <span className="text-zinc-500">
                           {passenger.seat_number ? `Siège ${passenger.seat_number}` : "—"}
                         </span>
                       </li>

@@ -20,15 +20,15 @@ function VoucherRow({ voucher }: { voucher: RefundPendingVoucherRow }) {
   const [state, action, pending] = useActionState(markVoucherProcessed, initialState);
 
   return (
-    <tr className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50">
-      <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+    <tr className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50">
+      <td className="px-4 py-3 text-zinc-700">
         {voucher.origin_booking_reference}
       </td>
-      <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{voucher.user_email ?? "—"}</td>
-      <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+      <td className="px-4 py-3 text-zinc-700">{voucher.user_email ?? "—"}</td>
+      <td className="px-4 py-3 text-zinc-700">
         {formatFcfa(voucher.refund_pending_amount_fcfa ?? voucher.amount_fcfa)}
       </td>
-      <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+      <td className="px-4 py-3 text-zinc-700">
         {voucher.refund_pending_at ? formatDepartureDateTime(voucher.refund_pending_at) : "—"}
       </td>
       <td className="px-4 py-3">
@@ -37,11 +37,11 @@ function VoucherRow({ voucher }: { voucher: RefundPendingVoucherRow }) {
           <button
             type="submit"
             disabled={pending}
-            className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:opacity-50"
           >
             {pending ? "…" : "Marquer comme traité"}
           </button>
-          {state.error ? <span className="text-xs text-red-600 dark:text-red-400">{state.error}</span> : null}
+          {state.error ? <span className="text-xs text-red-600">{state.error}</span> : null}
         </form>
       </td>
     </tr>
@@ -51,17 +51,17 @@ function VoucherRow({ voucher }: { voucher: RefundPendingVoucherRow }) {
 export function RemboursementsTable({ vouchers }: { vouchers: RefundPendingVoucherRow[] }) {
   if (vouchers.length === 0) {
     return (
-      <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+      <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
         Aucun avoir en attente de remboursement.
       </p>
     );
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white">
       <table className="w-full min-w-[800px] border-collapse text-left text-sm">
         <thead>
-          <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+          <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500">
             <th className="px-4 py-3 font-medium">Réservation d&apos;origine</th>
             <th className="px-4 py-3 font-medium">Client</th>
             <th className="px-4 py-3 font-medium">Montant</th>

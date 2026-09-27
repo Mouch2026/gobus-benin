@@ -195,12 +195,12 @@ export default async function DriverDetailPage(props: PageProps<"/chauffeurs/[id
   if (!driver) {
     return (
       <div className="mx-auto max-w-xl px-6 py-8">
-        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
           Ce chauffeur n&apos;existe pas ou ne vous appartient pas.
         </p>
         <Link
           href="/chauffeurs"
-          className="mt-4 inline-block font-medium text-zinc-950 hover:underline dark:text-zinc-50"
+          className="mt-4 inline-block font-medium text-zinc-950 hover:underline"
         >
           ← Retour aux chauffeurs
         </Link>
@@ -227,7 +227,7 @@ export default async function DriverDetailPage(props: PageProps<"/chauffeurs/[id
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-6 px-6 py-8">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">{driver.full_name}</h1>
+        <h1 className="text-lg font-semibold text-zinc-950">{driver.full_name}</h1>
         <span
           className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${DRIVER_DISPLAY_STATUS_STYLES[displayStatus]}`}
         >
@@ -237,36 +237,36 @@ export default async function DriverDetailPage(props: PageProps<"/chauffeurs/[id
 
       <Link
         href={`/chauffeurs/${id}/disponibilites`}
-        className="self-start rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+        className="self-start rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100"
       >
         Voir le calendrier de disponibilités →
       </Link>
 
       {currentTrip ? (
-        <div className="rounded-xl border border-zinc-200 bg-white p-4 text-sm text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
+        <div className="rounded-xl border border-zinc-200 bg-white p-4 text-sm text-zinc-700">
           En mission : {currentTrip.routes.origin_city} → {currentTrip.routes.destination_city} ·{" "}
           {formatDepartureDateTime(currentTrip.departure_at)} · Bus {currentTrip.bus_number}
         </div>
       ) : null}
 
-      <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="rounded-xl border border-zinc-200 bg-white p-6">
         <EditDriverForm driver={driver} canManage={canManage} />
       </div>
 
       {canViewDocuments ? (
         <section>
-          <h2 className="mb-2 text-lg font-semibold text-zinc-950 dark:text-zinc-50">Documents</h2>
-          <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+          <h2 className="mb-2 text-lg font-semibold text-zinc-950">Documents</h2>
+          <p className="mb-4 text-sm text-zinc-500">
             Réservé au propriétaire et aux chefs d&apos;agence. Une alerte est envoyée quand un
             document atteint {alertDays} jour{alertDays > 1 ? "s" : ""} avant son expiration.
           </p>
 
-          <div className="mb-4 rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="mb-4 rounded-xl border border-zinc-200 bg-white p-6">
             <UploadDocumentForm driverId={id} />
           </div>
 
           {documents.length === 0 ? (
-            <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+            <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
               Aucun document pour ce chauffeur.
             </p>
           ) : (
@@ -276,13 +276,13 @@ export default async function DriverDetailPage(props: PageProps<"/chauffeurs/[id
                 return (
                   <li
                     key={doc.id}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-800 dark:bg-zinc-900"
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm"
                   >
                     <div className="flex min-w-0 flex-col gap-0.5">
-                      <span className="font-medium text-zinc-950 dark:text-zinc-50">
+                      <span className="font-medium text-zinc-950">
                         {isDocumentType(doc.type) ? DOCUMENT_TYPE_LABELS[doc.type] : doc.type}
                       </span>
-                      <span className="truncate text-zinc-500 dark:text-zinc-400">
+                      <span className="truncate text-zinc-500">
                         {doc.file_name}
                         {doc.expiration_date ? ` · expire le ${doc.expiration_date.split("-").reverse().join("/")}` : ""}
                       </span>
@@ -295,7 +295,7 @@ export default async function DriverDetailPage(props: PageProps<"/chauffeurs/[id
                       </span>
                       <a
                         href={`/chauffeurs/${id}/documents/${doc.id}/telecharger`}
-                        className="text-xs font-medium text-zinc-700 hover:underline dark:text-zinc-300"
+                        className="text-xs font-medium text-zinc-700 hover:underline"
                       >
                         Télécharger
                       </a>
@@ -311,11 +311,11 @@ export default async function DriverDetailPage(props: PageProps<"/chauffeurs/[id
 
       {canViewRatings ? (
         <section>
-          <h2 className="mb-2 text-lg font-semibold text-zinc-950 dark:text-zinc-50">Évaluations</h2>
-          <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+          <h2 className="mb-2 text-lg font-semibold text-zinc-950">Évaluations</h2>
+          <p className="mb-4 text-sm text-zinc-500">
             Notées par les voyageurs après leur trajet — définitives, jamais modifiables.
           </p>
-          <p className="mb-4 text-sm font-medium text-zinc-950 dark:text-zinc-50">
+          <p className="mb-4 text-sm font-medium text-zinc-950">
             {averageRating !== null ? `★ ${averageRating} (${ratings.length} avis)` : "Aucun avis pour le moment."}
           </p>
 
@@ -324,19 +324,19 @@ export default async function DriverDetailPage(props: PageProps<"/chauffeurs/[id
               {ratings.map((rating) => (
                 <li
                   key={rating.id}
-                  className="flex flex-col gap-1 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-800 dark:bg-zinc-900"
+                  className="flex flex-col gap-1 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm"
                 >
                   <div className="flex items-center justify-between gap-4">
-                    <span className="font-medium text-zinc-950 dark:text-zinc-50">
+                    <span className="font-medium text-zinc-950">
                       {"★".repeat(rating.stars)}
                       {"☆".repeat(5 - rating.stars)}
                     </span>
-                    <span className="text-zinc-500 dark:text-zinc-400">
+                    <span className="text-zinc-500">
                       {rating.reviewer_name} · {formatDepartureDateTime(rating.created_at)}
                     </span>
                   </div>
                   {rating.comment ? (
-                    <p className="text-zinc-700 dark:text-zinc-300">{rating.comment}</p>
+                    <p className="text-zinc-700">{rating.comment}</p>
                   ) : null}
                 </li>
               ))}
@@ -346,11 +346,11 @@ export default async function DriverDetailPage(props: PageProps<"/chauffeurs/[id
       ) : null}
 
       <section>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+        <h2 className="mb-4 text-lg font-semibold text-zinc-950">
           Historique des affectations
         </h2>
         {history.length === 0 ? (
-          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
             Aucune affectation passée.
           </p>
         ) : (
@@ -364,21 +364,21 @@ export default async function DriverDetailPage(props: PageProps<"/chauffeurs/[id
               return (
                 <li
                   key={trip.trip_id}
-                  className="flex flex-col gap-1 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-800 dark:bg-zinc-900"
+                  className="flex flex-col gap-1 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm"
                 >
                   <div className="flex items-center justify-between gap-4">
-                    <span className="font-medium text-zinc-950 dark:text-zinc-50">
+                    <span className="font-medium text-zinc-950">
                       {trip.origin_city} → {trip.destination_city}
                     </span>
                     <span
                       className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
-                        STATUS_STYLES[trip.status] ?? "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                        STATUS_STYLES[trip.status] ?? "bg-zinc-100 text-zinc-700"
                       }`}
                     >
                       {STATUS_LABELS[trip.status] ?? trip.status}
                     </span>
                   </div>
-                  <span className="text-zinc-500 dark:text-zinc-400">
+                  <span className="text-zinc-500">
                     {formatDepartureDateTime(trip.departure_at)} · Bus {trip.bus_number} · Durée {durationLabel}
                   </span>
                 </li>
@@ -390,7 +390,7 @@ export default async function DriverDetailPage(props: PageProps<"/chauffeurs/[id
 
       <Link
         href="/chauffeurs"
-        className="font-medium text-zinc-950 hover:underline dark:text-zinc-50"
+        className="font-medium text-zinc-950 hover:underline"
       >
         ← Retour aux chauffeurs
       </Link>

@@ -44,8 +44,8 @@ export function EditBookingForm({
         />
       </div>
 
-      <div className="flex flex-col gap-4 border-t border-zinc-200 pt-4 dark:border-zinc-800">
-        <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">Passagers</h3>
+      <div className="flex flex-col gap-4 border-t border-zinc-200 pt-4">
+        <h3 className="text-sm font-semibold text-zinc-950">Passagers</h3>
         {booking.passengers.map((passenger) => {
           // Un passager peut toujours garder son siège actuel — les
           // options sont : sièges libres (ni pris par un autre, ni par ce
@@ -94,7 +94,7 @@ export function EditBookingForm({
       </div>
 
       {state.error ? (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+        <p className="text-sm text-red-600" role="alert">
           {state.error}
         </p>
       ) : null}
@@ -102,7 +102,7 @@ export function EditBookingForm({
       <button
         type="submit"
         disabled={pending}
-        className="self-start rounded-lg bg-zinc-950 px-4 py-2.5 font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+        className="self-start rounded-lg bg-zinc-950 px-4 py-2.5 font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {pending ? "Enregistrement..." : "Enregistrer"}
       </button>
