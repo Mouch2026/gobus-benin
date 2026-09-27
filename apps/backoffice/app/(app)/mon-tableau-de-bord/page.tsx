@@ -1,4 +1,5 @@
 import Link from "next/link";
+import * as Icons from "@/lib/icons";
 import { requireCompany } from "@/lib/supabase/dal";
 import { can } from "@/lib/permissions";
 import { getSelectedAgency, getActiveAgencies } from "@/lib/agency-selection";
@@ -93,6 +94,8 @@ export default async function AgentDashboardPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Réservations du jour"
+          icon={Icons.TicketIcon}
+          accent="blue"
           value={
             <span className="flex items-baseline gap-2">
               {kpis.bookingsTodayCount}
@@ -107,51 +110,102 @@ export default async function AgentDashboardPage() {
         />
         <StatCard
           label="Paiements en ligne en attente"
+          icon={Icons.CardIcon}
+          accent="amber"
           value={kpis.pendingOnlinePaymentCount}
         />
         <StatCard
           label="Mes encaissements"
+          icon={Icons.BanknoteIcon}
+          accent="emerald"
           value={openSession ? formatFcfa(theoreticalBalance ?? 0) : "Aucune session ouverte"}
           href="/caisse"
         />
-        <StatCard label="Billets à valider" value={kpis.boardingPendingCount} href="/embarquement" />
+        <StatCard
+          label="Billets à valider"
+          icon={Icons.QrCodeIcon}
+          accent="red"
+          value={kpis.boardingPendingCount}
+          href="/embarquement"
+        />
       </div>
 
-      <section>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-950">
-          Prochains départs depuis l&apos;agence
-        </h2>
-        {upcomingTrips.length === 0 ? (
-          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
-            Aucun départ à venir depuis cette agence.
-          </p>
-        ) : (
-          <ul className="flex flex-col gap-2">
-            {upcomingTrips.map((trip) => (
-              <li
-                key={trip.tripId}
-                className="flex flex-col gap-2 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-zinc-950">
-                      {trip.originCity} → {trip.destinationCity}
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+        <section>
+          <h2 className="mb-4 text-lg font-semibold text-zinc-950">
+            Prochains départs depuis l&apos;agence
+          </h2>
+          {upcomingTrips.length === 0 ? (
+            <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
+              Aucun départ à venir depuis cette agence.
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {upcomingTrips.map((trip) => (
+                <li
+                  key={trip.tripId}
+                  className="flex flex-col gap-2 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-zinc-950">
+                        {trip.originCity} → {trip.destinationCity}
+                      </span>
+                      <DelayBadge delayMinutes={trip.latestDelayMinutes} />
+                    </div>
+                    <span className="text-zinc-500">
+                      {formatDepartureDateTime(trip.departureAt)} · Bus {trip.busNumber}
                     </span>
-                    <DelayBadge delayMinutes={trip.latestDelayMinutes} />
                   </div>
-                  <span className="text-zinc-500">
-                    {formatDepartureDateTime(trip.departureAt)} · Bus {trip.busNumber}
+                  <div className="flex flex-wrap items-center gap-3">
+                    <SeatFillBar availableSeats={trip.availableSeats} totalSeats={trip.totalSeats} />
+                    <ReportDelayForm tripId={trip.tripId} />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section>
+          <h2 className="mb-2 text-lg font-semibold text-zinc-950">Ma session de caisse</h2>
+          {!openSession ? (
+            <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
+              Aucune session de caisse ouverte.{" "}
+              <Link href="/caisse" className="font-medium text-zinc-950 hover:underline">
+                Ouvrir une session →
+              </Link>
+            </p>
+          ) : (
+            <div className="rounded-xl border border-zinc-200 bg-white p-6">
+              <p className="mb-4 text-xs text-zinc-500">
+                Espèces uniquement — les paiements Mobile Money/carte ne passent jamais par une
+                session de caisse.
+              </p>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div>
+                  <span className="block text-sm text-zinc-500">Encaissements</span>
+                  <span className="font-display text-lg font-semibold text-zinc-950">
+                    {formatFcfa(caisseBreakdown!.encaissementsFcfa)} ({caisseBreakdown!.encaissementsCount})
                   </span>
                 </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <SeatFillBar availableSeats={trip.availableSeats} totalSeats={trip.totalSeats} />
-                  <ReportDelayForm tripId={trip.tripId} />
+                <div>
+                  <span className="block text-sm text-zinc-500">Dépôts coffre</span>
+                  <span className="font-display text-lg font-semibold text-zinc-950">
+                    {formatFcfa(caisseBreakdown!.depotsFcfa)} ({caisseBreakdown!.depotsCount})
+                  </span>
                 </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+                <div>
+                  <span className="block text-sm text-zinc-500">Solde théorique</span>
+                  <span className="font-display text-lg font-semibold text-zinc-950">
+                    {formatFcfa(theoreticalBalance ?? 0)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
+      </div>
 
       <section>
         <h2 className="mb-4 text-lg font-semibold text-zinc-950">Actions rapides</h2>
@@ -177,137 +231,106 @@ export default async function AgentDashboardPage() {
         </div>
       </section>
 
-      <section>
-        <h2 className="mb-2 text-lg font-semibold text-zinc-950">Ma session de caisse</h2>
-        {!openSession ? (
-          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
-            Aucune session de caisse ouverte.{" "}
-            <Link href="/caisse" className="font-medium text-zinc-950 hover:underline">
-              Ouvrir une session →
-            </Link>
-          </p>
-        ) : (
-          <div className="rounded-xl border border-zinc-200 bg-white p-6">
-            <p className="mb-4 text-xs text-zinc-500">
-              Espèces uniquement — les paiements Mobile Money/carte ne passent jamais par une
-              session de caisse.
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+        <section>
+          <h2 className="mb-4 text-lg font-semibold text-zinc-950">Mes alertes</h2>
+          {notifications.length === 0 ? (
+            <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
+              Aucune alerte pour cette agence.
             </p>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <div>
-                <span className="block text-sm text-zinc-500">Encaissements</span>
-                <span className="font-display text-lg font-semibold text-zinc-950">
-                  {formatFcfa(caisseBreakdown!.encaissementsFcfa)} ({caisseBreakdown!.encaissementsCount})
-                </span>
-              </div>
-              <div>
-                <span className="block text-sm text-zinc-500">Dépôts coffre</span>
-                <span className="font-display text-lg font-semibold text-zinc-950">
-                  {formatFcfa(caisseBreakdown!.depotsFcfa)} ({caisseBreakdown!.depotsCount})
-                </span>
-              </div>
-              <div>
-                <span className="block text-sm text-zinc-500">Solde théorique</span>
-                <span className="font-display text-lg font-semibold text-zinc-950">
-                  {formatFcfa(theoreticalBalance ?? 0)}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-      </section>
-
-      <section>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-950">Réservations à traiter</h2>
-        {pendingPayments.length === 0 ? (
-          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
-            Aucun paiement en ligne en attente pour cette agence.
-          </p>
-        ) : (
-          <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white">
-            <table className="w-full min-w-[700px] border-collapse text-left text-sm">
-              <thead>
-                <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500">
-                  <th className="px-4 py-3 font-medium">Réservation</th>
-                  <th className="px-4 py-3 font-medium">Voyageur</th>
-                  <th className="px-4 py-3 font-medium">Trajet</th>
-                  <th className="px-4 py-3 font-medium">Moyen</th>
-                  <th className="px-4 py-3 font-medium">Montant</th>
-                  <th className="px-4 py-3 font-medium">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pendingPayments.map((booking) => {
-                  const expired =
-                    !booking.paymentTokenExpiresAt || new Date(booking.paymentTokenExpiresAt) <= new Date();
-                  return (
-                    <tr
-                      key={booking.paymentId}
-                      className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50"
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {notifications.map((notification) => (
+                <li
+                  key={notification.id}
+                  className="flex flex-col gap-1 rounded-xl border border-zinc-200 bg-white p-4"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="font-medium text-zinc-950">{notification.title}</span>
+                    <span
+                      className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${NOTIFICATION_LEVEL_STYLES[notification.level]}`}
                     >
-                      <td className="px-4 py-3 text-zinc-700">{booking.bookingReference}</td>
-                      <td className="px-4 py-3 text-zinc-700">{booking.passengerNames || "—"}</td>
-                      <td className="px-4 py-3 text-zinc-700">
-                        {booking.originCity} → {booking.destinationCity} ·{" "}
-                        {formatDepartureDateTime(booking.departureAt)}
-                      </td>
-                      <td className="px-4 py-3 text-zinc-700">
-                        {PAYMENT_METHOD_LABELS[booking.paymentMethod] ?? booking.paymentMethod}
-                      </td>
-                      <td className="px-4 py-3 text-zinc-700">
-                        {formatFcfa(booking.amountDueFcfa)}
-                      </td>
-                      <td className="px-4 py-3">
-                        <RelaunchButton paymentId={booking.paymentId} disabled={expired} />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-
-      <section>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-950">Mes alertes</h2>
-        {notifications.length === 0 ? (
-          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
-            Aucune alerte pour cette agence.
-          </p>
-        ) : (
-          <ul className="flex flex-col gap-3">
-            {notifications.map((notification) => (
-              <li
-                key={notification.id}
-                className="flex flex-col gap-1 rounded-xl border border-zinc-200 bg-white p-4"
-              >
-                <div className="flex items-center justify-between gap-4">
-                  <span className="font-medium text-zinc-950">{notification.title}</span>
-                  <span
-                    className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${NOTIFICATION_LEVEL_STYLES[notification.level]}`}
-                  >
-                    {NOTIFICATION_LEVEL_LABELS[notification.level]}
+                      {NOTIFICATION_LEVEL_LABELS[notification.level]}
+                    </span>
+                  </div>
+                  {notification.body ? (
+                    <span className="text-sm text-zinc-500">{notification.body}</span>
+                  ) : null}
+                  <span className="text-xs text-zinc-400">
+                    {formatNotificationDate(notification.createdAt)}
                   </span>
-                </div>
-                {notification.body ? (
-                  <span className="text-sm text-zinc-500">{notification.body}</span>
-                ) : null}
-                <span className="text-xs text-zinc-400">
-                  {formatNotificationDate(notification.createdAt)}
-                </span>
-                {notification.actionHref ? (
-                  <Link
-                    href={notification.actionHref}
-                    className="mt-1 text-sm font-medium text-zinc-950 hover:underline"
-                  >
-                    Voir →
-                  </Link>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+                  {notification.actionHref ? (
+                    <Link
+                      href={notification.actionHref}
+                      className="mt-1 text-sm font-medium text-zinc-950 hover:underline"
+                    >
+                      Voir →
+                    </Link>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section>
+          <h2 className="mb-4 text-lg font-semibold text-zinc-950">Réservations à traiter</h2>
+          {pendingPayments.length === 0 ? (
+            <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
+              Aucun paiement en ligne en attente pour cette agence.
+            </p>
+          ) : (
+            <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white">
+              <table className="w-full min-w-[500px] border-collapse text-left text-sm">
+                <thead>
+                  <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500">
+                    <th className="px-4 py-3 font-medium">Réservation</th>
+                    <th className="px-4 py-3 font-medium">Trajet</th>
+                    <th className="px-4 py-3 font-medium">Montant</th>
+                    <th className="px-4 py-3 font-medium">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendingPayments.map((booking) => {
+                    const expired =
+                      !booking.paymentTokenExpiresAt || new Date(booking.paymentTokenExpiresAt) <= new Date();
+                    return (
+                      <tr
+                        key={booking.paymentId}
+                        className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50"
+                      >
+                        <td className="px-4 py-3 text-zinc-700">
+                          <div className="flex flex-col">
+                            <span>{booking.bookingReference}</span>
+                            <span className="text-xs text-zinc-500">{booking.passengerNames || "—"}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-zinc-700">
+                          <div className="flex flex-col">
+                            <span>
+                              {booking.originCity} → {booking.destinationCity}
+                            </span>
+                            <span className="text-xs text-zinc-500">
+                              {formatDepartureDateTime(booking.departureAt)} ·{" "}
+                              {PAYMENT_METHOD_LABELS[booking.paymentMethod] ?? booking.paymentMethod}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-zinc-700">
+                          {formatFcfa(booking.amountDueFcfa)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <RelaunchButton paymentId={booking.paymentId} disabled={expired} />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   );
 }
