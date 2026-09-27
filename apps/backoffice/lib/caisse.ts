@@ -55,3 +55,33 @@ export async function getTheoreticalBalance(sessionId: string): Promise<number> 
     0
   );
 }
+
+export type CaisseBreakdown = {
+  encaissementsCount: number;
+  encaissementsFcfa: number;
+  depotsCount: number;
+  depotsFcfa: number;
+};
+
+// Détail par type de mouvement pour "Ma session de caisse"
+// (mon-tableau-de-bord) — mouvements_caisse ne trace QUE les espèces
+// (voir le plan) : aucun découpage MTN/Moov/carte n'est possible ici, ces
+// paiements ne passent jamais par une session de caisse ni ne sont
+// rattachés à un agent.
+export async function getSessionMovementsBreakdown(sessionId: string): Promise<CaisseBreakdown> {
+  const { data } = await supabaseAdmin
+    .from("mouvements_caisse")
+    .select("type, montant_fcfa")
+    .eq("session_id", sessionId);
+
+  const rows = data ?? [];
+  const sum = (type: string) =>
+    rows.filter((r) => r.type === type).reduce((s, r) => s + r.montant_fcfa, 0);
+
+  return {
+    encaissementsCount: rows.filter((r) => r.type === "ENCAISSEMENT").length,
+    encaissementsFcfa: sum("ENCAISSEMENT"),
+    depotsCount: rows.filter((r) => r.type === "DEPOT_COFFRE").length,
+    depotsFcfa: sum("DEPOT_COFFRE"),
+  };
+}

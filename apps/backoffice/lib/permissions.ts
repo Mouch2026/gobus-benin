@@ -24,7 +24,8 @@ export type CompanyAction =
   | "driverUnavailability.manage" // déclarer/modifier/supprimer une indisponibilité — même niveau que trips.manage (owner + agency_manager), pas le niveau CRUD roster (drivers.manage, owner seul)
   | "driverDocuments.manage" // voir/téléverser/télécharger/supprimer les documents d'un chauffeur — owner + agency_manager, lecture COMPRISE (données personnelles : un agent ne voit même pas la liste)
   | "documentAlerts.manage" // régler le seuil d'alerte d'expiration des documents — propriétaire uniquement, comme cashCeiling/lockPolicy
-  | "driverRatings.view"; // consulter les évaluations d'un chauffeur — owner + agency_manager, comme driverDocuments.manage mais action distincte (voir un avis n'est pas gérer un document légal)
+  | "driverRatings.view" // consulter les évaluations d'un chauffeur — owner + agency_manager, comme driverDocuments.manage mais action distincte (voir un avis n'est pas gérer un document légal)
+  | "ownerDashboard.view"; // consulter le tableau de bord stratégique compagnie entière (/pilotage) — propriétaire uniquement
 
 const PERMISSIONS: Record<CompanyAction, readonly CompanyRole[]> = {
   "trips.manage": ["owner", "agency_manager"],
@@ -43,6 +44,7 @@ const PERMISSIONS: Record<CompanyAction, readonly CompanyRole[]> = {
   "driverDocuments.manage": ["owner", "agency_manager"],
   "documentAlerts.manage": ["owner"],
   "driverRatings.view": ["owner", "agency_manager"],
+  "ownerDashboard.view": ["owner"],
 };
 
 export function can(role: CompanyRole, action: CompanyAction): boolean {

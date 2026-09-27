@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getBeninDateStringFor } from "@/lib/benin-time";
+import { getBeninDateString, getBeninDateStringFor } from "@/lib/benin-time";
+import { DOCUMENT_TYPE_LABELS, isDocumentType } from "@/lib/driverDocuments";
 import { UNAVAILABILITY_REASON_LABELS } from "../_shared";
 
 export type DriverAssignmentResult =
@@ -48,6 +49,32 @@ export async function resolveAndValidateDriver(
 
   if (!driver) {
     return { ok: false, error: "Ce chauffeur n'existe pas, n'est pas actif, ou ne vous appartient pas." };
+  }
+
+  // Un chauffeur sans papiers à jour n'est pas éligible du tout,
+  // indépendamment du créneau horaire — placé AVANT le chevauchement.
+  // Client de SESSION (pas supabaseAdmin) : les deux points d'appel sont
+  // déjà gatés par can(role, "trips.manage") = owner/agency_manager,
+  // exactement les rôles autorisés par driver_documents_select_manager
+  // (RLS) — ne jamais "corriger" ceci vers supabaseAdmin, l'alignement
+  // est volontaire, pas un oubli.
+  const today = getBeninDateString();
+  const { data: expiredDocuments } = await supabase
+    .from("driver_documents")
+    .select("type, expiration_date")
+    .eq("driver_id", driverId)
+    .eq("company_id", companyId)
+    .not("expiration_date", "is", null)
+    .lt("expiration_date", today);
+
+  if (expiredDocuments && expiredDocuments.length > 0) {
+    const labels = (expiredDocuments as { type: string; expiration_date: string }[])
+      .map((d) => {
+        const label = isDocumentType(d.type) ? DOCUMENT_TYPE_LABELS[d.type] : d.type;
+        return `${label} (expiré le ${d.expiration_date.split("-").reverse().join("/")})`;
+      })
+      .join(", ");
+    return { ok: false, error: `Ce chauffeur a un ou plusieurs documents expirés : ${labels}.` };
   }
 
   if (arrivalAt) {

@@ -133,14 +133,33 @@ export async function updateTripDetails(
   }
   const newAvailableSeats = newTotalSeats - booked;
 
-  const driverAssignment = await resolveAndValidateDriver(
-    supabase,
-    access.company.id,
-    driverIdRaw,
-    trip.departure_at,
-    arrival.arrivalAt,
-    tripId
-  );
+  // Ne revalide (chevauchement, indisponibilité, document expiré...) QUE
+  // si le chauffeur ou l'horaire changent réellement — même principe déjà
+  // accepté ci-dessus pour le garde-fou "trajet déjà parti" (lignes
+  // 111-116) : ne pas ré-appliquer un contrôle à une valeur qui n'a pas
+  // bougé. Sans ce garde-fou, l'ajout du contrôle "document expiré"
+  // bloquerait indéfiniment TOUTE modification d'un trajet existant (même
+  // sans rapport, ex. une coquille dans bus_number) dès que le document du
+  // chauffeur déjà affecté expire — un couplage bien plus large que ce que
+  // ce contrôle est censé empêcher.
+  //
+  // Effet de bord mineur accepté, symétrique à celui déjà toléré pour le
+  // garde-fou "déjà parti" : une indisponibilité déclarée APRÈS
+  // l'affectation initiale ne sera plus détectée par une simple correction
+  // sans rapport (bus_number, prix...) tant que le chauffeur ou l'horaire
+  // ne changent pas eux-mêmes — seule une modification qui les touche
+  // réellement redéclenche la vérification complète.
+  const driverUnchanged = (driverIdRaw.trim() || null) === trip.driver_id;
+  const driverAssignment = driverUnchanged && !arrivalChanged
+    ? { ok: true as const, driverId: trip.driver_id }
+    : await resolveAndValidateDriver(
+        supabase,
+        access.company.id,
+        driverIdRaw,
+        trip.departure_at,
+        arrival.arrivalAt,
+        tripId
+      );
   if (!driverAssignment.ok) {
     return { error: driverAssignment.error };
   }

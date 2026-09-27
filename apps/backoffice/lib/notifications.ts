@@ -57,6 +57,38 @@ export const getCompanyNotifications = cache(
   }
 );
 
+// Même mapping que getCompanyNotifications, mais scopée à une agence
+// EXPLICITE plutôt qu'à celle du membre appelant — nécessaire pour
+// mon-tableau-de-bord, où un owner peut consulter une agence qui n'est
+// jamais la sienne (il n'en a aucune, voir agency-selection.ts).
+export const getAgencyNotifications = cache(
+  async (agencyId: string, limit = 20): Promise<CompanyNotification[]> => {
+    const user = await requireUser();
+    const { data, error } = await supabaseAdmin.rpc("get_agency_notifications", {
+      p_user_id: user.sub,
+      p_agency_id: agencyId,
+      p_limit: limit,
+    });
+
+    if (error) {
+      console.error("Impossible de charger les alertes de l'agence :", error.message);
+      return [];
+    }
+
+    return ((data ?? []) as GetCompanyNotificationsRow[]).map((row) => ({
+      id: row.id,
+      kind: row.kind as CompanyNotification["kind"],
+      type: row.type,
+      level: row.level as CompanyNotification["level"],
+      title: row.title,
+      body: row.body,
+      actionHref: row.action_href,
+      createdAt: row.created_at,
+      isRead: row.is_read,
+    }));
+  }
+);
+
 export const getUnreadNotificationCount = cache(async (): Promise<number> => {
   const user = await requireUser();
   // count_unread_company_notifications renvoie un entier scalaire (pas un

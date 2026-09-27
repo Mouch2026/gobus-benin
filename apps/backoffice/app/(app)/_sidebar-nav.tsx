@@ -49,6 +49,8 @@ const NAV_SECTIONS: NavSection[] = [
     colorClass: "text-indigo-600 dark:text-indigo-400",
     items: [
       { kind: "link", label: "Vue globale", href: "/", Icon: Icons.GaugeIcon },
+      { kind: "link", label: "Mon tableau de bord", href: "/mon-tableau-de-bord", Icon: Icons.LayoutGridIcon },
+      { kind: "link", label: "Pilotage", href: "/pilotage", Icon: Icons.ChartBarIcon, gate: "ownerDashboard.view" },
       { kind: "soon", label: "Widgets personnalisables", Icon: Icons.PuzzleIcon },
     ],
   },
