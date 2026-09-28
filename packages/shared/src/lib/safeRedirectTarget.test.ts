@@ -44,3 +44,45 @@ test("safeRedirectTarget — liste de cas complète", () => {
     );
   }
 });
+
+// Test de propriété : quel que soit l'appelant (auth/confirm, connexion,
+// inscription — tous construisent la cible finale via
+// new URL(safeRedirectTarget(next), origin), jamais par concaténation de
+// chaînes, voir apps/*/app/auth/confirm/route.ts), l'hôte résultant doit
+// TOUJOURS être celui de origin. Couvre les deux classes de contournement
+// découvertes sur la concaténation `${origin}${next}` :
+//   - injection d'userinfo ("@evil.com" -> "http://host@evil.com", où
+//     "host" devient un nom d'utilisateur et "evil.com" l'hôte réel) ;
+//   - fusion de suffixe de domaine (".evil.com" concaténé directement
+//     après un hôte sans port ni chemin donne un sous-domaine d'evil.com).
+// La propriété tient ICI parce que safeRedirectTarget() réduit d'abord
+// `next` à un chemin relatif sûr (jamais un hôte/schéma), avant que
+// new URL(..., origin) ne le résolve CONTRE origin plutôt que de le
+// laisser corrompre l'autorité d'origin par concaténation.
+const HOSTILE_VALUES = [
+  "@evil.com",
+  ".evil.com",
+  "//evil.com",
+  "https://evil.com",
+  "/\\evil.com",
+  "/.//evil.com",
+  "",
+  "reservations",
+];
+
+const ORIGINS = ["http://localhost:3001", "https://gobus.exemple"];
+
+test("safeRedirectTarget — propriété : new URL(safeRedirectTarget(x), origin) ne change jamais d'hôte", () => {
+  for (const origin of ORIGINS) {
+    const expectedHost = new URL(origin).host;
+    for (const hostile of HOSTILE_VALUES) {
+      const target = safeRedirectTarget(hostile);
+      const resolved = new URL(target, origin);
+      assert.equal(
+        resolved.host,
+        expectedHost,
+        `origin=${origin}, x=${JSON.stringify(hostile)} : safeRedirectTarget -> ${JSON.stringify(target)} -> host ${JSON.stringify(resolved.host)}, attendu ${JSON.stringify(expectedHost)}`
+      );
+    }
+  }
+});
