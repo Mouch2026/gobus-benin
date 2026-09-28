@@ -6,8 +6,8 @@ import type { CompanyNotification } from "@/lib/notifications";
 import { LiveBeninClock } from "./_live-clock";
 import { StationSelect } from "./_station-select";
 import { NotificationBell } from "./_notification-bell";
+import { DismissibleDetails } from "./_dismissible-details";
 import { ActivityTracker } from "./_activity-tracker";
-import { ScrollToTopOnNavigate } from "./_scroll-to-top-on-navigate";
 import { SidebarLinks } from "./_sidebar-nav";
 import { CollapsibleSidebar } from "./_collapsible-sidebar";
 
@@ -100,9 +100,12 @@ function AppHeader({
             sous la forme « <Rôle> : <nom> ». */}
         <NotificationBell notifications={notifications} unreadCount={unreadCount} />
 
-        {/* Menu utilisateur : même patron <details>/<summary> sans JS que
-            le sous-menu Administration (voir SidebarLinks ci-dessous). */}
-        <details className="group relative">
+        {/* Menu utilisateur : même DismissibleDetails que NotificationBell
+            — ce menu vit lui aussi dans le layout partagé, jamais démonté
+            entre deux pages, donc un <details> natif seul ne se
+            refermerait jamais après un clic sur "Profil"/"Se déconnecter"
+            ou en dehors. */}
+        <DismissibleDetails className="group relative">
           <summary className="cursor-pointer list-none truncate text-sm font-medium text-zinc-700 hover:text-zinc-950">
             {ROLE_LABELS[role]} : {summaryLabel} ▾
           </summary>
@@ -132,7 +135,7 @@ function AppHeader({
               </button>
             </form>
           </div>
-        </details>
+        </DismissibleDetails>
       </div>
     </header>
   );
@@ -187,7 +190,6 @@ export function AppShell({
           client comme tout layout Next.js, donc l'inactivité se mesure
           en continu sur toute la session, pas par page. */}
       <ActivityTracker lockTimeoutMinutes={lockTimeoutMinutes} />
-      <ScrollToTopOnNavigate />
 
       <div className="md:col-span-2 print:hidden">
         <AppHeader
@@ -204,18 +206,21 @@ export function AppShell({
       </div>
 
       {/* Mobile uniquement : tiroir replié par défaut, pousse le contenu
-          en dessous à l'ouverture — pas de JS, pas d'overlay à gérer.
-          print:hidden : une page imprimable (ex. billet) n'a jamais
-          besoin du chrome de nav, quelle que soit la largeur d'écran au
-          moment de l'impression. */}
-      <details className="border-b border-sidebar-border bg-sidebar md:hidden print:hidden">
+          en dessous à l'ouverture. DismissibleDetails (même mécanisme que
+          la cloche et le menu utilisateur) referme le tiroir après un tap
+          sur un lien de navigation — sans ça, comme ce shell n'est jamais
+          démonté entre deux pages, le tiroir resterait ouvert par-dessus
+          la page suivante. print:hidden : une page imprimable (ex. billet)
+          n'a jamais besoin du chrome de nav, quelle que soit la largeur
+          d'écran au moment de l'impression. */}
+      <DismissibleDetails className="border-b border-sidebar-border bg-sidebar md:hidden print:hidden">
         <summary className="cursor-pointer list-none px-6 py-3 text-sm font-medium text-sidebar-foreground">
           ☰ Menu
         </summary>
         <nav className="flex flex-col gap-1 px-4 pb-4">
           <SidebarLinks role={role} initialBadgeCounts={initialBadgeCounts} />
         </nav>
-      </details>
+      </DismissibleDetails>
 
       {/* Desktop uniquement : colonne toujours visible, réductible en
           icônes seules (CollapsibleSidebar) — n'affecte jamais le tiroir
