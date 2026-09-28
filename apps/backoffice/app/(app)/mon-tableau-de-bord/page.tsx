@@ -37,7 +37,12 @@ export default async function AgentDashboardPage() {
     return <AccessBlockedMessage reason={access.reason} />;
   }
 
-  const agency = await getSelectedAgency();
+  // allowPreview: owner uniquement — condition inchangée (getSelectedAgency
+  // est désormais partagée avec /pilotage, qui l'autorise en plus pour un
+  // chef d'agence avec l'autorisation pilotage ; cette page-ci continue
+  // de toujours montrer SA PROPRE agence à un agency_manager/agent, même
+  // si un cookie de prévisualisation a été posé ailleurs).
+  const agency = await getSelectedAgency({ allowPreview: access.role === "owner" });
 
   if (!agency) {
     return (

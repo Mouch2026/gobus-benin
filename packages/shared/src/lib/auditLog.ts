@@ -51,7 +51,18 @@ export type AuditAction =
   // depuis apps/web (bookingId renseigné cette fois, contrairement aux
   // événements chauffeur du back-office — ici l'événement EST une
   // réservation).
-  | "driver_rating_submitted";
+  | "driver_rating_submitted"
+  // Chantier "tableau de bord agent" : signalement manuel d'un retard sur
+  // un trajet, depuis le back-office. bookingId: null (comme les
+  // événements chauffeur) — l'événement porte sur un TRAJET, pas une
+  // réservation.
+  | "trip_delay_reported"
+  // Chantier "affectation d'un tableau de bord à un employé" : changement
+  // de home_screen et/ou pilotage_access_granted pour un employé, par le
+  // propriétaire. bookingId: null. Seul type d'événement de ce fichier à
+  // porter systématiquement un before/after dans payload (avant/après
+  // explicitement demandé) — les autres se contentent d'un id.
+  | "employee_dashboard_updated";
 
 // Le journal est secondaire par rapport à l'action réelle qu'il
 // enregistre — ne doit jamais faire échouer l'appelant.

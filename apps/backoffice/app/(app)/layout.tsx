@@ -1,4 +1,5 @@
 import { requireCompany } from "@/lib/supabase/dal";
+import { canViewCompanyWideDashboards } from "@/lib/permissions";
 import { getBeninTimeString } from "@/lib/benin-time";
 import { getActiveStations, getSelectedStation } from "@/lib/station-selection";
 import {
@@ -52,6 +53,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <AppShell
       company={result.company}
       role={result.role}
+      canViewCompanyWideDashboards={canViewCompanyWideDashboards(result)}
       memberName={result.memberName}
       agencyName={result.agency?.name ?? null}
       currentTime={getBeninTimeString()}

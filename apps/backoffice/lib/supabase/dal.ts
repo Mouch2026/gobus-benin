@@ -3,7 +3,7 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "./server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import type { CompanyRole } from "@/lib/permissions";
+import type { CompanyRole, HomeScreen } from "@/lib/permissions";
 
 export type { CompanyRole } from "@/lib/permissions";
 
@@ -70,6 +70,12 @@ export type CompanyAccessResult =
       // Chantier 6 — seuil lu une fois ici, transmis au traqueur
       // d'activité côté client (_activity-tracker.tsx).
       lockTimeoutMinutes: number;
+      // Chantier "affectation d'un tableau de bord à un employé" —
+      // préférence d'accueil et autorisation pilotage, voir
+      // lib/permissions.ts (resolveHomeRoute/canViewCompanyWideDashboards) pour
+      // le point de contrôle central qui les consomme.
+      homeScreen: HomeScreen;
+      pilotageAccessGranted: boolean;
     }
   | { ok: false; reason: "no-company" | "no-subscription" | "subscription-pending" | "subscription-inactive" | "no-pin" }
   | { ok: false; reason: "locked"; company: Company; memberName: string; lockedAt: string };
@@ -92,6 +98,8 @@ type GetCompanyAccessRow = {
   last_activity_at: string;
   lock_timeout_minutes: number;
   session_started_at: string;
+  member_home_screen: string;
+  member_pilotage_access_granted: boolean;
 };
 
 // Chantier 6 (correctif) — expiration dure : jwt_expiry seul ne suffit
@@ -213,6 +221,8 @@ export const requireCompany = cache(async (): Promise<CompanyAccessResult> => {
       currentPeriodEnd: data.current_period_end,
     },
     lockTimeoutMinutes: data.lock_timeout_minutes,
+    homeScreen: data.member_home_screen as HomeScreen,
+    pilotageAccessGranted: data.member_pilotage_access_granted,
   };
 });
 

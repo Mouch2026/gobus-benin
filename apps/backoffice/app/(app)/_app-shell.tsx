@@ -144,6 +144,7 @@ function AppHeader({
 export function AppShell({
   company,
   role,
+  canViewCompanyWideDashboards,
   memberName,
   agencyName,
   currentTime,
@@ -157,6 +158,7 @@ export function AppShell({
 }: {
   company: { name: string; logoUrl: string | null };
   role: CompanyRole;
+  canViewCompanyWideDashboards: boolean;
   memberName: string;
   agencyName: string | null;
   currentTime: string;
@@ -218,7 +220,7 @@ export function AppShell({
           ☰ Menu
         </summary>
         <nav className="flex flex-col gap-1 px-4 pb-4">
-          <SidebarLinks role={role} initialBadgeCounts={initialBadgeCounts} />
+          <SidebarLinks role={role} canViewCompanyWideDashboards={canViewCompanyWideDashboards} initialBadgeCounts={initialBadgeCounts} />
         </nav>
       </DismissibleDetails>
 
@@ -226,7 +228,7 @@ export function AppShell({
           icônes seules (CollapsibleSidebar) — n'affecte jamais le tiroir
           mobile ci-dessus, qui reste un simple <details>. */}
       <CollapsibleSidebar>
-        <SidebarLinks role={role} initialBadgeCounts={initialBadgeCounts} />
+        <SidebarLinks role={role} canViewCompanyWideDashboards={canViewCompanyWideDashboards} initialBadgeCounts={initialBadgeCounts} />
       </CollapsibleSidebar>
 
       {/* min-w-0 : évite qu'un tableau large (ex. /paiements) ne force la

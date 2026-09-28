@@ -3,16 +3,12 @@
 import { redirect } from "next/navigation";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase/server";
+import { safeRedirectTarget } from "shared";
 
 export type SignupState = { error: string | null };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 6; // Supabase Auth's own default minimum
-
-function safeRedirectTarget(value: string): string {
-  if (value.startsWith("/") && !value.startsWith("//")) return value;
-  return "/";
-}
 
 function mapAuthError(error: { code?: string; message: string }): string {
   if (error.code === "email_exists") {

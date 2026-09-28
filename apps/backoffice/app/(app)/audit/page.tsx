@@ -38,6 +38,7 @@ const ACTION_LABELS: Record<string, string> = {
   driver_document_added: "Document de chauffeur ajouté",
   driver_document_deleted: "Document de chauffeur supprimé",
   driver_rating_submitted: "Chauffeur noté par un voyageur",
+  employee_dashboard_updated: "Tableau de bord d'un employé modifié",
 };
 
 // Owner : toute la compagnie. Agency_manager : uniquement son agence —

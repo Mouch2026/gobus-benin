@@ -3,16 +3,11 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { requireCompany } from "@/lib/supabase/dal";
+import { resolveHomeRoute } from "@/lib/permissions";
+import { safeRedirectTarget } from "shared";
 
 export type LoginState = { error: string | null };
-
-function safeRedirectTarget(value: string): string {
-  // `redirectTo` comes from a query param an attacker could craft (e.g.
-  // ?next=//evil.com, which passes a naive startsWith("/") check but is a
-  // protocol-relative URL browsers will follow to a different host).
-  if (value.startsWith("/") && !value.startsWith("//")) return value;
-  return "/";
-}
 
 export async function login(_prevState: LoginState, formData: FormData): Promise<LoginState> {
   const email = String(formData.get("email") ?? "").trim();
@@ -49,6 +44,18 @@ export async function login(_prevState: LoginState, formData: FormData): Promise
     .from("company_members")
     .update({ locked_at: null, last_activity_at: now, session_started_at: now })
     .eq("user_id", data.user.id);
+
+  // Chantier "affectation d'un tableau de bord à un employé" — n'écrase
+  // JAMAIS un ?next= explicite (deep-link préservé, ex. lien direct vers
+  // une réservation reçu par un agent alors qu'il n'était pas connecté) :
+  // seule la destination par défaut ("/", faute de tout ?next=) est
+  // remplacée par l'écran d'accueil réellement assigné à ce membre.
+  if (redirectTo === "/") {
+    const access = await requireCompany();
+    if (access.ok) {
+      redirect(resolveHomeRoute(access));
+    }
+  }
 
   redirect(redirectTo);
 }

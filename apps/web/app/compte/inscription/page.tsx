@@ -1,13 +1,9 @@
 import Link from "next/link";
 import { SignupForm } from "./SignupForm";
+import { safeRedirectTarget } from "shared";
 
 function firstValue(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
-}
-
-function safeRedirectTarget(value: string): string {
-  if (value.startsWith("/") && !value.startsWith("//")) return value;
-  return "/";
 }
 
 export default async function InscriptionPage(props: PageProps<"/compte/inscription">) {

@@ -2,14 +2,56 @@
 
 import { revalidatePath } from "next/cache";
 import { requireCompany } from "@/lib/supabase/dal";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission, type HomeScreen } from "@/lib/permissions";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { logAuditEvent } from "shared/src/lib/auditLog";
 
 export type EmployeeFormState = { error: string | null };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 6; // Supabase Auth's own default minimum — même constante que partenaires/inscription et compte/inscription.
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const HOME_SCREENS: readonly HomeScreen[] = ["global", "owner_dashboard", "employee_dashboard"];
+
+// Backstop applicatif partagé par createEmployee et updateEmployeeDashboard
+// — message clair plutôt qu'une erreur Postgres brute si jamais franchi ;
+// les CHECK de la migration company_members restent la protection réelle
+// contre une requête forgée (voir supabase/migrations/
+// 20260928090000_add_employee_dashboard_assignment.sql). Ne fait AUCUNE
+// confiance à ce qu'envoie le client, même pour un rôle "agent" dont le
+// sélecteur est censé être masqué côté formulaire.
+//
+// L'autorisation pilotage couvre les DEUX vues compagnie entière ("/" ET
+// /pilotage) — décision explicite, ce ne sont pas deux autorisations
+// distinctes. Un chef d'agence SANS l'autorisation ne peut donc avoir
+// d'autre home_screen que 'employee_dashboard' : retirer l'autorisation
+// (pilotageAccessGranted = false) force TOUJOURS ce retour ici, quelle
+// que soit la valeur soumise pour homeScreen — c'est ce qui garantit que
+// la Server Action écrit les deux colonnes de façon cohérente EN UNE
+// SEULE instruction UPDATE, jamais en deux temps (le CHECK SQL
+// company_members_home_screen_role_check rejetterait toute autre valeur
+// pour un chef d'agence non autorisé).
+function resolveDashboardAssignment(
+  role: "agency_manager" | "agent",
+  homeScreenRaw: string,
+  pilotageAccessGranted: boolean
+): { homeScreen: HomeScreen; pilotageAccessGranted: boolean } | { error: string } {
+  if (role === "agent") {
+    // Un agent n'a aucun choix — toujours son tableau employé, jamais la
+    // grant pilotage (company_members_pilotage_agent_check l'interdit de
+    // toute façon en base).
+    return { homeScreen: "employee_dashboard", pilotageAccessGranted: false };
+  }
+
+  if (!pilotageAccessGranted) {
+    return { homeScreen: "employee_dashboard", pilotageAccessGranted: false };
+  }
+
+  if (!HOME_SCREENS.includes(homeScreenRaw as HomeScreen)) {
+    return { error: "Écran d'accueil invalide." };
+  }
+  return { homeScreen: homeScreenRaw as HomeScreen, pilotageAccessGranted: true };
+}
 
 function mapAuthError(error: { code?: string; message: string }): string {
   if (error.code === "email_exists") {
@@ -36,6 +78,8 @@ export async function createEmployee(
   const password = String(formData.get("password") ?? "");
   const role = String(formData.get("role") ?? "");
   const agencyId = String(formData.get("agencyId") ?? "").trim();
+  const homeScreenRaw = String(formData.get("homeScreen") ?? "");
+  const pilotageAccessGranted = formData.get("pilotageAccessGranted") === "1";
 
   if (!EMAIL_RE.test(email)) {
     return { error: "Merci de renseigner un email valide." };
@@ -49,6 +93,9 @@ export async function createEmployee(
   if (!UUID_RE.test(agencyId)) {
     return { error: "Merci de choisir une agence." };
   }
+
+  const dashboard = resolveDashboardAssignment(role, homeScreenRaw, pilotageAccessGranted);
+  if ("error" in dashboard) return dashboard;
 
   // L'agence doit exister, être active, ET appartenir à CETTE compagnie —
   // jamais fait confiance à un id transmis par le formulaire (même règle
@@ -92,6 +139,8 @@ export async function createEmployee(
     agency_id: agencyId,
     full_name: fullName || null,
     is_active: true,
+    home_screen: dashboard.homeScreen,
+    pilotage_access_granted: dashboard.pilotageAccessGranted,
   });
 
   if (memberError) {
@@ -183,6 +232,77 @@ export async function setEmployeeActive(
     console.error("Impossible de changer l'état du compte employé :", error.message);
     return { error: "Impossible de changer l'état de ce compte. Réessayez." };
   }
+
+  revalidatePath("/employes");
+  return { error: null };
+}
+
+// Panneau "Tableau de bord" du panneau dépliable de chaque ligne
+// (EmployeeRow) — propriétaire uniquement, jamais sur la ligne 'owner'.
+// Protection en profondeur : cette validation applicative (message clair)
+// + RLS company_members_update_owner (owner uniquement, jamais role =
+// 'owner') + les CHECK de la migration 20260928090000 comme dernier
+// rempart si jamais une requête contournait cette action.
+export async function updateEmployeeDashboard(
+  _prevState: EmployeeFormState,
+  formData: FormData
+): Promise<EmployeeFormState> {
+  const access = await requireCompany();
+  const guardError = requirePermission(access, "employees.manage");
+  if (guardError) return guardError;
+  if (!access.ok) return { error: "Votre session ou votre abonnement ne permet plus cette action." };
+
+  const memberId = String(formData.get("memberId") ?? "").trim();
+  const homeScreenRaw = String(formData.get("homeScreen") ?? "");
+  const pilotageAccessGranted = formData.get("pilotageAccessGranted") === "1";
+
+  // Jamais un id transmis à l'aveugle : re-vérifié scopé à la compagnie,
+  // même patron que setEmployeeActive/createEmployee.
+  const { data: member } = await supabaseAdmin
+    .from("company_members")
+    .select("id, role, home_screen, pilotage_access_granted")
+    .eq("id", memberId)
+    .eq("company_id", access.company.id)
+    .maybeSingle<{
+      id: string;
+      role: "owner" | "agency_manager" | "agent";
+      home_screen: HomeScreen;
+      pilotage_access_granted: boolean;
+    }>();
+
+  if (!member) {
+    return { error: "Ce compte n'existe pas ou ne fait pas partie de votre compagnie." };
+  }
+  if (member.role === "owner") {
+    return { error: "Le compte propriétaire n'est pas géré ici." };
+  }
+
+  const dashboard = resolveDashboardAssignment(member.role, homeScreenRaw, pilotageAccessGranted);
+  if ("error" in dashboard) return dashboard;
+
+  const { error } = await supabaseAdmin
+    .from("company_members")
+    .update({ home_screen: dashboard.homeScreen, pilotage_access_granted: dashboard.pilotageAccessGranted })
+    .eq("id", memberId)
+    .eq("company_id", access.company.id);
+
+  if (error) {
+    console.error("Impossible de mettre à jour le tableau de bord de cet employé :", error.message);
+    return { error: "Impossible de mettre à jour ce réglage. Réessayez." };
+  }
+
+  await logAuditEvent({
+    action: "employee_dashboard_updated",
+    bookingId: null,
+    companyId: access.company.id,
+    acteurId: access.user.sub,
+    agencyId: null,
+    payload: {
+      targetMemberId: memberId,
+      before: { homeScreen: member.home_screen, pilotageAccessGranted: member.pilotage_access_granted },
+      after: dashboard,
+    },
+  });
 
   revalidatePath("/employes");
   return { error: null };

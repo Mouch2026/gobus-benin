@@ -2,16 +2,9 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { safeRedirectTarget } from "shared";
 
 export type LoginState = { error: string | null };
-
-function safeRedirectTarget(value: string): string {
-  // `redirectTo` comes from a query param an attacker could craft (e.g.
-  // ?next=//evil.com, a protocol-relative URL a naive startsWith("/")
-  // check would let through).
-  if (value.startsWith("/") && !value.startsWith("//")) return value;
-  return "/";
-}
 
 export async function login(_prevState: LoginState, formData: FormData): Promise<LoginState> {
   const email = String(formData.get("email") ?? "").trim();

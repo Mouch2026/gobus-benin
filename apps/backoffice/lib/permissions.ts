@@ -66,3 +66,40 @@ export function requirePermission(
   }
   return null;
 }
+
+// Chantier "affectation d'un tableau de bord à un employé" — home_screen
+// et pilotage_access_granted (company_members) ne sont pas des permissions
+// statiques par rôle comme PERMISSIONS ci-dessus (elles varient par
+// MEMBRE, pas seulement par rôle), d'où ces fonctions séparées plutôt
+// qu'une entrée de plus dans CompanyAction/PERMISSIONS.
+export type HomeScreen = "global" | "owner_dashboard" | "employee_dashboard";
+
+// LE point de contrôle central pour les deux vues compagnie entière — "/"
+// (vue globale) ET /pilotage — jamais dupliqué en `role === "owner"` à la
+// main (pages, sélecteur d'agence, menu). Décision explicite : ce ne sont
+// PAS deux autorisations distinctes, un chef d'agence non autorisé ne
+// doit ouvrir ni l'une ni l'autre — une seule et même vérification, un
+// seul et même booléen, pour les deux gardes. Un agent ne peut jamais
+// passer ce test : pilotageAccessGranted est de toute façon garanti false
+// pour lui en base (company_members_pilotage_agent_check).
+export function canViewCompanyWideDashboards(access: {
+  role: CompanyRole;
+  pilotageAccessGranted: boolean;
+}): boolean {
+  return access.role === "owner" || (access.role === "agency_manager" && access.pilotageAccessGranted);
+}
+
+// Résout l'écran d'accueil RÉEL d'un membre, en retombant proprement sur
+// le tableau employé si sa préférence pointe vers un écran qu'il n'a
+// plus le droit de voir (autorisation pilotage retirée après coup, par
+// exemple) — jamais de page bloquante, jamais de boucle, puisque
+// /mon-tableau-de-bord n'a lui-même aucune garde qui renverrait ailleurs.
+export function resolveHomeRoute(access: {
+  role: CompanyRole;
+  homeScreen: HomeScreen;
+  pilotageAccessGranted: boolean;
+}): "/" | "/pilotage" | "/mon-tableau-de-bord" {
+  if (access.homeScreen === "owner_dashboard" && canViewCompanyWideDashboards(access)) return "/pilotage";
+  if (access.homeScreen === "global" && canViewCompanyWideDashboards(access)) return "/";
+  return "/mon-tableau-de-bord";
+}

@@ -52,7 +52,15 @@ const NAV_SECTIONS: NavSection[] = [
     label: "Tableau de bord",
     Icon: Icons.GridIcon,
     items: [
-      { kind: "link", label: "Vue globale", href: "/", Icon: Icons.GaugeIcon, hiddenForRoles: ["agent"] },
+      // Même gate que Pilotage ci-dessous ("ownerDashboard.view", résolu
+      // dynamiquement par isGateVisible via canViewCompanyWideDashboards,
+      // pas par can(role, ...) seul) : décision explicite du chantier
+      // "affectation d'un tableau de bord" — Vue globale et Pilotage sont
+      // gouvernés par LA MÊME autorisation, jamais deux vérifications
+      // distinctes. hiddenForRoles n'est plus nécessaire ici : un agent
+      // échoue déjà ce gate (canViewCompanyWideDashboards renvoie
+      // toujours false pour lui).
+      { kind: "link", label: "Vue globale", href: "/", Icon: Icons.GaugeIcon, gate: "ownerDashboard.view" },
       { kind: "link", label: "Mon tableau de bord", href: "/mon-tableau-de-bord", Icon: Icons.LayoutGridIcon },
       { kind: "link", label: "Pilotage", href: "/pilotage", Icon: Icons.ChartBarIcon, gate: "ownerDashboard.view" },
       { kind: "soon", label: "Widgets personnalisables", Icon: Icons.PuzzleIcon, hiddenForRoles: ["agent"] },
@@ -317,14 +325,27 @@ function GroupDetails({
   );
 }
 
+// "ownerDashboard.view" n'est plus une permission purement par RÔLE
+// (PERMISSIONS le fixe à ["owner"], mais un chef d'agence peut recevoir
+// l'accès individuellement — voir canViewCompanyWideDashboards, lib/permissions.ts)
+// — seul point de spécialisation du mécanisme générique gate/can() ci-
+// dessous, calculé une fois dans (app)/layout.tsx et transmis en prop,
+// jamais recalculé ici à partir du seul rôle.
+function isGateVisible(gate: CompanyAction, role: CompanyRole, canViewCompanyWideDashboards: boolean): boolean {
+  if (gate === "ownerDashboard.view") return canViewCompanyWideDashboards;
+  return can(role, gate);
+}
+
 function SectionDetails({
   section,
   role,
+  canViewCompanyWideDashboards,
   query,
   badgeCounts,
 }: {
   section: NavSection;
   role: CompanyRole;
+  canViewCompanyWideDashboards: boolean;
   query: string;
   badgeCounts: Record<string, number>;
 }) {
@@ -337,7 +358,7 @@ function SectionDetails({
   // de chercher.
   const roleVisibleItems = section.items.filter((item) => {
     if (item.kind !== "group" && item.hiddenForRoles?.includes(role)) return false;
-    if (item.kind === "link" && item.gate && !can(role, item.gate)) return false;
+    if (item.kind === "link" && item.gate && !isGateVisible(item.gate, role, canViewCompanyWideDashboards)) return false;
     return true;
   });
 
@@ -360,7 +381,7 @@ function SectionDetails({
 
   const visibleItems = section.items.filter((item) => {
     if (item.kind !== "group" && item.hiddenForRoles?.includes(role)) return false;
-    if (item.kind === "link" && item.gate && !can(role, item.gate)) return false;
+    if (item.kind === "link" && item.gate && !isGateVisible(item.gate, role, canViewCompanyWideDashboards)) return false;
     if (item.kind === "group") return groupHasMatch(item, query) || sectionLabelMatches;
     return sectionLabelMatches || matchesQuery(item.label, query);
   });
@@ -396,9 +417,11 @@ function SectionDetails({
 // pour être importable ici (voir son commentaire de tête).
 export function SidebarLinks({
   role,
+  canViewCompanyWideDashboards,
   initialBadgeCounts,
 }: {
   role: CompanyRole;
+  canViewCompanyWideDashboards: boolean;
   initialBadgeCounts: Record<string, number>;
 }) {
   const [query, setQuery] = useState("");
@@ -439,6 +462,7 @@ export function SidebarLinks({
           key={section.key}
           section={section}
           role={role}
+          canViewCompanyWideDashboards={canViewCompanyWideDashboards}
           query={normalizedQuery}
           badgeCounts={badgeCounts}
         />

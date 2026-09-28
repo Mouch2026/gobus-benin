@@ -3,11 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { requireCompany } from "@/lib/supabase/dal";
+import { canViewCompanyWideDashboards } from "@/lib/permissions";
 import { AGENCY_COOKIE } from "@/lib/agencies";
 import { getActiveAgencies } from "@/lib/agency-selection";
 
-// Owner uniquement — agency_manager/agent voient directement leur propre
-// agence (agency-selection.ts), aucun sélecteur ne leur est jamais rendu.
+// Owner OU chef d'agence autorisé sur /pilotage (canViewCompanyWideDashboards) —
+// tout autre agency_manager/agent voit directement sa propre agence
+// (agency-selection.ts), aucun sélecteur ne leur est jamais rendu.
 // Cookie de SESSION (pas de maxAge), même choix que setSelectedStation.
 //
 // Relocalisé depuis mon-tableau-de-bord/agency-actions.ts (chantier
@@ -20,7 +22,7 @@ import { getActiveAgencies } from "@/lib/agency-selection";
 // écrans).
 export async function setSelectedAgency(formData: FormData) {
   const access = await requireCompany();
-  if (!access.ok || access.role !== "owner") return;
+  if (!access.ok || !canViewCompanyWideDashboards(access)) return;
 
   const requested = String(formData.get("agencyId") ?? "");
   const agencies = await getActiveAgencies(access.company.id);

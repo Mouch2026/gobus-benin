@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { FIELD_CLASSES, LABEL_CLASSES } from "../_shared";
 import { createEmployee, type EmployeeFormState } from "./actions";
+import { DashboardAssignmentFields } from "./DashboardAssignmentFields";
 
 export type AgencyOption = { id: string; name: string; stationLabel: string | null };
 
@@ -10,12 +11,18 @@ const initialState: EmployeeFormState = { error: null };
 
 export function EmployeeForm({ agencies }: { agencies: AgencyOption[] }) {
   const [state, formAction, pending] = useActionState(createEmployee, initialState);
+  const [role, setRole] = useState<"agency_manager" | "agent">("agent");
   const formRef = useRef<HTMLFormElement>(null);
   const wasPending = useRef(false);
 
   useEffect(() => {
     if (wasPending.current && !pending && !state.error) {
       formRef.current?.reset();
+      // formRef.reset() ramène le <select role> natif à son defaultValue
+      // ("agent") — sans ceci, l'état React role resterait sur l'ancienne
+      // valeur, désynchronisé de ce que montre le <select> réinitialisé,
+      // et DashboardAssignmentFields afficherait le mauvais rôle.
+      setRole("agent");
     }
     wasPending.current = pending;
   }, [pending, state]);
@@ -66,7 +73,14 @@ export function EmployeeForm({ agencies }: { agencies: AgencyOption[] }) {
           <label htmlFor="role" className={LABEL_CLASSES}>
             Rôle
           </label>
-          <select id="role" name="role" required defaultValue="agent" className={FIELD_CLASSES}>
+          <select
+            id="role"
+            name="role"
+            required
+            value={role}
+            onChange={(event) => setRole(event.target.value as "agency_manager" | "agent")}
+            className={FIELD_CLASSES}
+          >
             <option value="agent">Agent</option>
             <option value="agency_manager">Chef d&apos;agence</option>
           </select>
@@ -89,6 +103,8 @@ export function EmployeeForm({ agencies }: { agencies: AgencyOption[] }) {
           </select>
         </div>
       </div>
+
+      <DashboardAssignmentFields role={role} />
 
       {state.error ? (
         <p className="text-sm text-red-600" role="alert">

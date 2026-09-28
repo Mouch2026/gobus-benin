@@ -28,17 +28,29 @@ export const getActiveAgencies = cache(async (companyId: string): Promise<Agency
 
 // null = aucune agence à afficher (compagnie sans agence active).
 //
-// agency_manager/agent voient TOUJOURS leur propre agence, sans jamais
-// passer par le cookie — un sélecteur n'a de sens que pour un owner, qui
-// n'a par construction aucune agence propre (company_members_agency_matches_role
-// interdit agency_id sur une ligne 'owner'). Pour lui : cookie validé
-// contre la liste des agences actives, sinon la première par ordre
-// alphabétique, sinon aucune.
-export const getSelectedAgency = cache(async (): Promise<AgencyOption | null> => {
+// allowPreview : PARAMÉTRÉ explicitement par l'appelant plutôt que déduit
+// ici de access.role — cette fonction est partagée par /pilotage ET
+// /mon-tableau-de-bord (même cookie AGENCY_COOKIE), et un chef d'agence
+// autorisé sur /pilotage doit pouvoir prévisualiser une autre agence là
+// SANS que ce même cookie ne fuite dans SON PROPRE /mon-tableau-de-bord,
+// qui doit continuer à montrer sa propre agence sans exception. Chaque
+// appelant décide donc lui-même s'il autorise la prévisualisation :
+// pilotage/page.tsx → canViewCompanyWideDashboards(access) ;
+// mon-tableau-de-bord/page.tsx → access.role === "owner" (inchangé).
+//
+// Sans prévisualisation autorisée : toujours la propre agence du membre
+// (agency_manager/agent), jamais le cookie. Avec : cookie validé contre
+// la liste des agences actives, sinon la première par ordre alphabétique,
+// sinon aucune — même logique qu'avant pour un owner.
+export const getSelectedAgency = cache(async ({
+  allowPreview,
+}: {
+  allowPreview: boolean;
+}): Promise<AgencyOption | null> => {
   const access = await requireCompany();
   if (!access.ok) return null;
 
-  if (access.role !== "owner") {
+  if (!allowPreview) {
     return access.agency;
   }
 
