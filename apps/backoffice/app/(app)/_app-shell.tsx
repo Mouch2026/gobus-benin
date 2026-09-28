@@ -7,6 +7,7 @@ import { LiveBeninClock } from "./_live-clock";
 import { StationSelect } from "./_station-select";
 import { NotificationBell } from "./_notification-bell";
 import { ActivityTracker } from "./_activity-tracker";
+import { ScrollToTopOnNavigate } from "./_scroll-to-top-on-navigate";
 import { SidebarLinks } from "./_sidebar-nav";
 import { CollapsibleSidebar } from "./_collapsible-sidebar";
 
@@ -169,13 +170,24 @@ export function AppShell({
     // suit la largeur réelle du <aside> (CollapsibleSidebar, qui pose sa
     // propre largeur via data-collapsed) — ainsi le repli en icônes ne
     // demande aucune coordination avec ce conteneur.
-    <div className="min-h-screen bg-background text-muted md:grid md:grid-cols-[auto_1fr] print:grid-cols-1">
+    //
+    // content-start (align-content) : sans lui, min-h-screen + align-content
+    // par défaut ("normal", qui se comporte comme "stretch" pour des lignes
+    // dimensionnées en auto) étire les deux lignes implicites (en-tête,
+    // puis sidebar+contenu) pour combler l'espace excédentaire dès que le
+    // contenu réel est plus court que 100vh — invisible sur les pages
+    // longues, mais gonfle mesurablement la ligne d'en-tête et repousse la
+    // seconde ligne plus bas sur une page courte (ex. /notifications sans
+    // aucune notification). content-start fige les deux lignes à leur
+    // hauteur naturelle, l'éventuel espace en trop reste en bas de page.
+    <div className="min-h-screen bg-background text-muted md:grid md:grid-cols-[auto_1fr] content-start print:grid-cols-1">
       {/* Ne rend rien à l'écran — écoute l'activité et déclenche le
           verrouillage/battement de cœur en arrière-plan (chantier 6).
           Monté une seule fois ici : persiste entre navigations côté
           client comme tout layout Next.js, donc l'inactivité se mesure
           en continu sur toute la session, pas par page. */}
       <ActivityTracker lockTimeoutMinutes={lockTimeoutMinutes} />
+      <ScrollToTopOnNavigate />
 
       <div className="md:col-span-2 print:hidden">
         <AppHeader

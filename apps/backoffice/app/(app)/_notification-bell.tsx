@@ -4,6 +4,7 @@ import { formatRelativeTime } from "@/lib/relative-time";
 import type { CompanyNotification } from "@/lib/notifications";
 import { markAllNotificationsRead, openNotification } from "./_notification-actions";
 import { NotificationBadge } from "./_notification-badge";
+import { NotificationBellShell } from "./_notification-bell-shell";
 import { BellIcon } from "@/lib/icons";
 
 function NotificationRow({ notification }: { notification: CompanyNotification }) {
@@ -66,10 +67,14 @@ export function NotificationBell({
   const events = notifications.filter((n) => n.kind === "event");
 
   return (
-    // Même patron <details>/<summary> sans JS que le menu utilisateur et
-    // le sous-menu Administration (voir _app-shell.tsx) — le panneau reste
-    // un Server Component, seul le badge de compte est un îlot client.
-    <details className="group relative">
+    // <details>/<summary> comme le menu utilisateur et le sous-menu
+    // Administration (_app-shell.tsx), mais enveloppé dans
+    // NotificationBellShell (client, minimal) : ce panneau vit dans le
+    // layout PARTAGÉ, jamais démonté entre deux pages — un <details> natif
+    // seul ne se refermerait donc jamais après un clic sur un lien
+    // intérieur ou en dehors. Tout le contenu ci-dessous reste un Server
+    // Component, comme avant.
+    <NotificationBellShell>
       <summary className="relative flex cursor-pointer list-none items-center text-zinc-700 hover:text-zinc-950">
         <BellIcon className="h-5 w-5" aria-hidden />
         <NotificationBadge initialCount={unreadCount} />
@@ -117,6 +122,6 @@ export function NotificationBell({
           </Link>
         </div>
       </div>
-    </details>
+    </NotificationBellShell>
   );
 }
