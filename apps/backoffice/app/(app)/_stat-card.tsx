@@ -6,24 +6,29 @@ import type { ReactElement, SVGProps } from "react";
 // pour ces deux derniers, icon/accent restent optionnels (opt-in), pas
 // de bordure/icône par défaut pour ne pas changer leur rendu existant.
 
-export type StatCardAccent = "blue" | "amber" | "emerald" | "red";
+export type StatCardAccent = "blue" | "amber" | "emerald" | "red" | "violet";
 
 // Mêmes teintes que BOOKING_STATUS_STYLES/NOTIFICATION_LEVEL_STYLES
 // (_shared.tsx) : amber (jamais "orange", qui n'existe nulle part
 // ailleurs dans ce projet) pour l'attention/l'attente, emerald pour
 // l'argent/le confirmé, red pour l'urgent, blue pour le neutre/informatif
-// — même vocabulaire de couleurs que le reste du back-office.
+// — même vocabulaire de couleurs que le reste du back-office. violet :
+// ajouté pour la 5e carte de "/" (Bus en service, chantier "cartes à
+// venir") — déjà un ton établi ailleurs dans ce projet
+// (voucher_issued, _shared.tsx), jamais utilisé pour un StatCard avant.
 const ACCENT_BORDER_CLASSES: Record<StatCardAccent, string> = {
   blue: "border-t-blue-500",
   amber: "border-t-amber-500",
   emerald: "border-t-emerald-500",
   red: "border-t-red-500",
+  violet: "border-t-violet-500",
 };
 const ACCENT_ICON_CLASSES: Record<StatCardAccent, string> = {
   blue: "text-blue-500",
   amber: "text-amber-500",
   emerald: "text-emerald-500",
   red: "text-red-500",
+  violet: "text-violet-500",
 };
 
 type IconComponent = (props: SVGProps<SVGSVGElement>) => ReactElement;

@@ -6,6 +6,7 @@ import { getBeninDateString, getBeninMidnightToday } from "@/lib/benin-time";
 import { formatFcfa } from "shared";
 import { AccessBlockedMessage } from "./_components";
 import { StatCard } from "./_stat-card";
+import { ComingSoonBadge } from "./_coming-soon-badge";
 import * as Icons from "@/lib/icons";
 import {
   BOOKING_STATUS_LABELS,
@@ -135,7 +136,12 @@ export default async function DashboardPage(props: PageProps<"/">) {
         ) : null}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Ligne 1 — 5 cartes côte à côte : les 4 cartes réelles inchangées
+          + "Bus en service", 5e carte, même bordure/icône que les
+          autres mais aucune donnée réelle derrière (pas de table
+          "buses" dans ce projet) — badge "Bientôt disponible" à la
+          place du chiffre, jamais un chiffre inventé. */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <StatCard
           label="Réservations du jour"
           icon={Icons.TicketIcon}
@@ -169,10 +175,10 @@ export default async function DashboardPage(props: PageProps<"/">) {
           }
         />
         <StatCard
-          label="Taux de remplissage"
-          icon={Icons.GaugeIcon}
-          accent="red"
-          value={occupancyRate === null ? "—" : `${Math.round(occupancyRate * 100)} %`}
+          label="Bus en service"
+          icon={Icons.BusIcon}
+          accent="violet"
+          value={<ComingSoonBadge />}
         />
         <StatCard
           label="Clients actifs (30j)"
@@ -180,239 +186,276 @@ export default async function DashboardPage(props: PageProps<"/">) {
           accent="amber"
           value={activeClients}
         />
+        <StatCard
+          label="Taux de remplissage"
+          icon={Icons.GaugeIcon}
+          accent="red"
+          value={occupancyRate === null ? "—" : `${Math.round(occupancyRate * 100)} %`}
+        />
       </div>
 
-      <section>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-950">Alertes en temps réel</h2>
-        {alerts.length === 0 ? (
-          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
-            Aucune alerte pour le moment.
-          </p>
-        ) : (
-          <ul className="flex flex-col gap-3">
-            {alerts.map((notification) => (
-              <li
-                key={notification.id}
-                className="flex flex-col gap-1 rounded-xl border border-zinc-200 bg-white p-4"
-              >
-                <div className="flex items-center justify-between gap-4">
-                  <span className="font-medium text-zinc-950">{notification.title}</span>
-                  <span
-                    className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${NOTIFICATION_LEVEL_STYLES[notification.level]}`}
-                  >
-                    {NOTIFICATION_LEVEL_LABELS[notification.level]}
-                  </span>
-                </div>
-                {notification.body ? (
-                  <span className="text-sm text-zinc-500">{notification.body}</span>
-                ) : null}
-                <span className="text-xs text-zinc-400">
-                  {formatNotificationDate(notification.createdAt)}
-                </span>
-                {notification.actionHref ? (
-                  <Link
-                    href={notification.actionHref}
-                    className="mt-1 text-sm font-medium text-zinc-950 hover:underline"
-                  >
-                    Voir →
-                  </Link>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      {/* Ligne 2 */}
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+        <section>
+          <h2 className="mb-4 text-lg font-semibold text-zinc-950">
+            Réservations — 7 derniers jours
+          </h2>
+          <div className="rounded-xl border border-zinc-200 bg-white p-6">
+            {weeklyChartData.length === 0 ? (
+              <p className="text-zinc-500">Aucune réservation confirmée cette semaine.</p>
+            ) : (
+              <BookingsChart data={weeklyChartData} />
+            )}
+          </div>
+        </section>
 
-      <section>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-950">
-          Réservations — 7 derniers jours
-        </h2>
-        <div className="rounded-xl border border-zinc-200 bg-white p-6">
-          {weeklyChartData.length === 0 ? (
-            <p className="text-zinc-500">Aucune réservation confirmée cette semaine.</p>
+        <section>
+          <h2 className="mb-4 text-lg font-semibold text-zinc-950">
+            Répartition des paiements (30 derniers jours)
+          </h2>
+          {methodTotalFcfa === 0 ? (
+            <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
+              Aucun paiement approuvé sur cette période.
+            </p>
           ) : (
-            <BookingsChart data={weeklyChartData} />
-          )}
-        </div>
-      </section>
-
-      <section>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-950">
-          Répartition des paiements (30 derniers jours)
-        </h2>
-        {methodTotalFcfa === 0 ? (
-          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
-            Aucun paiement approuvé sur cette période.
-          </p>
-        ) : (
-          <div className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white p-6">
-            {(Object.keys(PAYMENT_METHOD_LABELS) as (keyof typeof methodBreakdown)[]).map((method) => {
-              const { amountFcfa, count } = methodBreakdown[method];
-              const share = methodTotalFcfa > 0 ? Math.round((amountFcfa / methodTotalFcfa) * 100) : 0;
-              return (
-                <div key={method} className="flex flex-col gap-1">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium text-zinc-950">
-                      {PAYMENT_METHOD_LABELS[method]}
-                    </span>
-                    <span className="text-zinc-500">
-                      {formatFcfa(amountFcfa)} ({count}) · {share} %
-                    </span>
-                  </div>
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100">
-                    <div className="h-full rounded-full bg-zinc-950" style={{ width: `${share}%` }} />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      <section>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-950">
-          Top 5 itinéraires (30 derniers jours)
-        </h2>
-        {topRoutes.length === 0 ? (
-          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
-            Aucune réservation confirmée sur cette période.
-          </p>
-        ) : (
-          <ol className="flex flex-col gap-2">
-            {topRoutes.map((route, index) => (
-              <li
-                key={`${route.originCity}-${route.destinationCity}`}
-                className="flex items-center justify-between gap-4 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm"
-              >
-                <span className="text-zinc-950">
-                  {index + 1}. {route.originCity} → {route.destinationCity}
-                </span>
-                <span className="text-zinc-500">{route.count} réservation{route.count > 1 ? "s" : ""}</span>
-              </li>
-            ))}
-          </ol>
-        )}
-      </section>
-
-      <section>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-zinc-950">Calendrier des trajets</h2>
-          <div className="flex items-center gap-3">
-            <Link
-              href={`/?month=${prevMonth}`}
-              className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
-            >
-              ← Mois précédent
-            </Link>
-            <span className="text-sm font-medium capitalize text-zinc-950">{monthLabel(month)}</span>
-            <Link
-              href={`/?month=${nextMonth}`}
-              className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
-            >
-              Mois suivant →
-            </Link>
-          </div>
-        </div>
-        <div className="rounded-xl border border-zinc-200 bg-white p-4">
-          <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-zinc-500">
-            {WEEKDAY_LABELS.map((w) => (
-              <span key={w}>{w}</span>
-            ))}
-          </div>
-          <div className="mt-1 flex flex-col gap-1">
-            {weeks.map((week, i) => (
-              <div key={i} className="grid grid-cols-7 gap-1">
-                {week.map((day) => {
-                  const hasTrip = tripDates.has(day.date);
-                  return (
-                    <div
-                      key={day.date}
-                      className={`relative flex h-12 flex-col items-center justify-start gap-1 rounded p-1 text-xs font-medium ${day.isCurrentMonth ? "" : "opacity-40"}`}
-                    >
-                      <span className="text-zinc-900">{day.dayOfMonth}</span>
-                      {hasTrip ? <span className="h-1.5 w-1.5 rounded-full bg-zinc-950" /> : null}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-950">
-          5 réservations les plus récentes
-        </h2>
-        {recentBookings.length === 0 ? (
-          <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
-            Aucune réservation pour le moment.
-          </p>
-        ) : (
-          <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white">
-            <table className="w-full min-w-[600px] border-collapse text-left text-sm">
-              <thead>
-                <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500">
-                  <th className="px-4 py-3 font-medium">Réservation</th>
-                  <th className="px-4 py-3 font-medium">Montant</th>
-                  <th className="px-4 py-3 font-medium">Statut</th>
-                  <th className="px-4 py-3 font-medium">Créée le</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentBookings.map((booking) => (
-                  <tr
-                    key={booking.id}
-                    className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50"
-                  >
-                    <td className="px-4 py-3 text-zinc-700">{booking.booking_reference}</td>
-                    <td className="px-4 py-3 text-zinc-700">
-                      {formatFcfa(booking.total_price_fcfa)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
-                          BOOKING_STATUS_STYLES[booking.status] ??
-                          "bg-zinc-100 text-zinc-700"
-                        }`}
-                      >
-                        {BOOKING_STATUS_LABELS[booking.status] ?? booking.status}
+            <div className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white p-6">
+              {(Object.keys(PAYMENT_METHOD_LABELS) as (keyof typeof methodBreakdown)[]).map((method) => {
+                const { amountFcfa, count } = methodBreakdown[method];
+                const share = methodTotalFcfa > 0 ? Math.round((amountFcfa / methodTotalFcfa) * 100) : 0;
+                return (
+                  <div key={method} className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium text-zinc-950">
+                        {PAYMENT_METHOD_LABELS[method]}
                       </span>
-                    </td>
-                    <td className="px-4 py-3 text-zinc-700">
-                      {formatDepartureDateTime(booking.created_at)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+                      <span className="text-zinc-500">
+                        {formatFcfa(amountFcfa)} ({count}) · {share} %
+                      </span>
+                    </div>
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100">
+                      <div className="h-full rounded-full bg-zinc-950" style={{ width: `${share}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      </div>
 
-      <section>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-950">Actions rapides</h2>
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href="/reservations/nouvelle"
-            className="rounded-lg bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
-          >
-            + Nouvelle réservation
-          </Link>
-          <a
-            href={`/reservations/export?from=${getBeninDateString()}&to=${getBeninDateString()}`}
-            className="rounded-lg border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100"
-          >
-            ⭳ Export du jour
-          </a>
-          <Link
-            href="/trajets/nouveau"
-            className="rounded-lg border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100"
-          >
-            Créer un itinéraire
-          </Link>
-        </div>
-      </section>
+      {/* Ligne 3 */}
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+        <section>
+          <h2 className="mb-4 text-lg font-semibold text-zinc-950">Revenus mensuels</h2>
+          <div className="flex flex-col items-start gap-3 rounded-xl border border-zinc-200 bg-white p-6">
+            <p className="text-sm text-zinc-500">
+              Comparaison mois par mois avec l&apos;année précédente — aucune donnée 2025
+              n&apos;existe encore pour l&apos;établir.
+            </p>
+            <ComingSoonBadge />
+          </div>
+        </section>
+
+        <section>
+          <h2 className="mb-4 text-lg font-semibold text-zinc-950">
+            Top 5 itinéraires (30 derniers jours)
+          </h2>
+          {topRoutes.length === 0 ? (
+            <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
+              Aucune réservation confirmée sur cette période.
+            </p>
+          ) : (
+            <ol className="flex flex-col gap-2">
+              {topRoutes.map((route, index) => (
+                <li
+                  key={`${route.originCity}-${route.destinationCity}`}
+                  className="flex items-center justify-between gap-4 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm"
+                >
+                  <span className="text-zinc-950">
+                    {index + 1}. {route.originCity} → {route.destinationCity}
+                  </span>
+                  <span className="text-zinc-500">{route.count} réservation{route.count > 1 ? "s" : ""}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+      </div>
+
+      {/* Ligne 4 */}
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+        <section>
+          <h2 className="mb-4 text-lg font-semibold text-zinc-950">Alertes en temps réel</h2>
+          {alerts.length === 0 ? (
+            <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
+              Aucune alerte pour le moment.
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {alerts.map((notification) => (
+                <li
+                  key={notification.id}
+                  className="flex flex-col gap-1 rounded-xl border border-zinc-200 bg-white p-4"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="font-medium text-zinc-950">{notification.title}</span>
+                    <span
+                      className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${NOTIFICATION_LEVEL_STYLES[notification.level]}`}
+                    >
+                      {NOTIFICATION_LEVEL_LABELS[notification.level]}
+                    </span>
+                  </div>
+                  {notification.body ? (
+                    <span className="text-sm text-zinc-500">{notification.body}</span>
+                  ) : null}
+                  <span className="text-xs text-zinc-400">
+                    {formatNotificationDate(notification.createdAt)}
+                  </span>
+                  {notification.actionHref ? (
+                    <Link
+                      href={notification.actionHref}
+                      className="mt-1 text-sm font-medium text-zinc-950 hover:underline"
+                    >
+                      Voir →
+                    </Link>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section>
+          <h2 className="mb-4 text-lg font-semibold text-zinc-950">Actions rapides</h2>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              disabled
+              className="flex cursor-not-allowed items-center gap-2 rounded-lg border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-400"
+            >
+              Ajouter un bus
+              <ComingSoonBadge />
+            </button>
+            <Link
+              href="/trajets/nouveau"
+              className="rounded-lg border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100"
+            >
+              Créer un itinéraire
+            </Link>
+            <Link
+              href="/reservations/nouvelle"
+              className="rounded-lg bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
+            >
+              + Nouvelle réservation
+            </Link>
+            <a
+              href={`/reservations/export?from=${getBeninDateString()}&to=${getBeninDateString()}`}
+              className="rounded-lg border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100"
+            >
+              Exporter les données
+            </a>
+          </div>
+        </section>
+      </div>
+
+      {/* Ligne 5 */}
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+        <section>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-zinc-950">Calendrier des trajets</h2>
+            <div className="flex items-center gap-3">
+              <Link
+                href={`/?month=${prevMonth}`}
+                className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+              >
+                ← Mois précédent
+              </Link>
+              <span className="text-sm font-medium capitalize text-zinc-950">{monthLabel(month)}</span>
+              <Link
+                href={`/?month=${nextMonth}`}
+                className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+              >
+                Mois suivant →
+              </Link>
+            </div>
+          </div>
+          <div className="rounded-xl border border-zinc-200 bg-white p-4">
+            <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-zinc-500">
+              {WEEKDAY_LABELS.map((w) => (
+                <span key={w}>{w}</span>
+              ))}
+            </div>
+            <div className="mt-1 flex flex-col gap-1">
+              {weeks.map((week, i) => (
+                <div key={i} className="grid grid-cols-7 gap-1">
+                  {week.map((day) => {
+                    const hasTrip = tripDates.has(day.date);
+                    return (
+                      <div
+                        key={day.date}
+                        className={`relative flex h-12 flex-col items-center justify-start gap-1 rounded p-1 text-xs font-medium ${day.isCurrentMonth ? "" : "opacity-40"}`}
+                      >
+                        <span className="text-zinc-900">{day.dayOfMonth}</span>
+                        {hasTrip ? <span className="h-1.5 w-1.5 rounded-full bg-zinc-950" /> : null}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2 className="mb-4 text-lg font-semibold text-zinc-950">
+            5 réservations les plus récentes
+          </h2>
+          {recentBookings.length === 0 ? (
+            <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
+              Aucune réservation pour le moment.
+            </p>
+          ) : (
+            <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white">
+              <table className="w-full min-w-[600px] border-collapse text-left text-sm">
+                <thead>
+                  <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500">
+                    <th className="px-4 py-3 font-medium">Réservation</th>
+                    <th className="px-4 py-3 font-medium">Montant</th>
+                    <th className="px-4 py-3 font-medium">Statut</th>
+                    <th className="px-4 py-3 font-medium">Créée le</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentBookings.map((booking) => (
+                    <tr
+                      key={booking.id}
+                      className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50"
+                    >
+                      <td className="px-4 py-3 text-zinc-700">{booking.booking_reference}</td>
+                      <td className="px-4 py-3 text-zinc-700">
+                        {formatFcfa(booking.total_price_fcfa)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
+                            BOOKING_STATUS_STYLES[booking.status] ??
+                            "bg-zinc-100 text-zinc-700"
+                          }`}
+                        >
+                          {BOOKING_STATUS_LABELS[booking.status] ?? booking.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-zinc-700">
+                        {formatDepartureDateTime(booking.created_at)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   );
 }
