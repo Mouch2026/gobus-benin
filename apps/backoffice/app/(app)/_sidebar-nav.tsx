@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactElement, type SVGProps } from "react";
 import Link from "next/link";
-import { can, type CompanyAction, type CompanyRole } from "@/lib/permissions";
+import { can, type CompanyAction, type CompanyRole, type PageAccessLevel } from "@/lib/permissions";
 import * as Icons from "@/lib/icons";
 
 // Structure de données unique pour toute la navigation — icône, couleur,
@@ -18,7 +18,7 @@ type NavLeaf = {
   label: string;
   Icon: IconComponent;
   href?: string;
-  gate?: CompanyAction;
+  gate?: CompanyAction | PageAccessLevel;
   note?: string;
   subtitle?: string;
   notificationType?: string;
@@ -52,17 +52,18 @@ const NAV_SECTIONS: NavSection[] = [
     label: "Tableau de bord",
     Icon: Icons.GridIcon,
     items: [
-      // Même gate que Pilotage ci-dessous ("ownerDashboard.view", résolu
-      // dynamiquement par isGateVisible via canViewCompanyWideDashboards,
-      // pas par can(role, ...) seul) : décision explicite du chantier
-      // "affectation d'un tableau de bord" — Vue globale et Pilotage sont
-      // gouvernés par LA MÊME autorisation, jamais deux vérifications
-      // distinctes. hiddenForRoles n'est plus nécessaire ici : un agent
-      // échoue déjà ce gate (canViewCompanyWideDashboards renvoie
-      // toujours false pour lui).
-      { kind: "link", label: "Vue globale", href: "/", Icon: Icons.GaugeIcon, gate: "ownerDashboard.view" },
+      // Même gate que Pilotage ci-dessous ("companyWide", un
+      // PageAccessLevel résolu dynamiquement par isGateVisible via
+      // canViewCompanyWideDashboards, pas par can(role, ...) seul) :
+      // décision explicite du chantier "affectation d'un tableau de
+      // bord" — Vue globale et Pilotage sont gouvernés par LA MÊME
+      // autorisation, jamais deux vérifications distinctes.
+      // hiddenForRoles n'est plus nécessaire ici : un agent échoue déjà
+      // ce gate (canViewCompanyWideDashboards renvoie toujours false
+      // pour lui).
+      { kind: "link", label: "Vue globale", href: "/", Icon: Icons.GaugeIcon, gate: "companyWide" },
       { kind: "link", label: "Mon tableau de bord", href: "/mon-tableau-de-bord", Icon: Icons.LayoutGridIcon },
-      { kind: "link", label: "Pilotage", href: "/pilotage", Icon: Icons.ChartBarIcon, gate: "ownerDashboard.view" },
+      { kind: "link", label: "Pilotage", href: "/pilotage", Icon: Icons.ChartBarIcon, gate: "companyWide" },
       { kind: "soon", label: "Widgets personnalisables", Icon: Icons.PuzzleIcon, hiddenForRoles: ["agent"] },
     ],
   },
@@ -106,8 +107,15 @@ const NAV_SECTIONS: NavSection[] = [
             href: "/chauffeurs",
             Icon: Icons.SteeringWheelIcon,
             notificationType: "driver_document_expiring",
+            gate: "ownerAndManager",
           },
-          { kind: "link", label: "Disponibilités", href: "/chauffeurs/disponibilites", Icon: Icons.CalendarCheckIcon },
+          {
+            kind: "link",
+            label: "Disponibilités",
+            href: "/chauffeurs/disponibilites",
+            Icon: Icons.CalendarCheckIcon,
+            gate: "ownerAndManager",
+          },
           { kind: "soon", label: "Évaluations", Icon: Icons.StarIcon },
         ],
       },
@@ -119,7 +127,7 @@ const NAV_SECTIONS: NavSection[] = [
           // Même page que "Plans de bus" sous Administration — deux
           // contextes de navigation vers la même gestion de plans de
           // sièges, jamais une gestion de véhicules qui n'existe pas.
-          { kind: "link", label: "Flotte", href: "/plans-de-bus", Icon: Icons.BusIcon },
+          { kind: "link", label: "Flotte", href: "/plans-de-bus", Icon: Icons.BusIcon, gate: "ownerAndManager" },
           { kind: "soon", label: "Maintenance", Icon: Icons.WrenchIcon },
           { kind: "soon", label: "Localisation GPS", Icon: Icons.MapPinIcon },
         ],
@@ -146,8 +154,8 @@ const NAV_SECTIONS: NavSection[] = [
     label: "Finances",
     Icon: Icons.WalletIcon,
     items: [
-      { kind: "link", label: "Paiements", href: "/paiements", Icon: Icons.CardIcon },
-      { kind: "link", label: "Remboursements", href: "/remboursements", Icon: Icons.UndoIcon },
+      { kind: "link", label: "Paiements", href: "/paiements", Icon: Icons.CardIcon, gate: "companyWide" },
+      { kind: "link", label: "Remboursements", href: "/remboursements", Icon: Icons.UndoIcon, gate: "ownerAndManager" },
       {
         kind: "link",
         label: "Caisse",
@@ -163,8 +171,8 @@ const NAV_SECTIONS: NavSection[] = [
     Icon: Icons.UsersIcon,
     items: [
       { kind: "link", label: "Clients", href: "/clients", Icon: Icons.UserIcon },
-      { kind: "link", label: "Agences", href: "/agences", Icon: Icons.BuildingIcon },
-      { kind: "link", label: "Codes promo", href: "/codes-promo", Icon: Icons.TagIcon, gate: "promoCodes.manage" },
+      { kind: "link", label: "Agences", href: "/agences", Icon: Icons.BuildingIcon, gate: "ownerOnly" },
+      { kind: "link", label: "Codes promo", href: "/codes-promo", Icon: Icons.TagIcon, gate: "ownerAndManager" },
       { kind: "soon", label: "Programme de fidélité", Icon: Icons.GiftIcon },
     ],
   },
@@ -173,14 +181,14 @@ const NAV_SECTIONS: NavSection[] = [
     label: "Rapports & audit",
     Icon: Icons.ReportIcon,
     items: [
-      { kind: "link", label: "Rapports", href: "/rapports", Icon: Icons.ChartBarIcon },
+      { kind: "link", label: "Rapports", href: "/rapports", Icon: Icons.ChartBarIcon, gate: "companyWide" },
       { kind: "link", label: "Journal d'audit", href: "/audit", Icon: Icons.ShieldCheckIcon, gate: "auditLog.view" },
       {
         kind: "group",
         label: "Export",
         Icon: Icons.DownloadIcon,
         items: [
-          { kind: "link", label: "CSV", href: "/reservations/export", Icon: Icons.FileTextIcon },
+          { kind: "link", label: "CSV", href: "/reservations/export", Icon: Icons.FileTextIcon, gate: "ownerAndManager" },
           { kind: "soon", label: "Excel", Icon: Icons.FileSpreadsheetIcon },
           { kind: "soon", label: "PDF", Icon: Icons.FileIcon },
         ],
@@ -204,8 +212,8 @@ const NAV_SECTIONS: NavSection[] = [
     Icon: Icons.SettingsIcon,
     items: [
       { kind: "link", label: "Profil", href: "/profil", Icon: Icons.UserIcon },
-      { kind: "link", label: "Abonnement", href: "/abonnement", Icon: Icons.ReceiptIcon },
-      { kind: "link", label: "Plans de bus", href: "/plans-de-bus", Icon: Icons.LayoutGridIcon },
+      { kind: "link", label: "Abonnement", href: "/abonnement", Icon: Icons.ReceiptIcon, gate: "ownerOnly" },
+      { kind: "link", label: "Plans de bus", href: "/plans-de-bus", Icon: Icons.LayoutGridIcon, gate: "ownerAndManager" },
       { kind: "link", label: "Employés", href: "/employes", Icon: Icons.UsersIcon, gate: "employees.manage" },
       { kind: "soon", label: "Gestion des accès", Icon: Icons.LockIcon },
       { kind: "soon", label: "Sauvegardes", Icon: Icons.DatabaseIcon },
@@ -325,14 +333,23 @@ function GroupDetails({
   );
 }
 
-// "ownerDashboard.view" n'est plus une permission purement par RÔLE
-// (PERMISSIONS le fixe à ["owner"], mais un chef d'agence peut recevoir
-// l'accès individuellement — voir canViewCompanyWideDashboards, lib/permissions.ts)
-// — seul point de spécialisation du mécanisme générique gate/can() ci-
-// dessous, calculé une fois dans (app)/layout.tsx et transmis en prop,
-// jamais recalculé ici à partir du seul rôle.
-function isGateVisible(gate: CompanyAction, role: CompanyRole, canViewCompanyWideDashboards: boolean): boolean {
-  if (gate === "ownerDashboard.view") return canViewCompanyWideDashboards;
+// Un gate peut être une action précise (CompanyAction, résolue par rôle
+// seul via can()) OU un PageAccessLevel (chantier "gardes d'accès
+// serveur sur les pages") — même prédicat que la garde serveur de la
+// page correspondante (requirePageAccess/canAccessPage,
+// lib/permissions.ts), jamais un rôle recalculé ici à la main.
+// "companyWide" reste le seul niveau qui dépend de PLUS que le rôle seul
+// (l'autorisation pilotage, transmise en prop depuis (app)/layout.tsx) —
+// "ownerOnly"/"ownerAndManager" ne dépendent que de `role`, déjà
+// disponible ici.
+function isGateVisible(
+  gate: CompanyAction | PageAccessLevel,
+  role: CompanyRole,
+  canViewCompanyWideDashboards: boolean
+): boolean {
+  if (gate === "ownerOnly") return role === "owner";
+  if (gate === "ownerAndManager") return role === "owner" || role === "agency_manager";
+  if (gate === "companyWide") return canViewCompanyWideDashboards;
   return can(role, gate);
 }
 

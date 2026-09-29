@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireCompany } from "@/lib/supabase/dal";
+import { requirePermission } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { validateNewPassword, mapWeakPasswordError } from "shared";
 
@@ -17,11 +18,20 @@ const LOGO_MIME_TO_EXT: Record<string, string> = {
   "image/webp": "webp",
 };
 
+// Trou trouvé par l'audit "gardes d'accès serveur" : cette action modifie
+// une vraie donnée de compagnie (nom/téléphone/e-mail/logo), pas un
+// réglage personnel — malgré son emplacement sous /profil, n'importe quel
+// rôle pouvait auparavant la soumettre, /profil/page.tsx ne masquant le
+// formulaire pour personne. "companyProfile.manage" aligne la garde de
+// l'action sur celle désormais posée sur le formulaire lui-même (owner
+// uniquement).
 export async function updateCompanyProfile(
   _prevState: ProfilFormState,
   formData: FormData
 ): Promise<ProfilFormState> {
   const access = await requireCompany();
+  const guardError = requirePermission(access, "companyProfile.manage");
+  if (guardError) return { ...guardError, success: false };
   if (!access.ok) {
     return { error: "Votre session ou votre abonnement ne permet plus cette action.", success: false };
   }

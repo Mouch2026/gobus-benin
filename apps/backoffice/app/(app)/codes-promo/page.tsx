@@ -1,4 +1,4 @@
-import { requireCompany } from "@/lib/supabase/dal";
+import { requireCompany, requirePageAccess } from "@/lib/supabase/dal";
 import { can } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { formatFcfa } from "shared";
@@ -51,6 +51,7 @@ export default async function CodesPromoPage() {
   if (!result.ok) {
     return <AccessBlockedMessage reason={result.reason} />;
   }
+  requirePageAccess(result, "ownerAndManager");
 
   const canManage = can(result.role, "promoCodes.manage");
   const supabase = await createClient();

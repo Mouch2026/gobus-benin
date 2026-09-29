@@ -3,7 +3,8 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "./server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import type { CompanyRole, HomeScreen } from "@/lib/permissions";
+import type { CompanyRole, HomeScreen, PageAccessLevel } from "@/lib/permissions";
+import { canAccessPage } from "@/lib/permissions";
 
 export type { CompanyRole } from "@/lib/permissions";
 
@@ -273,3 +274,24 @@ export const requireCompanyMembership = cache(async (): Promise<CompanyMembershi
     pinHash: data.pin_hash,
   };
 });
+
+// Chantier "gardes d'accès serveur sur les pages" — LE point de contrôle
+// central pour l'accès en LECTURE à une page, à appeler juste après le
+// `if (!access.ok) return <AccessBlockedMessage/>` de chaque page
+// concernée. Jamais de message bloquant : un membre refusé retombe sur
+// /mon-tableau-de-bord, qui n'a lui-même aucune garde → puits absorbant,
+// aucune boucle possible (même principe déjà validé sur "/" et
+// /pilotage, généralisé ici à toute page qui en a besoin).
+// requirePermission() (permissions.ts) reste inchangée à côté : c'est la
+// garde des ACTIONS d'écriture, pas des pages — les deux se complètent,
+// aucune des deux ne remplace l'autre. Pour un Route Handler (pas une
+// page HTML, ex. reservations/export), utiliser canAccessPage()
+// directement plutôt que cette fonction, qui redirige — voir ce fichier.
+export function requirePageAccess(
+  access: Extract<CompanyAccessResult, { ok: true }>,
+  level: PageAccessLevel
+): void {
+  if (!canAccessPage(access, level)) {
+    redirect("/mon-tableau-de-bord");
+  }
+}

@@ -1,4 +1,4 @@
-import { requireCompany } from "@/lib/supabase/dal";
+import { requireCompany, requirePageAccess } from "@/lib/supabase/dal";
 import { can } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { AccessBlockedMessage } from "../_components";
@@ -32,6 +32,7 @@ export default async function PlansDeBusPage() {
   if (!result.ok) {
     return <AccessBlockedMessage reason={result.reason} />;
   }
+  requirePageAccess(result, "ownerAndManager");
 
   const busLayouts = await getCompanyBusLayouts(result.company.id);
   const canManage = can(result.role, "busLayouts.manage");

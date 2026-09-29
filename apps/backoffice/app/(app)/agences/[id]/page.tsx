@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireCompany } from "@/lib/supabase/dal";
+import { requireCompany, requirePageAccess } from "@/lib/supabase/dal";
 import { can } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { AccessBlockedMessage } from "../../_components";
@@ -58,6 +58,7 @@ export default async function EditAgencePage(props: PageProps<"/agences/[id]">) 
   if (!result.ok) {
     return <AccessBlockedMessage reason={result.reason} />;
   }
+  requirePageAccess(result, "ownerOnly");
 
   const supabase = await createClient();
   const agency = await getOwnedAgency(supabase, id, result.company.id);

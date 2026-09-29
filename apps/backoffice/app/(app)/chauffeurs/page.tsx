@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireCompany } from "@/lib/supabase/dal";
+import { requireCompany, requirePageAccess } from "@/lib/supabase/dal";
 import { can } from "@/lib/permissions";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { AccessBlockedMessage } from "../_components";
@@ -51,6 +51,7 @@ export default async function ChauffeursPage(props: PageProps<"/chauffeurs">) {
   if (!result.ok) {
     return <AccessBlockedMessage reason={result.reason} />;
   }
+  requirePageAccess(result, "ownerAndManager");
 
   const searchParams = await props.searchParams;
   const filters = parseDriverFilters(searchParams);

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireCompany } from "@/lib/supabase/dal";
+import { requireCompany, requirePageAccess } from "@/lib/supabase/dal";
 import { can } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
@@ -188,6 +188,7 @@ export default async function DriverDetailPage(props: PageProps<"/chauffeurs/[id
   if (!result.ok) {
     return <AccessBlockedMessage reason={result.reason} />;
   }
+  requirePageAccess(result, "ownerAndManager");
 
   const supabase = await createClient();
   const driver = await getOwnedDriver(supabase, id, result.company.id);

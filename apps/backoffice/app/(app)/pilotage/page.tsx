@@ -1,7 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { requireCompany } from "@/lib/supabase/dal";
-import { canViewCompanyWideDashboards } from "@/lib/permissions";
+import { requireCompany, requirePageAccess } from "@/lib/supabase/dal";
 import { getActiveAgencies, getSelectedAgency } from "@/lib/agency-selection";
 import { getCompanyNotifications } from "@/lib/notifications";
 import { getBeninDateString, getBeninMidnightToday } from "@/lib/benin-time";
@@ -52,15 +50,14 @@ export default async function PilotagePage(props: PageProps<"/pilotage">) {
     return <AccessBlockedMessage reason={access.reason} />;
   }
 
-  // canViewCompanyWideDashboards() est LE point de contrôle central (voir
-  // lib/permissions.ts) : owner, ou chef d'agence explicitement autorisé
-  // par le propriétaire. Redirection plutôt qu'un message statique — un
-  // employé dont l'autorisation vient d'être retirée retombe proprement
-  // sur son tableau employé, sans boucle possible puisque
-  // /mon-tableau-de-bord n'a aucune garde qui le renverrait ici.
-  if (!canViewCompanyWideDashboards(access)) {
-    redirect("/mon-tableau-de-bord");
-  }
+  // requirePageAccess(access, "companyWide") est LE point de contrôle
+  // central (voir lib/supabase/dal.ts) : owner, ou chef d'agence
+  // explicitement autorisé par le propriétaire. Redirige plutôt qu'un
+  // message statique — un employé dont l'autorisation vient d'être
+  // retirée retombe proprement sur son tableau employé, sans boucle
+  // possible puisque /mon-tableau-de-bord n'a aucune garde qui le
+  // renverrait ici.
+  requirePageAccess(access, "companyWide");
 
   const { company } = access;
 
@@ -105,8 +102,9 @@ export default async function PilotagePage(props: PageProps<"/pilotage">) {
     getRecentBookings(company.id),
     getConfirmedBookingsInPeriod(company.id, sevenDaysAgo, todayTo),
     getCompanyNotifications(50),
-    // La garde plus haut a déjà redirigé si !canViewCompanyWideDashboards(access)
-    // — on sait donc ici que owner OU chef d'agence autorisé.
+    // La garde plus haut (requirePageAccess) a déjà redirigé si le niveau
+    // "companyWide" n'était pas atteint — on sait donc ici que owner OU
+    // chef d'agence autorisé.
     getActiveAgencies(company.id),
     getSelectedAgency({ allowPreview: true }),
   ]);

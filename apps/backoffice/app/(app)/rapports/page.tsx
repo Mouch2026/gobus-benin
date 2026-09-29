@@ -1,4 +1,4 @@
-import { requireCompany } from "@/lib/supabase/dal";
+import { requireCompany, requirePageAccess } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
 import { formatFcfa } from "shared";
 import { AccessBlockedMessage } from "../_components";
@@ -84,6 +84,7 @@ export default async function RapportsPage() {
   if (!result.ok) {
     return <AccessBlockedMessage reason={result.reason} />;
   }
+  requirePageAccess(result, "companyWide");
 
   const stats = await getStats(result.company.id);
   const statusEntries = Object.entries(stats.tripsByStatus);

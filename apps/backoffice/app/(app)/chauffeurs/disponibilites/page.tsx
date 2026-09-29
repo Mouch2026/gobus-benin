@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireCompany } from "@/lib/supabase/dal";
+import { requireCompany, requirePageAccess } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getBeninDateString } from "@/lib/benin-time";
@@ -45,6 +45,7 @@ export default async function CompanyAvailabilityPage(props: PageProps<"/chauffe
   if (!result.ok) {
     return <AccessBlockedMessage reason={result.reason} />;
   }
+  requirePageAccess(result, "ownerAndManager");
 
   const searchParams = await props.searchParams;
   const monthParam = typeof searchParams.month === "string" ? searchParams.month : null;

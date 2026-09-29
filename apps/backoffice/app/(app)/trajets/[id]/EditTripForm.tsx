@@ -48,14 +48,21 @@ export function EditTripForm({
   const canCancel = canManage && trip.status !== "cancelled" && trip.status !== "completed";
   const currentDuration = splitDuration(trip.departure_at, trip.arrival_at);
 
+  // Le formulaire d'édition n'APPARAÎT (pas seulement "champs désactivés")
+  // que pour owner/agency_manager (trips.manage) — l'action reste de toute
+  // façon gardée côté serveur (requirePermission, trajets/[id]/actions.ts),
+  // mais un agent ne doit même plus voir des champs de prix/route/annulation
+  // qu'il ne peut pas soumettre.
+  if (!canManage) {
+    return (
+      <p className="text-sm text-zinc-500">
+        Réservé au propriétaire et aux chefs d&apos;agence.
+      </p>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
-      {!canManage ? (
-        <p className="text-sm text-zinc-500">
-          Réservé au propriétaire et aux chefs d&apos;agence.
-        </p>
-      ) : null}
-
       <form action={detailsAction} className="flex flex-col gap-4">
         <input type="hidden" name="tripId" value={trip.id} />
 

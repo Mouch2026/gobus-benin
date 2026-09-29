@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireCompany } from "@/lib/supabase/dal";
+import { canAccessPage } from "@/lib/permissions";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getBeninDateString } from "@/lib/benin-time";
 import { BOOKING_STATUS_LABELS, formatDepartureDateTime } from "../../_shared";
@@ -39,7 +40,15 @@ function csvEscape(value: string): string {
 // voit à l'écran est ce qu'il obtient dans le CSV.
 export async function GET(request: NextRequest) {
   const result = await requireCompany();
-  if (!result.ok) {
+  // Route Handler, pas une page HTML : canAccessPage() directement plutôt
+  // que requirePageAccess() (qui redirige vers une page) — même patron
+  // que chauffeurs/[id]/documents/[docId]/telecharger/route.ts, qui
+  // inline déjà requirePermission() sans wrapper. Même niveau que la
+  // page /reservations/export elle-même n'existe pas (l'export est un
+  // Route Handler, pas une page) : owner + agency_manager, comme
+  // /chauffeurs et /remboursements — un agent ne peut plus exporter le
+  // CSV de toute la compagnie.
+  if (!result.ok || !canAccessPage(result, "ownerAndManager")) {
     return NextResponse.json({ error: "Accès refusé." }, { status: 403 });
   }
 

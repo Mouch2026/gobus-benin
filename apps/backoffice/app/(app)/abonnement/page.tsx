@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireCompany } from "@/lib/supabase/dal";
+import { requireCompany, requirePageAccess } from "@/lib/supabase/dal";
 import { can } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { formatFcfa } from "shared";
@@ -118,6 +118,7 @@ export default async function AbonnementPage(props: PageProps<"/abonnement">) {
   if (!result.ok) {
     return <AccessBlockedMessage reason={result.reason} />;
   }
+  requirePageAccess(result, "ownerOnly");
 
   const searchParams = await props.searchParams;
   const planChanged = firstValue(searchParams.plan_changed) === "1";

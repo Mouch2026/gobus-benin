@@ -1,4 +1,5 @@
 import { requireCompany } from "@/lib/supabase/dal";
+import { can } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { AccessBlockedMessage } from "../_components";
 import { ProfilForm } from "./ProfilForm";
@@ -39,18 +40,39 @@ export default async function ProfilPage() {
   }
 
   const profile = await getCompanyProfile(result.company.id);
+  // Trou trouvé par l'audit "gardes d'accès serveur" : nom/téléphone/
+  // e-mail/logo sont une vraie donnée de compagnie (companyProfile.manage,
+  // owner uniquement), pas un réglage personnel — le formulaire éditable
+  // ne s'affiche donc plus que pour le propriétaire ; un non-propriétaire
+  // voit au plus ces informations en lecture seule, jamais le formulaire.
+  const canManageCompanyProfile = can(result.role, "companyProfile.manage");
 
   return (
     <div className="mx-auto max-w-xl px-6 py-8">
       <h1 className="mb-6 text-lg font-semibold text-zinc-950">Profil</h1>
 
       <div className="rounded-xl border border-zinc-200 bg-white p-6">
-        {profile ? (
-          <ProfilForm company={profile} />
-        ) : (
+        {!profile ? (
           <p className="text-zinc-500">
             Impossible de charger le profil pour le moment.
           </p>
+        ) : canManageCompanyProfile ? (
+          <ProfilForm company={profile} />
+        ) : (
+          <dl className="flex flex-col gap-3 text-sm">
+            <div>
+              <dt className="text-zinc-500">Nom de la compagnie</dt>
+              <dd className="text-zinc-950">{profile.name}</dd>
+            </div>
+            <div>
+              <dt className="text-zinc-500">Téléphone</dt>
+              <dd className="text-zinc-950">{profile.phone ?? "—"}</dd>
+            </div>
+            <div>
+              <dt className="text-zinc-500">E-mail</dt>
+              <dd className="text-zinc-950">{profile.email ?? "—"}</dd>
+            </div>
+          </dl>
         )}
       </div>
 

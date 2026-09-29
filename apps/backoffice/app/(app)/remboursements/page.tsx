@@ -1,4 +1,4 @@
-import { requireCompany } from "@/lib/supabase/dal";
+import { requireCompany, requirePageAccess } from "@/lib/supabase/dal";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { AccessBlockedMessage } from "../_components";
 import { RemboursementsTable, type RefundPendingVoucherRow } from "./RemboursementsTable";
@@ -31,6 +31,7 @@ export default async function RemboursementsPage() {
   if (!result.ok) {
     return <AccessBlockedMessage reason={result.reason} />;
   }
+  requirePageAccess(result, "ownerAndManager");
 
   const vouchers = await getRefundPendingVouchers(result.company.id);
 

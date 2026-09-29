@@ -25,7 +25,8 @@ export type CompanyAction =
   | "driverDocuments.manage" // voir/téléverser/télécharger/supprimer les documents d'un chauffeur — owner + agency_manager, lecture COMPRISE (données personnelles : un agent ne voit même pas la liste)
   | "documentAlerts.manage" // régler le seuil d'alerte d'expiration des documents — propriétaire uniquement, comme cashCeiling/lockPolicy
   | "driverRatings.view" // consulter les évaluations d'un chauffeur — owner + agency_manager, comme driverDocuments.manage mais action distincte (voir un avis n'est pas gérer un document légal)
-  | "ownerDashboard.view"; // consulter le tableau de bord stratégique compagnie entière (/pilotage) — propriétaire uniquement
+  | "refunds.manage" // marquer un avoir comme remboursé — owner + agency_manager, comme driverDocuments.manage (une action réelle sur l'argent d'un client, pas une simple lecture)
+  | "companyProfile.manage"; // modifier nom/téléphone/e-mail/logo de la compagnie — propriétaire uniquement, comme agencies.manage/busLayouts.manage (une vraie donnée de compagnie, pas un réglage personnel, malgré son emplacement sous /profil)
 
 const PERMISSIONS: Record<CompanyAction, readonly CompanyRole[]> = {
   "trips.manage": ["owner", "agency_manager"],
@@ -44,7 +45,8 @@ const PERMISSIONS: Record<CompanyAction, readonly CompanyRole[]> = {
   "driverDocuments.manage": ["owner", "agency_manager"],
   "documentAlerts.manage": ["owner"],
   "driverRatings.view": ["owner", "agency_manager"],
-  "ownerDashboard.view": ["owner"],
+  "refunds.manage": ["owner", "agency_manager"],
+  "companyProfile.manage": ["owner"],
 };
 
 export function can(role: CompanyRole, action: CompanyAction): boolean {
@@ -102,4 +104,30 @@ export function resolveHomeRoute(access: {
   if (access.homeScreen === "owner_dashboard" && canViewCompanyWideDashboards(access)) return "/pilotage";
   if (access.homeScreen === "global" && canViewCompanyWideDashboards(access)) return "/";
   return "/mon-tableau-de-bord";
+}
+
+// Chantier "gardes d'accès serveur sur les pages" — jusqu'ici, les pages
+// listées ci-dessous (au-delà de "/" et /pilotage, déjà gardées par
+// canViewCompanyWideDashboards) n'avaient que requireCompany() comme
+// garde : un agent qui connaît l'URL directe voyait les mêmes données
+// qu'un propriétaire, can(role, ...) ne servant qu'à masquer des
+// boutons. Trois niveaux, un seul endroit — remplace toute réécriture
+// locale de "role === owner"/"role === agency_manager" à la main. "all"
+// n'existe pas comme niveau : les pages ouvertes aux trois rôles
+// n'appellent simplement pas requirePageAccess/canAccessPage, elles
+// restent inchangées à l'identique.
+export type PageAccessLevel = "ownerOnly" | "ownerAndManager" | "companyWide";
+
+export function canAccessPage(
+  access: { role: CompanyRole; pilotageAccessGranted: boolean },
+  level: PageAccessLevel
+): boolean {
+  switch (level) {
+    case "ownerOnly":
+      return access.role === "owner";
+    case "ownerAndManager":
+      return access.role === "owner" || access.role === "agency_manager";
+    case "companyWide":
+      return canViewCompanyWideDashboards(access);
+  }
 }

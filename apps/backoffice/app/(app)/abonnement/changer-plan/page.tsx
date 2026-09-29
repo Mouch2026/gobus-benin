@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { requireCompany } from "@/lib/supabase/dal";
-import { can } from "@/lib/permissions";
+import { requireCompany, requirePageAccess } from "@/lib/supabase/dal";
 import { createClient } from "@/lib/supabase/server";
 import { formatFcfa } from "shared";
 import { AccessBlockedMessage } from "../../_components";
@@ -54,15 +53,7 @@ export default async function ChangerPlanPage({
     return <AccessBlockedMessage reason={result.reason} />;
   }
 
-  if (!can(result.role, "subscription.manage")) {
-    return (
-      <div className="mx-auto max-w-xl px-6 py-8">
-        <p className="rounded-xl border border-zinc-200 bg-white p-6 text-zinc-500">
-          Cette page est réservée au propriétaire du compte.
-        </p>
-      </div>
-    );
-  }
+  requirePageAccess(result, "ownerOnly");
 
   const resolvedSearchParams = await searchParams;
   const planId = firstValue(resolvedSearchParams.plan);

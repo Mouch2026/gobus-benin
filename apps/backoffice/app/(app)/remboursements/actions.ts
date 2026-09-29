@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireCompany } from "@/lib/supabase/dal";
+import { requirePermission } from "@/lib/permissions";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export type MarkVoucherProcessedState = { error: string | null };
@@ -15,11 +16,19 @@ export type MarkVoucherProcessedState = { error: string | null };
 // company_id passé ici n'a pas besoin d'être "fait confiance" seul.
 // Même patron que cancelTrip (trajets/[id]/actions.ts) : requireCompany()
 // → action ciblée → revalidatePath.
+//
+// Chantier "gardes d'accès serveur sur les pages" — trou trouvé par
+// l'audit : cette action n'avait jusqu'ici AUCUNE garde de rôle (un agent
+// pouvait marquer un avoir comme traité). "refunds.manage" aligne la
+// garde de l'action sur celle de la page (owner + agency_manager,
+// requirePageAccess(result, "ownerAndManager") dans page.tsx).
 export async function markVoucherProcessed(
   _prevState: MarkVoucherProcessedState,
   formData: FormData
 ): Promise<MarkVoucherProcessedState> {
   const access = await requireCompany();
+  const guardError = requirePermission(access, "refunds.manage");
+  if (guardError) return guardError;
   if (!access.ok) {
     return { error: "Votre session ou votre abonnement ne permet plus cette action." };
   }

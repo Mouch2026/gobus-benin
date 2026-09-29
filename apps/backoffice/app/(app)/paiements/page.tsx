@@ -1,4 +1,4 @@
-import { requireCompany } from "@/lib/supabase/dal";
+import { requireCompany, requirePageAccess } from "@/lib/supabase/dal";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { formatFcfa } from "shared";
 import { AccessBlockedMessage } from "../_components";
@@ -47,6 +47,7 @@ export default async function PaiementsPage() {
   if (!result.ok) {
     return <AccessBlockedMessage reason={result.reason} />;
   }
+  requirePageAccess(result, "companyWide");
 
   const payments = await getCompanyPayments(result.company.id);
 

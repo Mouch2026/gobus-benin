@@ -1,7 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { requireCompany } from "@/lib/supabase/dal";
-import { canViewCompanyWideDashboards } from "@/lib/permissions";
+import { requireCompany, requirePageAccess } from "@/lib/supabase/dal";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getBeninDateString, getBeninMidnightToday } from "@/lib/benin-time";
 import { formatFcfa } from "shared";
@@ -93,14 +91,15 @@ export default async function DashboardPage(props: PageProps<"/">) {
   }
 
   // Vue globale (données de toute la compagnie, non scopées par agence) —
-  // même prédicat central que /pilotage (canViewCompanyWideDashboards) :
-  // décision explicite, ce ne sont pas deux autorisations distinctes, un
-  // chef d'agence sans l'autorisation pilotage ne doit ouvrir ni l'une ni
-  // l'autre. Gap découvert pendant l'exploration de ce chantier :
-  // jusqu'ici, seul le menu masquait "/" à un agent (hiddenForRoles côté
-  // _sidebar-nav.tsx), rien ne l'empêchait d'y accéder directement par
-  // URL. Redirection, pas de page bloquante : /mon-tableau-de-bord n'a
-  // aucune garde qui renverrait ici, donc aucune boucle possible.
+  // même niveau "companyWide" que /pilotage, via LE point de contrôle
+  // central (requirePageAccess, lib/supabase/dal.ts) : décision
+  // explicite, ce ne sont pas deux autorisations distinctes, un chef
+  // d'agence sans l'autorisation pilotage ne doit ouvrir ni l'une ni
+  // l'autre. Gap découvert à l'origine : jusqu'ici, seul le menu masquait
+  // "/" à un agent (hiddenForRoles côté _sidebar-nav.tsx), rien ne
+  // l'empêchait d'y accéder directement par URL. Redirection, pas de page
+  // bloquante : /mon-tableau-de-bord n'a aucune garde qui renverrait ici,
+  // donc aucune boucle possible.
   //
   // Ne consulte PAS home_screen (volontairement) — seule la PERMISSION
   // compte ici. home_screen ne gouverne que l'atterrissage à la connexion
@@ -109,9 +108,7 @@ export default async function DashboardPage(props: PageProps<"/">) {
   // quiconque a choisi un autre écran d'accueil, alors que "/" reste une
   // destination valide pour lui — vérifié : un propriétaire ou un chef
   // d'agence autorisé accède à "/" quelle que soit sa préférence.
-  if (!canViewCompanyWideDashboards(result)) {
-    redirect("/mon-tableau-de-bord");
-  }
+  requirePageAccess(result, "companyWide");
 
   const { company } = result;
 
