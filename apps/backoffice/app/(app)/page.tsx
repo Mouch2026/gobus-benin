@@ -6,6 +6,7 @@ import { getBeninDateString, getBeninMidnightToday } from "@/lib/benin-time";
 import { formatFcfa } from "shared";
 import { AccessBlockedMessage } from "./_components";
 import { StatCard } from "./_stat-card";
+import * as Icons from "@/lib/icons";
 import {
   BOOKING_STATUS_LABELS,
   BOOKING_STATUS_STYLES,
@@ -137,6 +138,8 @@ export default async function DashboardPage(props: PageProps<"/">) {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Réservations du jour"
+          icon={Icons.TicketIcon}
+          accent="blue"
           value={
             <span className="flex items-baseline gap-2">
               {bookingsToday.length}
@@ -151,6 +154,8 @@ export default async function DashboardPage(props: PageProps<"/">) {
         />
         <StatCard
           label="Revenus du jour"
+          icon={Icons.BanknoteIcon}
+          accent="emerald"
           value={
             <span className="flex flex-col">
               {formatFcfa(revenueToday)}
@@ -165,9 +170,16 @@ export default async function DashboardPage(props: PageProps<"/">) {
         />
         <StatCard
           label="Taux de remplissage"
+          icon={Icons.GaugeIcon}
+          accent="red"
           value={occupancyRate === null ? "—" : `${Math.round(occupancyRate * 100)} %`}
         />
-        <StatCard label="Clients actifs (30j)" value={activeClients} />
+        <StatCard
+          label="Clients actifs (30j)"
+          icon={Icons.UsersIcon}
+          accent="amber"
+          value={activeClients}
+        />
       </div>
 
       <section>
