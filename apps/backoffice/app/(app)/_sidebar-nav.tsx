@@ -52,18 +52,18 @@ const NAV_SECTIONS: NavSection[] = [
     label: "Tableau de bord",
     Icon: Icons.GridIcon,
     items: [
-      // Même gate que Pilotage ci-dessous ("companyWide", un
-      // PageAccessLevel résolu dynamiquement par isGateVisible via
-      // canViewCompanyWideDashboards, pas par can(role, ...) seul) :
-      // décision explicite du chantier "affectation d'un tableau de
-      // bord" — Vue globale et Pilotage sont gouvernés par LA MÊME
-      // autorisation, jamais deux vérifications distinctes.
-      // hiddenForRoles n'est plus nécessaire ici : un agent échoue déjà
-      // ce gate (canViewCompanyWideDashboards renvoie toujours false
-      // pour lui).
+      // "companyWide" : un PageAccessLevel résolu dynamiquement par
+      // isGateVisible via canViewCompanyWideDashboards, pas par
+      // can(role, ...) seul. hiddenForRoles n'est pas nécessaire ici :
+      // un agent échoue déjà ce gate (canViewCompanyWideDashboards
+      // renvoie toujours false pour lui).
+      //
+      // Chantier "un seul tableau de bord compagnie entière" — l'entrée
+      // "Pilotage" (/pilotage) est retirée : elle menait à un contenu
+      // désormais identique à "Vue globale" (/pilotage n'est plus
+      // qu'une redirection vers "/"), un seul lien suffit.
       { kind: "link", label: "Vue globale", href: "/", Icon: Icons.GaugeIcon, gate: "companyWide" },
       { kind: "link", label: "Mon tableau de bord", href: "/mon-tableau-de-bord", Icon: Icons.LayoutGridIcon },
-      { kind: "link", label: "Pilotage", href: "/pilotage", Icon: Icons.ChartBarIcon, gate: "companyWide" },
       { kind: "soon", label: "Widgets personnalisables", Icon: Icons.PuzzleIcon, hiddenForRoles: ["agent"] },
     ],
   },

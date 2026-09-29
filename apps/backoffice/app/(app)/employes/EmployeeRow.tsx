@@ -12,9 +12,13 @@ const ROLE_LABELS: Record<"agency_manager" | "agent", string> = {
   agent: "Agent",
 };
 
+// 'global' et 'owner_dashboard' mènent désormais à la même page ("/",
+// /pilotage n'étant plus qu'une redirection) — même libellé pour les
+// deux plutôt que de laisser croire à deux destinations distinctes pour
+// une ligne existante encore sur l'ancienne valeur.
 const HOME_SCREEN_LABELS: Record<HomeScreen, string> = {
-  global: "Vue globale",
-  owner_dashboard: "Tableau propriétaire",
+  global: "Tableau de bord de l'entreprise",
+  owner_dashboard: "Tableau de bord de l'entreprise",
   employee_dashboard: "Tableau employé",
 };
 

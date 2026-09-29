@@ -11,11 +11,17 @@ import type { HomeScreen } from "@/lib/permissions";
 // resolveDashboardAssignment(), actions.ts — ce composant ne fait
 // qu'empêcher l'UI de proposer un choix invalide.
 //
-// L'autorisation pilotage couvre les DEUX vues compagnie entière ("/" ET
-// /pilotage, pas seulement /pilotage) — décision explicite. Un chef
+// L'autorisation pilotage couvre la vue compagnie entière ("/" — /pilotage
+// n'est plus qu'une redirection vers "/" depuis le chantier "un seul
+// tableau de bord compagnie entière") — décision explicite. Un chef
 // d'agence SANS l'autorisation n'a donc AUCUN sélecteur : son tableau de
 // bord est fixé sur "Tableau employé", exactement comme un agent. Le
-// sélecteur (3 options) n'apparaît qu'une fois la case cochée.
+// sélecteur (2 options) n'apparaît qu'une fois la case cochée.
+// 'owner_dashboard' reste une valeur valide de home_screen en base
+// (aucune contrainte SQL retirée, resolveHomeRoute la traite comme
+// équivalente à 'global') mais n'est plus proposée à l'écran — un choix
+// de moins à comprendre pour le propriétaire, jamais deux destinations
+// distinctes pour une seule vue.
 export function DashboardAssignmentFields({
   role,
   defaultHomeScreen = "employee_dashboard",
@@ -28,9 +34,14 @@ export function DashboardAssignmentFields({
   const [pilotageAccessGranted, setPilotageAccessGranted] = useState(
     role === "agent" ? false : defaultPilotageAccessGranted
   );
-  const [homeScreen, setHomeScreen] = useState<HomeScreen>(
-    role === "agent" ? "employee_dashboard" : defaultHomeScreen
-  );
+  // Une ligne existante peut encore porter 'owner_dashboard' en base (une
+  // valeur toujours valide, jamais retirée de la contrainte SQL) — plus
+  // aucune <option> ne le propose depuis que /pilotage redirige vers
+  // "/", donc affiché comme 'global' (même destination désormais) plutôt
+  // que de laisser le <select> sur une valeur qu'il ne peut pas montrer.
+  const initialHomeScreen =
+    role === "agent" ? "employee_dashboard" : defaultHomeScreen === "owner_dashboard" ? "global" : defaultHomeScreen;
+  const [homeScreen, setHomeScreen] = useState<HomeScreen>(initialHomeScreen);
 
   if (role === "agent") {
     // Un agent n'a aucun choix — toujours son tableau employé, jamais la
@@ -65,8 +76,7 @@ export function DashboardAssignmentFields({
             }
           }}
         />
-        Autoriser l&apos;accès aux vues compagnie entière (vue globale et
-        tableau propriétaire)
+        Autoriser l&apos;accès au tableau de bord de l&apos;entreprise
       </label>
 
       {pilotageAccessGranted ? (
@@ -82,8 +92,7 @@ export function DashboardAssignmentFields({
             className={FIELD_CLASSES}
           >
             <option value="employee_dashboard">Tableau employé</option>
-            <option value="global">Vue globale</option>
-            <option value="owner_dashboard">Tableau propriétaire</option>
+            <option value="global">Tableau de bord de l&apos;entreprise</option>
           </select>
         </div>
       ) : (

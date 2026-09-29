@@ -96,13 +96,25 @@ export function canViewCompanyWideDashboards(access: {
 // plus le droit de voir (autorisation pilotage retirée après coup, par
 // exemple) — jamais de page bloquante, jamais de boucle, puisque
 // /mon-tableau-de-bord n'a lui-même aucune garde qui renverrait ailleurs.
+//
+// Chantier "un seul tableau de bord compagnie entière" — /pilotage et
+// "/" montraient le même contenu, protégés par la même garde
+// (companyWide) ; /pilotage n'est plus qu'une redirection vers "/". La
+// valeur 'owner_dashboard' de home_screen reste valide en base (aucune
+// contrainte CHECK touchée) mais mène désormais au même endroit que
+// 'global' — les deux préférences convergent sur "/", il n'existe plus
+// qu'une seule vue compagnie entière à atteindre.
 export function resolveHomeRoute(access: {
   role: CompanyRole;
   homeScreen: HomeScreen;
   pilotageAccessGranted: boolean;
-}): "/" | "/pilotage" | "/mon-tableau-de-bord" {
-  if (access.homeScreen === "owner_dashboard" && canViewCompanyWideDashboards(access)) return "/pilotage";
-  if (access.homeScreen === "global" && canViewCompanyWideDashboards(access)) return "/";
+}): "/" | "/mon-tableau-de-bord" {
+  if (
+    (access.homeScreen === "owner_dashboard" || access.homeScreen === "global") &&
+    canViewCompanyWideDashboards(access)
+  ) {
+    return "/";
+  }
   return "/mon-tableau-de-bord";
 }
 
